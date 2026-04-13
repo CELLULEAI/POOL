@@ -716,37 +716,37 @@
     <div class="section">
         <h3 style="margin-bottom:0.5rem;">Actions</h3>
         <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem;">
-            <select id="w-assign-model" style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;flex:1;min-width:200px;">
+            <select id="w-assign-model" class="input" style="flex:1;min-width:200px">
                 <option value="">-- Modele a assigner --</option>
             </select>
-            <button onclick="assignModel()" style="padding:0.5rem 1rem;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">Assigner</button>
+            <button onclick="assignModel()" class="btn btn-primary">Assigner</button>
         </div>
         <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem;">
-            <select id="w-cmd-type" style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+            <select id="w-cmd-type" class="input">
                 <option value="self_update">Self Update</option>
                 <option value="restart">Restart</option>
             </select>
-            <button onclick="sendWorkerCmd()" style="padding:0.5rem 1rem;background:var(--accent3);color:#fff;border:none;border-radius:6px;cursor:pointer;">Envoyer commande</button>
+            <button onclick="sendWorkerCmd()" class="btn btn-accent">Envoyer commande</button>
         </div>
         <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem;">
-            <select id="w-pm-val" style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+            <select id="w-pm-val" class="input">
                 <option value="true">pool_managed = true</option>
                 <option value="false">pool_managed = false</option>
             </select>
-            <button onclick="setPoolManaged()" style="padding:0.5rem 1rem;background:var(--purple);color:#fff;border:none;border-radius:6px;cursor:pointer;">Appliquer</button>
+            <button onclick="setPoolManaged()" class="btn btn-primary">Appliquer</button>
         </div>
         <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem;">
-            <button onclick="deleteWorker(_selectedWorker())" style="padding:0.5rem 1rem;background:var(--red);color:#fff;border:none;border-radius:6px;cursor:pointer;">Supprimer du pool</button>
-            <button onclick="banWorker(_selectedWorker())" style="padding:0.5rem 1rem;background:var(--neon-blue);color:#fff;border:none;border-radius:6px;cursor:pointer;">Bannir</button>
+            <button onclick="deleteWorker(_selectedWorker())" class="btn btn-danger">Supprimer du pool</button>
+            <button onclick="banWorker(_selectedWorker())" class="btn btn-primary">Bannir</button>
         </div>
         <div id="w-action-result" style="color:var(--accent2);font-size:0.85rem;margin-top:0.3rem;"></div>
     </div>
 
     <div class="section">
         <h3 style="margin-bottom:0.5rem;">Migration globale</h3>
-        <button onclick="migrateAll()" style="padding:0.5rem 1rem;background:var(--red);color:#fff;border:none;border-radius:6px;cursor:pointer;">Migrer tous vers la famille active</button>
+        <button onclick="migrateAll()" class="btn btn-danger">Migrer tous vers la famille active</button>
         <div id="w-migrate-result" style="color:var(--accent2);font-size:0.85rem;margin-top:0.5rem;"></div>
-</div>    <!-- Nettoyage DB -->    <div class="section">        <h3 style="margin-bottom:0.5rem;">Nettoyage DB</h3>        <div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.5rem;">            <label style="font-size:0.85rem;">Seuil min t/s :</label>            <input type="number" id="cleanup-min-tps" value="8" min="1" max="100" step="1" style="width:60px;padding:0.4rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">            <label style="font-size:0.85rem;margin-left:0.5rem;">Offline depuis (h) :</label>            <input type="number" id="cleanup-offline-h" value="72" min="1" max="720" step="1" style="width:60px;padding:0.4rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">            <button onclick="cleanupPreview()" style="padding:0.4rem 1rem;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">Scanner</button>        </div>        <div id="cleanup-preview" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:0.75rem;margin-bottom:0.5rem;max-height:300px;overflow-y:auto;">            <table style="width:100%;font-size:0.8rem;">                <thead><tr><th><input type="checkbox" id="cleanup-all" onchange="toggleCleanupAll()"></th><th>Worker</th><th>t/s</th><th>Jobs</th><th>Raisons</th></tr></thead>                <tbody id="cleanup-table"></tbody>            </table>        </div>        <div style="display:flex;gap:0.5rem;">            <button id="cleanup-btn" onclick="cleanupExecute()" style="display:none;padding:0.5rem 1rem;background:var(--red);color:#fff;border:none;border-radius:6px;cursor:pointer;">Supprimer les selectionnes</button>            <span id="cleanup-result" style="color:var(--accent2);font-size:0.85rem;align-self:center;"></span>        </div>    </div>
+</div>    <!-- Nettoyage DB -->    <div class="section">        <h3 style="margin-bottom:0.5rem;">Nettoyage DB</h3>        <div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.5rem;">            <label style="font-size:0.85rem;">Seuil min t/s :</label>            <input type="number" id="cleanup-min-tps" value="8" min="1" max="100" step="1" style="width:60px;padding:0.4rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">            <label style="font-size:0.85rem;margin-left:0.5rem;">Offline depuis (h) :</label>            <input type="number" id="cleanup-offline-h" value="72" min="1" max="720" step="1" style="width:60px;padding:0.4rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">            <button onclick="cleanupPreview()" class="btn btn-primary btn-sm">Scanner</button>        </div>        <div id="cleanup-preview" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:0.75rem;margin-bottom:0.5rem;max-height:300px;overflow-y:auto;">            <table style="width:100%;font-size:0.8rem;">                <thead><tr><th><input type="checkbox" id="cleanup-all" onchange="toggleCleanupAll()"></th><th>Worker</th><th>t/s</th><th>Jobs</th><th>Raisons</th></tr></thead>                <tbody id="cleanup-table"></tbody>            </table>        </div>        <div style="display:flex;gap:0.5rem;">            <button id="cleanup-btn" onclick="cleanupExecute()" style="display:none;padding:0.5rem 1rem;background:var(--red);color:#fff;border:none;border-radius:6px;cursor:pointer;">Supprimer les selectionnes</button>            <span id="cleanup-result" style="color:var(--accent2);font-size:0.85rem;align-self:center;"></span>        </div>    </div>
     </div>
 
     <!-- Blacklist -->
@@ -755,7 +755,7 @@
         <div id="blacklist-list" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:0.75rem;margin-bottom:0.5rem;font-size:0.85rem;">Chargement...</div>
         <div style="display:flex;gap:0.5rem;align-items:center;">
             <input type="text" id="ban-worker-id" placeholder="Worker ID a bannir" style="flex:1;padding:0.4rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
-            <button onclick="banWorkerManual()" style="padding:0.4rem 1rem;background:var(--neon-blue);color:#fff;border:none;border-radius:6px;cursor:pointer;">Bannir</button>
+            <button onclick="banWorkerManual()" class="btn btn-primary btn-sm">Bannir</button>
         </div>
         <div id="ban-result" style="color:var(--accent2);font-size:0.85rem;margin-top:0.3rem;"></div>
     </div>
@@ -794,7 +794,7 @@
             </select>
             <input type="number" id="acc-credits-val" value="100" min="0" step="10" style="width:80px;padding:0.4rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
             <button onclick="addCredits()" style="padding:0.4rem 1rem;background:var(--accent2);color:#fff;border:none;border-radius:6px;cursor:pointer;">+Credits</button>
-            <button onclick="setCredits()" style="padding:0.4rem 1rem;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">Definir</button>
+            <button onclick="setCredits()" class="btn btn-primary btn-sm">Definir</button>
         </div>
         <div id="acc-result" style="color:var(--accent2);font-size:0.85rem;margin-top:0.3rem;"></div>
     </div>
@@ -818,7 +818,7 @@
             <select id="cfg-tool-model" style="flex:1;max-width:400px;padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:0.85rem;">
                 <option value="">Chargement...</option>
             </select>
-            <button onclick="saveToolModel()" style="padding:0.4rem 1rem;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">Appliquer</button>
+            <button onclick="saveToolModel()" class="btn btn-primary btn-sm">Appliquer</button>
         </div>
         <div id="cfg-tool-result" style="color:var(--accent2);font-size:0.85rem;margin-top:0.3rem;"></div>
     </div>
@@ -831,9 +831,9 @@
     <div class="section">
         <h3 style="margin-bottom:0.5rem;">Modifier une cle</h3>
         <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
-            <input id="c-key" placeholder="Key" style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;width:200px;">
-            <input id="c-val" placeholder="Value" style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;width:300px;">
-            <button onclick="setConfig()" style="padding:0.5rem 1rem;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">Sauvegarder</button>
+            <input id="c-key" placeholder="Key" class="input" style="width:200px">
+            <input id="c-val" placeholder="Value" class="input" style="width:300px">
+            <button onclick="setConfig()" class="btn btn-primary">Sauvegarder</button>
         </div>
         <div id="c-set-result" style="color:var(--accent2);font-size:0.85rem;"></div>
     </div>
@@ -843,7 +843,7 @@
         <p style="color:var(--text2);font-size:0.8rem;margin-bottom:0.75rem;">Le prompt systeme injecte dans chaque conversation. Changement pris en compte immediatement.</p>
         <textarea id="system-prompt-textarea" rows="8" style="width:100%;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:10px;font-family:monospace;font-size:0.85rem;resize:vertical;box-sizing:border-box;"></textarea>
         <div style="display:flex;gap:0.75rem;align-items:center;margin-top:0.5rem;">
-            <button onclick="saveSystemPrompt()" style="padding:0.5rem 1rem;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">Sauvegarder le prompt</button>
+            <button onclick="saveSystemPrompt()" class="btn btn-primary">Sauvegarder le prompt</button>
             <span id="sysprompt-result" style="font-size:0.85rem;color:var(--green);"></span>
         </div>
     </div>
@@ -853,20 +853,20 @@
         <p style="color:var(--text2);font-size:0.8rem;margin-bottom:1rem;">Parametres pour les alertes email (endpoint /admin/api/alert).</p>
         <div style="display:grid;grid-template-columns:120px 1fr;gap:0.4rem 0.75rem;align-items:center;margin-bottom:1rem;">
             <label style="font-size:0.85rem;color:var(--text2);">Serveur SMTP</label>
-            <input id="smtp-host" placeholder="smtp.gmail.com" style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+            <input id="smtp-host" placeholder="smtp.gmail.com" class="input">
             <label style="font-size:0.85rem;color:var(--text2);">Port</label>
-            <input id="smtp-port" placeholder="587" type="number" style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;width:100px;">
+            <input id="smtp-port" placeholder="587" type="number" class="input" style="width:100px">
             <label style="font-size:0.85rem;color:var(--text2);">Login</label>
-            <input id="smtp-user" placeholder="contact@cellule.ai" style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+            <input id="smtp-user" placeholder="contact@cellule.ai" class="input">
             <label style="font-size:0.85rem;color:var(--text2);">Mot de passe</label>
-            <input id="smtp-pass" type="password" placeholder="app password" style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+            <input id="smtp-pass" type="password" placeholder="app password" class="input">
             <label style="font-size:0.85rem;color:var(--text2);">Expediteur</label>
-            <input id="smtp-from" placeholder="CELLULE.AI Pool <contact@cellule.ai>" style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+            <input id="smtp-from" placeholder="CELLULE.AI Pool <contact@cellule.ai>" class="input">
             <label style="font-size:0.85rem;color:var(--text2);">Destinataire</label>
-            <input id="smtp-to" placeholder="david.mourgues@gmail.com" style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+            <input id="smtp-to" placeholder="david.mourgues@gmail.com" class="input">
         </div>
         <div style="display:flex;gap:0.5rem;">
-            <button onclick="saveSmtp()" style="padding:0.5rem 1rem;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">Sauvegarder SMTP</button>
+            <button onclick="saveSmtp()" class="btn btn-primary">Sauvegarder SMTP</button>
             <button onclick="testSmtp()" style="padding:0.5rem 1rem;background:var(--accent2);color:#000;border:none;border-radius:6px;cursor:pointer;">Envoyer un test</button>
         </div>
         <div id="smtp-result" style="color:var(--accent2);font-size:0.85rem;margin-top:0.5rem;"></div>
