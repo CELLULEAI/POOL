@@ -14,7 +14,7 @@
             --accent: #00d4ff; --accent2: #00ff88; --accent3: #ff8844;
             --text: #f0f0f0; --text2: #888888; --border: #222222;
             --neon-blue: #00d4ff; --neon-green: #00ff88;
-            --red: #f85149; --purple: #bc8cff;
+            --red: #f85149; --purple: var(--neon-blue);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family:'Inter',-apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
@@ -262,8 +262,8 @@
             border-color: var(--accent);
         }
         .module-action-btn.primary:hover {
-            background: #4a94e8;
-            border-color: #4a94e8;
+            background: var(--neon-blue);
+            border-color: var(--neon-blue);
             color: #fff;
         }
         .module-result {
@@ -736,8 +736,8 @@
             <button onclick="setPoolManaged()" style="padding:0.5rem 1rem;background:var(--purple);color:#fff;border:none;border-radius:6px;cursor:pointer;">Appliquer</button>
         </div>
         <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem;">
-            <button onclick="deleteWorker(_selectedWorker())" style="padding:0.5rem 1rem;background:#dc3545;color:#fff;border:none;border-radius:6px;cursor:pointer;">Supprimer du pool</button>
-            <button onclick="banWorker(_selectedWorker())" style="padding:0.5rem 1rem;background:#6f42c1;color:#fff;border:none;border-radius:6px;cursor:pointer;">Bannir</button>
+            <button onclick="deleteWorker(_selectedWorker())" style="padding:0.5rem 1rem;background:var(--red);color:#fff;border:none;border-radius:6px;cursor:pointer;">Supprimer du pool</button>
+            <button onclick="banWorker(_selectedWorker())" style="padding:0.5rem 1rem;background:var(--neon-blue);color:#fff;border:none;border-radius:6px;cursor:pointer;">Bannir</button>
         </div>
         <div id="w-action-result" style="color:var(--accent2);font-size:0.85rem;margin-top:0.3rem;"></div>
     </div>
@@ -746,7 +746,7 @@
         <h3 style="margin-bottom:0.5rem;">Migration globale</h3>
         <button onclick="migrateAll()" style="padding:0.5rem 1rem;background:var(--red);color:#fff;border:none;border-radius:6px;cursor:pointer;">Migrer tous vers la famille active</button>
         <div id="w-migrate-result" style="color:var(--accent2);font-size:0.85rem;margin-top:0.5rem;"></div>
-</div>    <!-- Nettoyage DB -->    <div class="section">        <h3 style="margin-bottom:0.5rem;">Nettoyage DB</h3>        <div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.5rem;">            <label style="font-size:0.85rem;">Seuil min t/s :</label>            <input type="number" id="cleanup-min-tps" value="8" min="1" max="100" step="1" style="width:60px;padding:0.4rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">            <label style="font-size:0.85rem;margin-left:0.5rem;">Offline depuis (h) :</label>            <input type="number" id="cleanup-offline-h" value="72" min="1" max="720" step="1" style="width:60px;padding:0.4rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">            <button onclick="cleanupPreview()" style="padding:0.4rem 1rem;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">Scanner</button>        </div>        <div id="cleanup-preview" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:0.75rem;margin-bottom:0.5rem;max-height:300px;overflow-y:auto;">            <table style="width:100%;font-size:0.8rem;">                <thead><tr><th><input type="checkbox" id="cleanup-all" onchange="toggleCleanupAll()"></th><th>Worker</th><th>t/s</th><th>Jobs</th><th>Raisons</th></tr></thead>                <tbody id="cleanup-table"></tbody>            </table>        </div>        <div style="display:flex;gap:0.5rem;">            <button id="cleanup-btn" onclick="cleanupExecute()" style="display:none;padding:0.5rem 1rem;background:#dc3545;color:#fff;border:none;border-radius:6px;cursor:pointer;">Supprimer les selectionnes</button>            <span id="cleanup-result" style="color:var(--accent2);font-size:0.85rem;align-self:center;"></span>        </div>    </div>
+</div>    <!-- Nettoyage DB -->    <div class="section">        <h3 style="margin-bottom:0.5rem;">Nettoyage DB</h3>        <div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.5rem;">            <label style="font-size:0.85rem;">Seuil min t/s :</label>            <input type="number" id="cleanup-min-tps" value="8" min="1" max="100" step="1" style="width:60px;padding:0.4rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">            <label style="font-size:0.85rem;margin-left:0.5rem;">Offline depuis (h) :</label>            <input type="number" id="cleanup-offline-h" value="72" min="1" max="720" step="1" style="width:60px;padding:0.4rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">            <button onclick="cleanupPreview()" style="padding:0.4rem 1rem;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">Scanner</button>        </div>        <div id="cleanup-preview" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:0.75rem;margin-bottom:0.5rem;max-height:300px;overflow-y:auto;">            <table style="width:100%;font-size:0.8rem;">                <thead><tr><th><input type="checkbox" id="cleanup-all" onchange="toggleCleanupAll()"></th><th>Worker</th><th>t/s</th><th>Jobs</th><th>Raisons</th></tr></thead>                <tbody id="cleanup-table"></tbody>            </table>        </div>        <div style="display:flex;gap:0.5rem;">            <button id="cleanup-btn" onclick="cleanupExecute()" style="display:none;padding:0.5rem 1rem;background:var(--red);color:#fff;border:none;border-radius:6px;cursor:pointer;">Supprimer les selectionnes</button>            <span id="cleanup-result" style="color:var(--accent2);font-size:0.85rem;align-self:center;"></span>        </div>    </div>
     </div>
 
     <!-- Blacklist -->
@@ -755,7 +755,7 @@
         <div id="blacklist-list" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:0.75rem;margin-bottom:0.5rem;font-size:0.85rem;">Chargement...</div>
         <div style="display:flex;gap:0.5rem;align-items:center;">
             <input type="text" id="ban-worker-id" placeholder="Worker ID a bannir" style="flex:1;padding:0.4rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
-            <button onclick="banWorkerManual()" style="padding:0.4rem 1rem;background:#6f42c1;color:#fff;border:none;border-radius:6px;cursor:pointer;">Bannir</button>
+            <button onclick="banWorkerManual()" style="padding:0.4rem 1rem;background:var(--neon-blue);color:#fff;border:none;border-radius:6px;cursor:pointer;">Bannir</button>
         </div>
         <div id="ban-result" style="color:var(--accent2);font-size:0.85rem;margin-top:0.3rem;"></div>
     </div>
@@ -880,7 +880,7 @@
 <!-- TAB: CHECKER                               -->
 <!-- ═══════════════════════════════════════════ -->
 <div id="tab-checker-tab" class="tab-content" style="display:none;">
-    <h2 style="color:#f0b429;">Checker Ladder</h2>
+    <h2 style="color:var(--neon-green);">Checker Ladder</h2>
     <p style="color:var(--text2);font-size:0.85rem;margin-bottom:1rem;">Validation synchrone des reponses par un LLM plus gros. Workers sous le seuil TPS sont verifies avant envoi au client.</p>
 
     <!-- Config checker -->
@@ -1601,13 +1601,13 @@ async function saveSystemPrompt() {
             msg.style.color = 'var(--green)';
             msg.textContent = 'Prompt sauvegarde !';
         } else {
-            msg.style.color = 'var(--red, #f44)';
+            msg.style.color = 'var(--red, var(--red))';
             msg.textContent = 'Erreur: ' + JSON.stringify(d);
         }
         loadConfig();
         setTimeout(() => { msg.textContent = ''; }, 4000);
     } catch(e) {
-        msg.style.color = 'var(--red, #f44)';
+        msg.style.color = 'var(--red, var(--red))';
         msg.textContent = 'Erreur: ' + e.message;
     }
 }
@@ -1700,7 +1700,7 @@ async function cleanupPreview() {
         tr.innerHTML = '<td><input type="checkbox" class="cleanup-cb" value="' + c.worker_id + '" checked></td>'
             + '<td>' + c.worker_id + '<br><small style="color:var(--text2)">' + c.hostname + '</small></td>'
             + '<td>' + c.effective_tps + '</td>'
-            + '<td>' + c.total_jobs + ' <small style="color:#dc3545">(' + c.jobs_failed + ' err)</small></td>'
+            + '<td>' + c.total_jobs + ' <small style="color:var(--red)">(' + c.jobs_failed + ' err)</small></td>'
             + '<td style="font-size:0.75rem;color:var(--accent3)">' + c.reasons.join(", ") + '</td>';
         tbody.appendChild(tr);
     });
@@ -1733,7 +1733,7 @@ async function cleanupExecute() {
         loadStats();
     } else {
         document.getElementById("cleanup-result").textContent = data.error || "Erreur";
-        document.getElementById("cleanup-result").style.color = "#dc3545";
+        document.getElementById("cleanup-result").style.color = "var(--red)";
     }
 }
 
@@ -1752,7 +1752,7 @@ async function loadBlacklist(){
         for(var i=0;i<d.blacklist.length;i++){
             var wid=d.blacklist[i];
             html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:0.2rem 0;">';
-            html+='<span style="color:#dc3545;">'+wid+'</span>';
+            html+='<span style="color:var(--red);">'+wid+'</span>';
             html+='<button data-wid="'+wid+'" onclick="unbanWorker(this.dataset.wid)" style="padding:0.2rem 0.5rem;background:var(--accent2);color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.75rem;">Debannir</button>';
             html+='</div>';
         }
@@ -1849,7 +1849,7 @@ async function loadAccounts(){
         d.accounts.forEach(function(a){
             var tr=document.createElement("tr");
             tr.style.borderBottom="1px solid var(--border)";
-            var delBtn='<button data-aid="'+a.account_id+'" onclick="deleteAccount(this.dataset.aid)" style="padding:0.2rem 0.4rem;background:#dc3545;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.7rem;">Suppr</button>';
+            var delBtn='<button data-aid="'+a.account_id+'" onclick="deleteAccount(this.dataset.aid)" style="padding:0.2rem 0.4rem;background:var(--red);color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.7rem;">Suppr</button>';
             tr.innerHTML='<td style="padding:0.4rem;color:var(--accent);">'+a.email+'</td>'
                 +'<td>'+a.pseudo+'</td>'
                 +'<td style="color:var(--accent2);">'+a.total_credits.toFixed(1)+'</td>'
@@ -1910,14 +1910,14 @@ setTimeout(loadAccounts,2500);
             }
             const tbody = document.getElementById('checker-tbody');
             tbody.innerHTML = (d.workers || []).map(w => {
-                const scoreColor = w.checker_score >= 0.7 ? 'var(--green)' : w.checker_score >= 0.4 ? '#f0b429' : 'var(--red, #f85149)';
+                const scoreColor = w.checker_score >= 0.7 ? 'var(--green)' : w.checker_score >= 0.4 ? 'var(--neon-green)' : 'var(--red, #f85149)';
                 const pct = w.checker_total > 0 ? Math.round(w.checker_passed / w.checker_total * 100) : '-';
                 const model = (w.model_path || '').split('/').pop() || '-';
                 return `<tr style="border-bottom:1px solid var(--border);">
                     <td style="padding:0.4rem 0.5rem;font-weight:600;">${w.worker_id}</td>
                     <td style="text-align:center;font-size:0.8rem;color:var(--text2);">${model}</td>
                     <td style="text-align:center;">${w.bench_tps}</td>
-                    <td style="text-align:center;">${w.checked ? '<span style="color:#f0b429;">OUI</span>' : '<span style="color:var(--text2);">non</span>'}</td>
+                    <td style="text-align:center;">${w.checked ? '<span style="color:var(--neon-green);">OUI</span>' : '<span style="color:var(--text2);">non</span>'}</td>
                     <td style="text-align:center;font-weight:700;color:${scoreColor};">${w.checker_score.toFixed(3)}</td>
                     <td style="text-align:center;color:${w.checker_fails > 0 ? 'var(--red, #f85149)' : 'var(--text2)'};">${w.checker_fails}</td>
                     <td style="text-align:center;">${w.checker_total}</td>
