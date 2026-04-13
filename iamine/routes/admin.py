@@ -59,7 +59,6 @@ LOGIN_PAGE_HTML = """<!DOCTYPE html>
 <div class="err" id="err"></div>
 <div class="logo">Cellule.ai</div>
 <script>
-}
 async function loginPw() {
     const r = await fetch('/admin/login', {method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({email:document.getElementById('em').value, password:document.getElementById('pw').value})});
