@@ -1,0 +1,16 @@
+# Render.com — déploiement automatique
+# https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: iamine-pool
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m iamine pool --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PORT
+        value: 8080
+    plan: free
+    # Domaine custom : iamine.org
+    # customDomains:
+    #   - name: iamine.org
+    #   - name: www.iamine.org

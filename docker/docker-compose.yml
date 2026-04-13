@@ -1,0 +1,69 @@
+# Cellule.ai Pool — docker-compose for community pool operators
+#
+# Quick start :
+#   1. Copy .env.example -> .env  (edit POOL_NAME, POOL_URL, DB_PASS)
+#   2. docker compose up -d
+#   3. curl http://localhost:8080/v1/federation/info
+#   4. Contact the Cellule.ai community to get your pool bonded
+#
+# Auto-update: Watchtower checks Docker Hub every hour and redeploys
+# the pool container when a new :latest image is available.
+
+services:
+  cellule-pg:
+    image: pgvector/pgvector:pg16
+    container_name: cellule-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: iamine
+      POSTGRES_PASSWORD: ${DB_PASS:?DB_PASS must be set in .env}
+      POSTGRES_DB: iamine
+    volumes:
+      - cellule-pg-data:/var/lib/postgresql/data
+    networks:
+      - cellule-net
+
+  cellule-pool:
+    image: celluleai/pool:latest
+    container_name: cellule-pool
+    restart: unless-stopped
+    depends_on:
+      - cellule-pg
+    ports:
+      - "8080:8080"
+    environment:
+      IAMINE_DB: postgres
+      DB_HOST: cellule-pg
+      DB_PORT: 5432
+      DB_USER: iamine
+      DB_PASS: ${DB_PASS:?DB_PASS must be set in .env}
+      DB_NAME: iamine
+      IAMINE_FED: observe
+      POOL_NAME: ${POOL_NAME:?POOL_NAME must be set in .env}
+      POOL_URL: ${POOL_URL:?POOL_URL must be set in .env}
+      IAMINE_FED_MOLECULE: iamine-testnet
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-change-me-in-production}
+    volumes:
+      - cellule-fed-keys:/root/.iamine/federation
+    networks:
+      - cellule-net
+
+  watchtower:
+    image: containrrr/watchtower
+    environment:
+      DOCKER_API_VERSION: "1.44"
+    container_name: cellule-watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 3600 --cleanup cellule-pool
+    networks:
+      - cellule-net
+
+volumes:
+  cellule-pg-data:
+  cellule-fed-keys:
+
+networks:
+  cellule-net:
+    driver: bridge

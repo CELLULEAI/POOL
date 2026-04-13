@@ -1,0 +1,68 @@
+__pycache__/
+*.pyc
+*.log
+models/*.gguf
+.env
+*.egg-info/
+dist/
+build/
+wallet.json
+config.json
+proxy.json
+contacts.jsonl
+bench-results.json
+accounts.json
+*.db
+.DS_Store
+.vscode/
+.idea/
+venv/
+.server_secret
+*.whl
+*.tar.gz
+
+# Internal reports (not for public)
+reports/david/
+reports/claude/
+reports/chat/
+reports/shared/
+reports/wasa/
+reports/regis/
+reports/INBOX.md
+reports/INDEX.md
+reports/settings-jobs.json
+
+# Claude Code config
+.claude/settings.local.json
+
+# Sensitive docs (credentials, SSH guides) — NEVER commit
+docs/deployment-guide.html
+docs/SSH-IAMINE-GUIDE.md
+docs/SSH-IAMINE-GUIDE.pdf
+docs/infrastructure-ssh.md
+docs/infrastructure-ssh.pdf
+docs/reprise-activite-vps.md
+docs/reprise-activite-vps.pdf
+settings-jobs.json
+
+# Pip artifacts
+=*
+
+# APK binaries (too large for GitHub)
+iamine/static/*.apk
+CONFIDENTIEL*
+*.bak*
+
+# Internal — never push to public GitHub
+.claude/
+CLAUDE-DAVID.md
+CLAUDE-TESTER.md
+reports/
+snapshots/
+assigned_model.json
+worker-config.json
+watchdog-reports.sh
+deploy/
+mobile/
+docs/
+tests/

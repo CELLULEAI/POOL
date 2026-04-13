@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta property="og:title" content="Cellule.ai — Run a Pool">
+<meta property="og:description" content="Run a decentralized LLM pool in 3 minutes with docker compose. PREPROD testnet, 3 pools already federated, workers migrate cross-pool. Join the cellule.ai molecule.">
+<meta property="og:url" content="https://cellule.ai/docs/pool-docker.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Cellule.ai">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Cellule.ai — Run a Pool (PREPROD testnet)">
+<meta name="twitter:description" content="Run a decentralized LLM pool in 3 minutes. 8 workers, 6 models, 3 pools federated, Ed25519 signed.">
+<meta name="twitter:site" content="@moleculeiallm">
+<title>Cellule.ai — Run a Pool</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0a0a0f; color: #e0e0e0; font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif; line-height: 1.6; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 3rem 1.5rem; }
+h1 { font-size: 2.2rem; margin-bottom: 0.5rem; color: #00ffea; }
+h2 { font-size: 1.4rem; margin: 2.5rem 0 1rem; color: #8b5cf6; }
+h3 { font-size: 1.1rem; margin: 1.5rem 0 0.75rem; color: #00d4ff; }
+p { margin-bottom: 1rem; }
+code { background: rgba(255,255,255,0.08); padding: 0.2rem 0.4rem; border-radius: 4px; font-family: ui-monospace, monospace; font-size: 0.9em; color: #39ff14; }
+pre { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 1rem; overflow-x: auto; margin: 1rem 0; font-family: ui-monospace, monospace; font-size: 0.85rem; color: #e0e0e0; }
+pre code { background: transparent; padding: 0; color: inherit; }
+.preprod { background: rgba(232, 255, 0, 0.12); border: 1px solid rgba(232, 255, 0, 0.35); border-radius: 8px; padding: 1rem 1.25rem; margin: 1.5rem 0; }
+.preprod strong { color: #e8ff00; }
+a { color: #00d4ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.steps { list-style: none; counter-reset: step; padding: 0; }
+.steps li { counter-increment: step; margin-bottom: 1.5rem; padding-left: 3rem; position: relative; }
+.steps li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 2rem; height: 2rem; border-radius: 50%; background: #00ffea; color: #0a0a0f; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+.footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); opacity: 0.6; font-size: 0.85rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🧬 Run a Cellule.ai pool</h1>
+<p>Join the molecule. Federated LLM inference, signed handshakes, cross-pool replication. Every node matters.</p>
+
+<div class="preprod">
+<strong>⚠ PREPROD / testnet phase.</strong> Cellule.ai is in early testing. $IAMINE credits have no market value. The federation protocol is live and the 3 founding pools are bonded, but expect rough edges. Early contributors welcome.
+</div>
+
+<h2>Quick start — docker compose (~3 minutes)</h2>
+
+<ol class="steps">
+<li>
+<strong>Get the compose file</strong>
+<pre><code>mkdir cellule-pool && cd cellule-pool
+curl -O https://cellule.ai/docs/docker-compose.yml
+curl -O https://cellule.ai/docs/.env.example
+cp .env.example .env</code></pre>
+</li>
+
+<li>
+<strong>Edit <code>.env</code></strong> with your pool name + public URL + DB password.
+<pre><code>POOL_NAME=my-community-pool
+POOL_URL=http://YOUR_PUBLIC_IP:8080
+DB_PASS=some-strong-random-password
+ADMIN_PASSWORD=admin-secret</code></pre>
+<p>Your <code>POOL_URL</code> must be reachable from the public internet. The simplest setup is to NAT TCP port 8080 on your router to your machine’s LAN IP.</p>
+</li>
+
+<li>
+<strong>Start the stack</strong>
+<pre><code>docker compose up -d
+docker compose logs -f cellule-pool</code></pre>
+<p>You should see <code>CELLULE.AI POOL v0.2.67</code> and migration messages followed by <code>federation: mode=observe atom_id=...</code>. Your pool is now running.</p>
+</li>
+
+<li>
+<strong>Verify locally</strong>
+<pre><code>curl http://localhost:8080/v1/federation/info</code></pre>
+<p>Returns a JSON card with your pool’s <code>atom_id</code> (64-char hex) and pubkey. Save these — they’re your identity.</p>
+</li>
+
+<li>
+<strong>Verify publicly</strong>
+<p>From another machine (your phone on 4G works) :</p>
+<pre><code>curl http://YOUR_PUBLIC_IP:8080/v1/federation/info</code></pre>
+<p>If this fails, your NAT rule isn’t in place yet. The pool is running but can’t be joined by the molecule.</p>
+</li>
+
+<li>
+<strong>Request federation</strong>
+<p>Contact the Cellule.ai community with your <code>atom_id</code> + <code>POOL_URL</code> to get bonded. For now, DM <a href="https://x.com/moleculeiallm">@moleculeiallm</a> on X. A later version of this flow will be self-serve.</p>
+</li>
+</ol>
+
+<h2>What you get</h2>
+<p>As soon as your pool is bonded trust level 2 :</p>
+<ul style="padding-left:1.5rem; margin-bottom:1rem;">
+<li>Your pool appears in the live molecule on the <a href="/">cellule.ai landing page</a> as a new satellite in the atom canvas.</li>
+<li>Accounts created on any bonded pool replicate to yours via M11.1 gossip.</li>
+<li>Ledger gossip via M11.2 keeps your pool in sync with the molecule’s revenue history.</li>
+<li>Workers from any pool can migrate to yours via the M11.3 seed list protocol.</li>
+<li>You can accept your own workers (local LLM machines) via WebSocket <code>ws://YOUR_POOL_URL:8080/ws</code>.</li>
+</ul>
+
+<h2>Requirements</h2>
+<ul style="padding-left:1.5rem; margin-bottom:1rem;">
+<li>Linux or macOS (Windows via WSL2)</li>
+<li>Docker 20+ with compose v2</li>
+<li>2 GB RAM, 10 GB disk</li>
+<li>Public URL / NAT rule for TCP 8080 inbound</li>
+<li>No GPU required for the pool itself (workers can be GPU or CPU, separately)</li>
+</ul>
+
+<h3>About image size (~9 GB)</h3>
+<p>The Docker image is larger than a typical web service because it includes an <strong>embedded AI memory system</strong> (M13 Agent Memory). This bundles <code>sentence-transformers</code> + <code>PyTorch</code> for vector embeddings, enabling semantic search, episodic recall, and procedural learning across sessions — all running locally inside the container with zero external dependencies.</p>
+<p>The tradeoff is deliberate: <strong>one <code>docker compose up</code> gives you a fully autonomous AI pool</strong> with persistent memory, federation sync, and MCP compatibility. No separate embedding service to configure. The first pull takes a few minutes; subsequent starts are instant.</p>
+
+<h2>Troubleshooting</h2>
+
+<h3>Container keeps restarting</h3>
+<p>Check <code>docker compose logs cellule-pool</code>. Most common cause : <code>POOL_URL</code> not set or still <code>http://YOUR_PUBLIC_IP:8080</code> (placeholder). The pool refuses to boot without a valid URL.</p>
+
+<h3>Migrations fail</h3>
+<p>The image uses <code>pgvector/pgvector:pg16</code> automatically via compose. If you use an external postgres, make sure the <code>vector</code> extension is available (<code>SELECT * FROM pg_available_extensions WHERE name='vector'</code>).</p>
+
+<h3>Federation handshake fails</h3>
+<p>Usually means your <code>POOL_URL</code> is not reachable from the Cellule.ai VPS. Test with <code>curl</code> from any public machine. If it fails there, fix your NAT / DNS / reverse proxy before asking to be bonded.</p>
+
+<h2>Source + support</h2>
+<p>• Full manual runbook (no-docker path) : <a href="/docs/RUNBOOK_POOL_BOOTSTRAP.md">RUNBOOK_POOL_BOOTSTRAP.md</a><br>
+• Architecture : <a href="/docs/ARCHITECTURE.md">ARCHITECTURE.md</a><br>
+• X : <a href="https://x.com/moleculeiallm">@moleculeiallm</a><br>
+• Main site : <a href="/">cellule.ai</a></p>
+
+<div class="footer">
+PREPROD testnet — celluleai/pool:0.2.67 — 2026-04-13
+</div>
+</div>
+</body>
+</html>

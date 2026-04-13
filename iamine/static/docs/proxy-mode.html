@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cellule.ai — Proxy Mode Guide</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0f;color:#e0e0e0;font-family:system-ui,-apple-system,sans-serif;line-height:1.7;padding:2rem 1rem}
+.container{max-width:800px;margin:0 auto}
+h1{font-size:2rem;background:linear-gradient(135deg,#8b5cf6,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:0.5rem}
+h2{color:#8b5cf6;font-size:1.3rem;margin:2.5rem 0 1rem;padding-bottom:0.5rem;border-bottom:1px solid rgba(139,92,246,0.2)}
+h3{color:#a78bfa;font-size:1.1rem;margin:1.5rem 0 0.5rem}
+p{margin-bottom:1rem;color:rgba(255,255,255,0.75)}
+a{color:#8b5cf6;text-decoration:none}
+a:hover{text-decoration:underline}
+code{background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;font-size:0.9em;font-family:'JetBrains Mono',monospace}
+pre{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:1.2rem;overflow-x:auto;margin:1rem 0;font-size:0.85rem;line-height:1.5}
+pre code{background:none;padding:0}
+.badge{display:inline-block;background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;padding:3px 12px;border-radius:12px;font-size:11px;font-weight:700;letter-spacing:1px;margin-bottom:1rem}
+.card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:1.5rem;margin:1rem 0}
+.warn{border-left:3px solid #ff8800;padding-left:1rem;margin:1rem 0;color:rgba(255,255,255,0.6)}
+.ok{border-left:3px solid #4ade80;padding-left:1rem;margin:1rem 0;color:rgba(255,255,255,0.6)}
+table{width:100%;border-collapse:collapse;margin:1rem 0}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.06)}
+th{color:#8b5cf6;font-size:0.85rem;text-transform:uppercase;letter-spacing:1px}
+.back{display:inline-block;margin-bottom:2rem;color:rgba(255,255,255,0.4);font-size:0.9rem}
+</style>
+</head>
+<body>
+<div class="container">
+
+<a href="/" class="back">&larr; Back to cellule.ai</a>
+
+<span class="badge">ADVANCED</span>
+<h1>Proxy Mode</h1>
+<p>Run your own LLM backends and connect them to the Cellule.ai network. You keep full control over your models, hardware, and configuration.</p>
+
+<h2>Who is this for?</h2>
+<p>Proxy mode is for contributors who:</p>
+<ul style="margin:0 0 1rem 1.5rem;color:rgba(255,255,255,0.7)">
+<li>Already run <code>llama-server</code>, <code>vLLM</code>, <code>Ollama</code>, or similar</li>
+<li>Want to choose which models they serve (no auto-assignment)</li>
+<li>Have GPU hardware and want to maximize throughput</li>
+<li>Want to serve multiple models from one machine</li>
+</ul>
+
+<div class="ok"><strong>The pool never reassigns models to proxy workers.</strong> Your config is yours.</div>
+
+<h2>Quick start</h2>
+
+<h3>1. Install</h3>
+<pre><code>pip install iamine-ai -i https://cellule.ai/pypi --extra-index-url https://pypi.org/simple</code></pre>
+
+<h3>2. Start your LLM backends</h3>
+<p>Start one or more <code>llama-server</code> instances on different ports:</p>
+<pre><code># Backend 1: Reasoning model on port 8080
+llama-server -m models/Qwen3-30B-A3B-Instruct-Q4_K_M.gguf \
+  --host 127.0.0.1 --port 8080 -ngl 99 -c 4096
+
+# Backend 2: Coding model on port 8081
+llama-server -m models/Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf \
+  --host 127.0.0.1 --port 8081 -ngl 99 -c 4096
+
+# Backend 3: Fast chat model on port 8082
+llama-server -m models/Qwen3.5-9B-Q4_K_M.gguf \
+  --host 127.0.0.1 --port 8082 -ngl 99 -c 4096</code></pre>
+
+<h3>3. Create proxy.json</h3>
+<pre><code>{
+    "pool_url": "wss://cellule.ai/ws",
+    "backends": [
+        {
+            "name": "Reasoning",
+            "url": "http://127.0.0.1:8080",
+            "model": "Qwen3-30B-A3B",
+            "model_path": "models/Qwen3-30B-A3B-Instruct-Q4_K_M.gguf",
+            "worker_id": "MyWorker-reasoning",
+            "bench_tps": 60.0
+        },
+        {
+            "name": "Coder",
+            "url": "http://127.0.0.1:8081",
+            "model": "Qwen3-Coder-30B-A3B",
+            "model_path": "models/Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf",
+            "worker_id": "MyWorker-coder",
+            "bench_tps": 55.0
+        },
+        {
+            "name": "Chat",
+            "url": "http://127.0.0.1:8082",
+            "model": "Qwen3.5-9B",
+            "model_path": "models/Qwen3.5-9B-Q4_K_M.gguf",
+            "worker_id": "MyWorker-chat",
+            "bench_tps": 80.0
+        }
+    ]
+}</code></pre>
+
+<h3>4. Launch the proxy</h3>
+<pre><code>python -m iamine proxy -c proxy.json</code></pre>
+
+<p>Each backend registers as a separate worker on the pool. The pool routes traffic to each based on the model requested.</p>
+
+<h2>Configuration reference</h2>
+
+<table>
+<tr><th>Field</th><th>Required</th><th>Description</th></tr>
+<tr><td><code>pool_url</code></td><td>Yes</td><td>WebSocket URL of the pool to join. Default: <code>wss://cellule.ai/ws</code></td></tr>
+<tr><td><code>backends[].name</code></td><td>Yes</td><td>Display name for this backend (shown in logs)</td></tr>
+<tr><td><code>backends[].url</code></td><td>Yes</td><td>HTTP URL of your llama-server instance</td></tr>
+<tr><td><code>backends[].model</code></td><td>Yes</td><td>Model name (used for routing)</td></tr>
+<tr><td><code>backends[].model_path</code></td><td>Yes</td><td>Path to the GGUF file (for pool registry matching)</td></tr>
+<tr><td><code>backends[].worker_id</code></td><td>No</td><td>Custom worker ID. Auto-generated if omitted</td></tr>
+<tr><td><code>backends[].bench_tps</code></td><td>No</td><td>Declared throughput in tokens/sec. Pool uses this for routing priority</td></tr>
+</table>
+
+<h2>How it works</h2>
+
+<div class="card">
+<h3>Proxy vs Auto mode</h3>
+<table>
+<tr><th></th><th>Auto (<code>--auto</code>)</th><th>Proxy (<code>-c proxy.json</code>)</th></tr>
+<tr><td>Model selection</td><td>Pool decides</td><td><strong>You decide</strong></td></tr>
+<tr><td>Model download</td><td>Automatic</td><td><strong>You manage</strong></td></tr>
+<tr><td>Inference engine</td><td>Built-in (llama-cpp-python)</td><td><strong>Your backend</strong> (llama-server, vLLM, etc.)</td></tr>
+<tr><td>GPU config</td><td>Auto-detected</td><td><strong>You configure</strong></td></tr>
+<tr><td>Multi-model</td><td>1 model per worker</td><td><strong>N models per machine</strong></td></tr>
+<tr><td>Auto-update</td><td>Yes (pool pushes)</td><td>Package only (config preserved)</td></tr>
+<tr><td>$IAMINE earnings</td><td>Same formula</td><td><strong>Same formula</strong></td></tr>
+</table>
+</div>
+
+<h2>Supported backends</h2>
+
+<div class="card">
+<p><strong>llama-server</strong> (recommended) — from llama.cpp. Best performance for GGUF models.</p>
+<pre><code>llama-server -m model.gguf --host 127.0.0.1 --port 8080 -ngl 99</code></pre>
+</div>
+
+<div class="card">
+<p><strong>Ollama</strong> — set the backend URL to Ollama's API port.</p>
+<pre><code># Start Ollama
+ollama serve
+
+# In proxy.json, use:
+"url": "http://127.0.0.1:11434"</code></pre>
+</div>
+
+<div class="card">
+<p><strong>vLLM</strong> — for high-throughput serving with continuous batching.</p>
+<pre><code>python -m vllm.entrypoints.openai.api_server \
+  --model Qwen/Qwen3-30B-A3B --port 8080</code></pre>
+</div>
+
+<h2>Tips</h2>
+
+<div class="warn"><strong>bench_tps matters.</strong> The pool uses your declared throughput for routing. Set it honestly — if you claim 100 t/s but deliver 20, the pool will detect the discrepancy and lower your routing priority.</div>
+
+<div class="warn"><strong>worker_id is persistent.</strong> Your wallet and earnings are tied to the worker_id. If you change it, you start with a fresh wallet.</div>
+
+<div class="ok"><strong>$IAMINE earnings</strong> are the same formula regardless of mode. 60% of credits go to the worker. More jobs served = more earned. The M12 recruitment system places traffic where it's needed — fill a gap, earn more.</div>
+
+<h2>Example: Z2 multi-GPU setup</h2>
+<p>The Cellule.ai test network runs a real proxy with 4 backends on an AMD Ryzen AI MAX+ PRO 395 (94 GB RAM, 88 GB ROCm VRAM):</p>
+<pre><code>{
+    "pool_url": "wss://cellule.ai/ws",
+    "backends": [
+        {"name": "RED",    "url": "http://127.0.0.1:8080", "model": "Qwen3-30B-A3B",         "bench_tps": 105.0, "worker_id": "RED-z2"},
+        {"name": "Coder",  "url": "http://127.0.0.1:8081", "model": "Qwen3-Coder-30B-A3B",   "bench_tps": 60.0,  "worker_id": "Coder-z2"},
+        {"name": "Tank",   "url": "http://127.0.0.1:8082", "model": "Qwen3.5-35B-A3B",       "bench_tps": 55.0,  "worker_id": "Tank-z2"},
+        {"name": "Scout",  "url": "http://127.0.0.1:8083", "model": "Qwen3.5-9B",            "bench_tps": 50.0,  "worker_id": "Scout-z2"}
+    ]
+}</code></pre>
+<p>Combined throughput: <strong>270 tokens/sec</strong> across 4 models. This single machine serves reasoning, coding, large context, and fast chat — all at once.</p>
+
+<div style="text-align:center;margin-top:3rem;padding-top:2rem;border-top:1px solid rgba(255,255,255,0.1)">
+<p style="color:rgba(255,255,255,0.4);font-size:0.9rem">Cellule.ai — Decentralized AI, powered by the community</p>
+<a href="/" style="color:#8b5cf6">cellule.ai</a>
+</div>
+
+</div>
+</body>
+</html>

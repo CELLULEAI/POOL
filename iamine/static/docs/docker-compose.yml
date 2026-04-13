@@ -1,0 +1,65 @@
+# Cellule.ai Pool — docker-compose for community pool operators
+#
+# Quick start :
+#   1. Copy .env.example -> .env  (edit POOL_NAME, POOL_URL, DB_PASS)
+#   2. docker compose up -d
+#   3. curl http://localhost:8080/v1/federation/info
+#   4. Contact the Cellule.ai community to get your pool bonded
+#      (trust level promotion via cellule.ai admin)
+#
+# Requirements :
+#   - Docker 20+ with compose v2
+#   - Public URL reachable from iamine.org (NAT 8080 or tunnel)
+#   - 2 GB RAM minimum, 10 GB disk
+#
+# The federation keypair is persisted in a named volume so your pool
+# identity (atom_id) survives restarts.
+
+services:
+  cellule-pg:
+    image: pgvector/pgvector:pg16
+    container_name: cellule-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: iamine
+      POSTGRES_PASSWORD: ${DB_PASS:?DB_PASS must be set in .env}
+      POSTGRES_DB: iamine
+    volumes:
+      - cellule-pg-data:/var/lib/postgresql/data
+    # Not exposed to the host — only the pool container accesses it
+    networks:
+      - cellule-net
+
+  cellule-pool:
+    image: celluleai/pool:latest
+    container_name: cellule-pool
+    restart: unless-stopped
+    depends_on:
+      - cellule-pg
+    ports:
+      - "8080:8080"
+    environment:
+      IAMINE_DB: postgres
+      DB_HOST: cellule-pg
+      DB_PORT: 5432
+      DB_USER: iamine
+      DB_PASS: ${DB_PASS:?DB_PASS must be set in .env}
+      DB_NAME: iamine
+      IAMINE_FED: observe
+      POOL_NAME: ${POOL_NAME:?POOL_NAME must be set in .env}
+      POOL_URL: ${POOL_URL:?POOL_URL must be set in .env}
+      IAMINE_FED_MOLECULE: iamine-testnet
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-change-me-in-production}
+      AGENT_MEMORY_ENABLED: ${AGENT_MEMORY_ENABLED:-true}
+    volumes:
+      - cellule-fed-keys:/root/.iamine/federation
+    networks:
+      - cellule-net
+
+volumes:
+  cellule-pg-data:
+  cellule-fed-keys:
+
+networks:
+  cellule-net:
+    driver: bridge

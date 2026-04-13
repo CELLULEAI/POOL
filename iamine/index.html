@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IAMINE.ORG — Distributed AI for Everyone</title>
+    <style>
+        :root {
+            --bg: #0d1117; --bg2: #161b22; --bg3: #21262d;
+            --accent: #58a6ff; --accent2: #3fb950; --accent3: #f0883e;
+            --text: #e6edf3; --text2: #8b949e; --border: #30363d;
+            --red: #f85149; --purple: #bc8cff; --gold: #d29922;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; display: flex; flex-direction: column; }
+
+        /* NAV */
+        nav { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 2rem; border-bottom: 1px solid var(--border); background: var(--bg2); flex-shrink: 0; }
+        .logo { font-size: 1.4rem; font-weight: 700; color: var(--accent); text-decoration: none; letter-spacing: 2px; }
+        .logo span { color: var(--accent3); }
+        .nav-tabs { list-style: none; display: flex; gap: 0; }
+        .nav-tab { padding: 0.6rem 1.2rem; color: var(--text2); text-decoration: none; font-size: 0.85rem; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .nav-tab:hover { color: var(--text); }
+        .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .lang-switch { display: flex; gap: 0.4rem; }
+        .lang-btn { padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; border: 1px solid var(--border); background: var(--bg); color: var(--text2); }
+        .lang-btn.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+
+        /* PAGES */
+        .page { display: none; flex: 1; overflow-y: auto; }
+        .page.active { display: flex; flex-direction: column; }
+        .page-content { flex: 1; padding: 2rem; max-width: 1000px; margin: 0 auto; width: 100%; }
+
+        /* BUTTONS */
+        .btn { padding: 0.7rem 1.8rem; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; text-decoration: none; border: none; transition: all 0.2s; display: inline-block; }
+        .btn-primary { background: var(--accent); color: var(--bg); }
+        .btn-primary:hover { background: #79c0ff; }
+        .btn-secondary { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+        .btn-gold { background: var(--gold); color: var(--bg); }
+        .btn-green { background: var(--accent2); color: var(--bg); }
+        .btn-green:hover { background: #4cd964; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* ====== HOME PAGE ====== */
+        .home-center { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; text-align: center; padding: 2rem; }
+        .home-title { font-size: 3.5rem; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.3rem; }
+        .home-subtitle { font-size: 1.3rem; color: var(--accent3); font-weight: 600; margin-bottom: 1.5rem; }
+        .home-desc { color: var(--text2); font-size: 1.05rem; max-width: 550px; margin-bottom: 2rem; }
+        .home-cta { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; margin-bottom: 2.5rem; }
+        .home-pillars { display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; }
+        .pillar { text-align: center; max-width: 200px; }
+        .pillar-num { font-size: 2rem; font-weight: 700; color: var(--accent); }
+        .pillar h4 { color: var(--text); margin-bottom: 0.2rem; }
+        .pillar p { color: var(--text2); font-size: 0.85rem; }
+        .home-stats { display: flex; gap: 3rem; justify-content: center; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+        .hstat-val { font-size: 1.5rem; font-weight: 700; color: var(--accent2); }
+        .hstat-lbl { font-size: 0.8rem; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; }
+        .home-oneliner { margin-top: 1.5rem; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.5rem; display: flex; align-items: center; gap: 1rem; max-width: 550px; }
+        .home-oneliner code { flex: 1; font-size: 0.95rem; color: var(--accent2); }
+        .copy-btn { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s; }
+        .copy-btn:hover { background: var(--accent); color: var(--bg); }
+        .copy-btn.copied { background: var(--accent2); color: var(--bg); border-color: var(--accent2); }
+
+        /* ====== LEVELS PAGE ====== */
+        .level-track { position: relative; padding-left: 40px; }
+        .level-line { position: absolute; left: 28px; top: 0; bottom: 0; width: 4px; background: var(--bg3); border-radius: 2px; }
+        .level-line-fill { position: absolute; left: 28px; top: 0; width: 4px; background: linear-gradient(180deg, var(--accent2), var(--accent)); border-radius: 2px; transition: height 1.5s ease; }
+        .level-item { display: flex; align-items: flex-start; gap: 1.2rem; padding: 0.8rem 0; position: relative; z-index: 2; }
+        .level-circle { width: 52px; min-width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: 700; border: 3px solid var(--border); background: var(--bg); transition: all 0.5s; margin-left: -12px; }
+        .level-circle.active { border-color: var(--accent2); background: rgba(63,185,80,0.15); color: var(--accent2); box-shadow: 0 0 15px rgba(63,185,80,0.3); }
+        .level-circle.next { border-color: var(--accent); background: rgba(88,166,255,0.1); color: var(--accent); animation: pulse 2s infinite; }
+        .level-circle.locked { color: var(--text2); opacity: 0.4; }
+        @keyframes pulse { 0%,100%{box-shadow:0 0 5px rgba(88,166,255,0.2)} 50%{box-shadow:0 0 20px rgba(88,166,255,0.5)} }
+        .level-info { flex: 1; }
+        .level-header { display: flex; align-items: center; gap: 0.5rem; }
+        .level-name { font-weight: 600; }
+        .lvl-badge { font-size: 0.65rem; padding: 0.1rem 0.4rem; border-radius: 8px; font-weight: 600; text-transform: uppercase; }
+        .lvl-active { background: var(--accent2); color: var(--bg); }
+        .lvl-next { background: var(--accent); color: var(--bg); }
+        .lvl-locked { background: var(--bg3); color: var(--text2); }
+        .level-sub { color: var(--text2); font-size: 0.85rem; }
+        .level-bar-bg { height: 8px; background: var(--bg3); border-radius: 4px; overflow: hidden; max-width: 350px; margin-top: 0.3rem; }
+        .level-bar { height: 100%; border-radius: 4px; transition: width 1.5s ease; }
+        .bar-green { background: var(--accent2); } .bar-blue { background: var(--accent); } .bar-gray { background: var(--text2); }
+        .level-reward { font-size: 0.8rem; color: var(--gold); margin-top: 0.2rem; }
+
+        /* ====== CHAT PAGE ====== */
+        .chat-wrap { display: flex; flex-direction: column; flex: 1; background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .chat-top { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1.2rem; border-bottom: 1px solid var(--border); background: var(--bg3); }
+        .chat-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); display: inline-block; margin-right: 0.4rem; }
+        .chat-dot.on { background: var(--accent2); }
+        .chat-msgs { flex: 1; overflow-y: auto; padding: 1rem 1.2rem; display: flex; flex-direction: column; gap: 0.6rem; }
+        .msg { max-width: 75%; padding: 0.6rem 1rem; border-radius: 12px; font-size: 0.95rem; }
+        .msg.user { align-self: flex-end; background: var(--accent); color: var(--bg); }
+        .msg.bot { align-self: flex-start; background: var(--bg3); border: 1px solid var(--border); }
+        .msg .meta { font-size: 0.7rem; margin-top: 0.2rem; opacity: 0.6; }
+        .chat-bar { display: flex; border-top: 1px solid var(--border); }
+        .chat-bar input { flex: 1; padding: 0.8rem 1.2rem; background: var(--bg); border: none; color: var(--text); font-size: 0.95rem; outline: none; }
+        .chat-bar button { padding: 0.8rem 1.2rem; background: var(--accent); color: var(--bg); border: none; font-weight: 600; cursor: pointer; }
+
+        /* ====== BENCH PAGE ====== */
+        .bench-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+        .bench-grid label { font-size: 0.85rem; color: var(--text2); display: block; margin-bottom: 0.2rem; }
+        .bench-grid select { width: 100%; padding: 0.5rem; background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); }
+        .bench-row { display: flex; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
+        .bench-row:last-child { border-bottom: none; }
+        .bench-lbl { width: 130px; font-size: 0.9rem; color: var(--text2); }
+        .bench-bar-bg { flex: 1; height: 22px; background: var(--bg3); border-radius: 4px; overflow: hidden; margin: 0 0.8rem; }
+        .bench-bar { height: 100%; border-radius: 4px; transition: width 1s; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+        .bench-val { width: 90px; text-align: right; font-weight: 600; font-size: 0.9rem; color: var(--accent2); }
+        .bench-join-box { margin-top: 1.5rem; padding: 1.5rem; background: var(--bg2); border: 2px solid var(--accent2); border-radius: 12px; text-align: center; display: none; }
+        .bench-join-box h3 { color: var(--accent2); margin-bottom: 0.5rem; }
+        .install-box { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin: 1rem 0; display: flex; align-items: center; gap: 0.75rem; }
+        .install-box code { flex: 1; font-size: 0.9rem; color: var(--accent2); word-break: break-all; }
+
+        /* ====== TOKEN PAGE ====== */
+        .token-hero { text-align: center; padding: 2rem 0; }
+        .token-hero h2 { font-size: 2.5rem; color: var(--gold); }
+        .token-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 2rem 0; }
+        .tcard { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; text-align: center; }
+        .tcard .ico { font-size: 2rem; margin-bottom: 0.5rem; }
+        .tcard h4 { margin-bottom: 0.2rem; }
+        .tcard p { color: var(--text2); font-size: 0.85rem; }
+
+        /* ====== CONTACT PAGE ====== */
+        .contact-form { max-width: 450px; margin: 2rem auto; }
+        .contact-form input, .contact-form textarea { width: 100%; padding: 0.7rem; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.95rem; margin-bottom: 0.75rem; font-family: inherit; }
+        .contact-form textarea { height: 100px; resize: vertical; }
+        .founders { display: flex; justify-content: center; gap: 3rem; margin: 2rem 0; }
+        .founder { text-align: center; }
+        .founder-av { width: 70px; height: 70px; border-radius: 50%; background: var(--bg3); border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: 700; color: var(--accent); margin: 0 auto 0.4rem; }
+        .founder-name { font-weight: 600; }
+        .founder-role { font-size: 0.8rem; color: var(--text2); }
+
+        /* WORKER BANNER (auto-detected) */
+        .worker-banner {
+            display: none; background: linear-gradient(90deg, rgba(63,185,80,0.15), rgba(88,166,255,0.1));
+            border: 1px solid var(--accent2); border-radius: 10px; padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem; position: relative;
+        }
+        .worker-banner.visible { display: block; }
+        .wb-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.75rem; margin-top: 0.75rem; }
+        .wb-item { text-align: center; }
+        .wb-val { font-size: 1.3rem; font-weight: 700; color: var(--accent2); }
+        .wb-lbl { font-size: 0.75rem; color: var(--text2); text-transform: uppercase; }
+        .wb-token { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 0.4rem 0.75rem; font-family: monospace; font-size: 0.8rem; color: var(--accent); display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
+        .wb-token code { flex: 1; word-break: break-all; }
+        .wb-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent2); display: inline-block; animation: pulse 2s infinite; }
+
+        /* FOOTER */
+        .foot { text-align: center; padding: 0.75rem; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text2); flex-shrink: 0; }
+        .foot a { color: var(--accent); text-decoration: none; }
+
+        @media (max-width: 768px) {
+            .home-title { font-size: 2.2rem; }
+            .home-pillars { gap: 1rem; }
+            .home-stats { gap: 1.5rem; flex-wrap: wrap; }
+            .bench-grid { grid-template-columns: 1fr; }
+            nav { padding: 0.5rem 1rem; }
+            .nav-tab { padding: 0.5rem 0.7rem; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a class="logo" onclick="go('home')">IA<span>MINE</span></a>
+    <ul class="nav-tabs">
+        <li class="nav-tab active" data-page="home" data-i18n="nav_home">Home</li>
+        <li class="nav-tab" data-page="pool" data-i18n="nav_pool">Pool</li>
+        <li class="nav-tab" data-page="levels" data-i18n="nav_levels">Levels</li>
+        <li class="nav-tab" data-page="demo" data-i18n="nav_demo">Demo</li>
+        <li class="nav-tab" data-page="bench" data-i18n="nav_bench">Benchmark</li>
+        <li class="nav-tab" data-page="workers" data-i18n="nav_workers" id="nav-tab-workers" style="display:none;">My Workers</li>
+        <li class="nav-tab" data-page="api" data-i18n="nav_api">API</li>
+        <li class="nav-tab" data-page="token" data-i18n="nav_token">$IAMINE</li>
+        <li class="nav-tab" data-page="tuto" data-i18n="nav_tuto">Tuto</li>
+        <li class="nav-tab" data-page="contact" data-i18n="nav_contact">Contact</li>
+        <li class="nav-tab" data-page="whitepaper" data-i18n="nav_wp">Whitepaper</li>
+    </ul>
+    <div style="display:flex;align-items:center;gap:0.75rem;">
+        <span id="nav-user-info" style="display:none;font-size:0.8rem;color:var(--accent2);"></span>
+        <button id="nav-login-btn" class="btn btn-primary" style="padding:0.35rem 1rem;font-size:0.8rem;" data-i18n="nav_login">Log in</button>
+        <button id="nav-logout-btn" class="btn btn-secondary" style="padding:0.35rem 0.8rem;font-size:0.75rem;display:none;" data-i18n="nav_logout">Logout</button>
+        <div class="lang-switch">
+            <button class="lang-btn active" onclick="setLang('en')">EN</button>
+            <button class="lang-btn" onclick="setLang('fr')">FR</button>
+            <button class="lang-btn" onclick="setLang('es')">ES</button>
+        </div>
+    </div>
+</nav>
+
+<!-- ============ HOME ============ -->
+<div class="page active" id="page-home">
+    <div style="display:flex;flex:1;overflow-y:auto;">
+        <!-- LEFT: Concept -->
+        <div style="flex:1;padding:2rem;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border);max-width:420px;min-width:320px;">
+            <h2 style="font-size:1.3rem;color:var(--accent);margin-bottom:1rem;" data-i18n="concept_title">How IAMINE works</h2>
+
+            <div style="display:flex;flex-direction:column;gap:1.2rem;">
+                <div style="display:flex;gap:0.75rem;align-items:flex-start;">
+                    <div style="min-width:32px;height:32px;border-radius:50%;background:var(--accent2);color:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;">1</div>
+                    <div><div style="font-weight:600;font-size:0.9rem;" data-i18n="c1t">You share your PC's power</div><div style="color:var(--text2);font-size:0.8rem;" data-i18n="c1d">Your idle CPU runs a lightweight AI model. No GPU needed. Works on any PC with 4 GB+ RAM.</div></div>
+                </div>
+
+                <div style="display:flex;gap:0.75rem;align-items:flex-start;">
+                    <div style="min-width:32px;height:32px;border-radius:50%;background:var(--accent);color:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;">2</div>
+                    <div><div style="font-weight:600;font-size:0.9rem;" data-i18n="c2t">The pool combines everyone's power</div><div style="color:var(--text2);font-size:0.8rem;" data-i18n="c2d">Smart routing sends each request to the best available worker. Larger models require workers with enough RAM and compute power to run them.</div></div>
+                </div>
+
+                <div style="display:flex;gap:0.75rem;align-items:flex-start;">
+                    <div style="min-width:32px;height:32px;border-radius:50%;background:var(--accent3);color:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;">3</div>
+                    <div><div style="font-weight:600;font-size:0.9rem;" data-i18n="c3t">You earn $IAMINE tokens</div><div style="color:var(--text2);font-size:0.8rem;" data-i18n="c3d">Every AI token your machine generates earns you $IAMINE. More context = more tokens = more rewards.</div></div>
+                </div>
+
+                <div style="display:flex;gap:0.75rem;align-items:flex-start;">
+                    <div style="min-width:32px;height:32px;border-radius:50%;background:var(--gold);color:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;">4</div>
+                    <div><div style="font-weight:600;font-size:0.9rem;" data-i18n="c4t">Spend tokens on powerful AI</div><div style="color:var(--text2);font-size:0.8rem;" data-i18n="c4d">Use your $IAMINE to access models your PC could never run: 7B, 14B, even 32B — powered by the pool's combined compute.</div></div>
+                </div>
+
+                <div style="display:flex;gap:0.75rem;align-items:flex-start;">
+                    <div style="min-width:32px;height:32px;border-radius:50%;background:var(--purple);color:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;">5</div>
+                    <div><div style="font-weight:600;font-size:0.9rem;" data-i18n="c5t">Export to your wallet</div><div style="color:var(--text2);font-size:0.8rem;" data-i18n="c5d">$IAMINE tokens will be tradeable on DEX. Export to MetaMask or Rabby and trade your compute power.</div></div>
+                </div>
+            </div>
+
+            <button class="btn btn-secondary" style="margin-top:1.5rem;font-size:0.85rem;" onclick="go('whitepaper')" data-i18n="concept_wp">Read the Whitepaper</button>
+        </div>
+
+        <!-- RIGHT: Action -->
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;">
+            <h1 class="home-title">IAMINE.ORG</h1>
+            <div class="home-subtitle" data-i18n="home_sub">Simplicity. Efficiency. AI for Everyone.</div>
+            <p class="home-desc" data-i18n="home_desc">Your PC has unused power. We turn it into AI. Join the network in 60 seconds with a single command. No cloud, no GPU, no hassle.</p>
+
+            <div class="home-oneliner">
+                <code id="install-cmd">pip install iamine-ai -i https://iamine.org/pypi && python -m iamine worker --auto</code>
+                <button class="copy-btn" onclick="copyInstall(this)">Copy</button>
+            </div>
+
+            <div class="home-cta" style="margin-top:1.5rem;">
+                <button class="btn btn-primary" onclick="go('bench')" data-i18n="home_cta1">Test your machine</button>
+                <button class="btn btn-secondary" onclick="go('demo')" data-i18n="home_cta2">Try the AI</button>
+                <button class="btn btn-gold" onclick="go('token')" data-i18n="home_cta3">Earn $IAMINE</button>
+            </div>
+
+            <div class="home-stats" style="margin-top:2rem;">
+                <div><div class="hstat-val" id="h-workers">-</div><div class="hstat-lbl" data-i18n="s_workers">Workers</div></div>
+                <div><div class="hstat-val" id="h-jobs">-</div><div class="hstat-lbl" data-i18n="s_jobs">Jobs</div></div>
+                <div><div class="hstat-val" id="h-tps">-</div><div class="hstat-lbl" data-i18n="s_tps">Network t/s</div></div>
+                <div><div class="hstat-val" id="h-power">-</div><div class="hstat-lbl" data-i18n="s_power">Pool Power</div></div>
+                <div><div class="hstat-val" id="h-best">-</div><div class="hstat-lbl" data-i18n="s_best">Best Model</div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ POOL ============ -->
+<div class="page" id="page-pool">
+    <div class="page-content" style="display:flex;flex-direction:column;align-items:center;flex:1;">
+        <h2 style="text-align:center;"><span data-i18n="pool_title">IAMINE Pool — Live Network</span></h2>
+        <p style="color:var(--text2);text-align:center;margin-bottom:1rem;" data-i18n="pool_sub">Real-time view of the distributed AI network. Each node is a worker contributing compute power.</p>
+
+        <!-- Pool stats bar -->
+        <div style="display:flex;gap:2rem;justify-content:center;margin-bottom:1.5rem;flex-wrap:wrap;">
+            <div style="text-align:center;"><div style="font-size:1.8rem;font-weight:700;color:var(--accent2);" id="pool-workers">0</div><div style="font-size:0.75rem;color:var(--text2);text-transform:uppercase;">Workers</div></div>
+            <div style="text-align:center;"><div style="font-size:1.8rem;font-weight:700;color:var(--accent);" id="pool-tps">0</div><div style="font-size:0.75rem;color:var(--text2);text-transform:uppercase;">Total t/s</div></div>
+            <div style="text-align:center;"><div style="font-size:1.8rem;font-weight:700;color:var(--accent3);" id="pool-jobs">0</div><div style="font-size:0.75rem;color:var(--text2);text-transform:uppercase;">Jobs</div></div>
+            <div style="text-align:center;"><div style="font-size:1.8rem;font-weight:700;color:var(--gold);" id="pool-best">-</div><div style="font-size:0.75rem;color:var(--text2);text-transform:uppercase;" data-i18n="pool_best">Best Model</div></div>
+        </div>
+
+        <!-- Network visualization -->
+        <canvas id="pool-canvas" style="flex:1;width:100%;max-width:800px;min-height:400px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;"></canvas>
+
+        <!-- Worker list -->
+        <div id="pool-list" style="width:100%;max-width:800px;margin-top:1rem;"></div>
+    </div>
+</div>
+
+<!-- ============ LEVELS ============ -->
+<div class="page" id="page-levels">
+    <div class="page-content">
+        <h2><span data-i18n="lvl_title">Network Progression</span></h2>
+        <p style="color:var(--text2);margin-bottom:1rem;" data-i18n="lvl_sub">Every worker that joins unlocks more powerful AI. Level up together.</p>
+
+        <!-- Concept box -->
+        <div style="background:linear-gradient(135deg,rgba(63,185,80,0.1),rgba(88,166,255,0.1));border:1px solid var(--accent2);border-radius:10px;padding:1.5rem;margin-bottom:1.5rem;">
+            <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:1.5rem;align-items:center;">
+                <div style="text-align:center;padding:0.5rem;">
+                    <div style="font-size:2rem;margin-bottom:0.3rem;">⬆</div>
+                    <div style="font-size:1.2rem;color:var(--accent2);font-weight:700;" data-i18n="lvl_serve">Serve</div>
+                    <div style="font-size:0.8rem;color:var(--text2);margin-top:0.3rem;" data-i18n="lvl_serve_desc">Run a model on your PC, earn $IAMINE for every token generated</div>
+                </div>
+                <div style="font-size:2rem;color:var(--text2);font-weight:700;">=</div>
+                <div style="text-align:center;padding:0.5rem;">
+                    <div style="font-size:2rem;margin-bottom:0.3rem;">⬇</div>
+                    <div style="font-size:1.2rem;color:var(--accent);font-weight:700;" data-i18n="lvl_use">Use</div>
+                    <div style="font-size:0.8rem;color:var(--text2);margin-top:0.3rem;" data-i18n="lvl_use_desc">Spend $IAMINE to use bigger models you can't run locally</div>
+                </div>
+            </div>
+        </div>
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1.5rem;font-size:0.85rem;color:var(--text2);text-align:center;" data-i18n="lvl_example">
+            Example: Your 8 GB PC serves a 0.5B model → earns $IAMINE → you spend them to use a 14B model running on a 32 GB machine in the pool. Access AI you could never run locally.
+        </div>
+
+        <div class="level-track" id="level-track">
+            <div class="level-line"></div>
+            <div class="level-line-fill" id="level-line-fill" style="height:0%"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ DEMO ============ -->
+<div class="page" id="page-demo">
+    <div class="page-content" style="display:flex;flex-direction:column;flex:1;">
+        <h2 style="margin-bottom:1rem;"><span data-i18n="demo_title">Live AI Chat</span></h2>
+        <div class="chat-wrap" style="flex:1;">
+            <div class="chat-top">
+                <div style="display:flex;align-items:center;gap:0.5rem;">
+                    <span style="font-weight:600;">IAMINE Chat</span>
+                    <select id="c-model" style="background:var(--bg);border:1px solid var(--border);color:var(--accent);padding:0.2rem 0.4rem;border-radius:4px;font-size:0.75rem;"></select>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.75rem;">
+                    <span style="font-size:0.7rem;color:var(--text2);opacity:0.5;" data-i18n="c_nohistory">No history stored</span>
+                    <button id="c-clear" style="background:var(--bg);border:1px solid var(--border);color:var(--text2);padding:0.2rem 0.5rem;border-radius:4px;font-size:0.7rem;cursor:pointer;" data-i18n="c_clear">Clear</button>
+                    <span style="font-size:0.8rem;color:var(--text2);"><span class="chat-dot" id="c-dot"></span><span id="c-status" data-i18n="c_off">Offline</span></span>
+                </div>
+            </div>
+            <div class="chat-msgs" id="chat-msgs">
+                <div class="msg bot" data-i18n="c_welcome">Welcome! Ask anything to test the distributed AI network.</div>
+            </div>
+            <div class="chat-bar">
+                <input type="text" id="c-input" data-i18n-placeholder="c_ph" placeholder="Type your message..." autocomplete="off">
+                <button id="c-send" data-i18n="c_send">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ BENCHMARK ============ -->
+<div class="page" id="page-bench">
+    <div class="page-content">
+        <h2><span data-i18n="b_title">Benchmark your machine</span></h2>
+        <p style="color:var(--text2);margin-bottom:1.5rem;" data-i18n="b_sub">See what your PC can do. We find the best AI model for you.</p>
+        <div class="bench-grid">
+            <div><label data-i18n="b_rounds">Rounds</label><select id="b-rounds"><option value="3">3 (~30s)</option><option value="5" selected>5 (~60s)</option></select></div>
+            <div><label data-i18n="b_tokens">Tokens/round</label><select id="b-tokens"><option value="32">32</option><option value="64" selected>64</option><option value="128">128</option></select></div>
+        </div>
+        <button class="btn btn-primary" id="b-start" style="margin-bottom:1.5rem;" data-i18n="b_go">Run Benchmark</button>
+        <div id="b-results" style="display:none;">
+            <div class="bench-row"><span class="bench-lbl">Tokens/sec</span><div class="bench-bar-bg"><div class="bench-bar" id="bb-tps" style="width:0%"></div></div><span class="bench-val" id="bv-tps">-</span></div>
+            <div class="bench-row"><span class="bench-lbl" data-i18n="b_lat">Latency</span><div class="bench-bar-bg"><div class="bench-bar" id="bb-lat" style="width:0%"></div></div><span class="bench-val" id="bv-lat">-</span></div>
+            <div class="bench-row"><span class="bench-lbl" data-i18n="b_stab">Stability</span><div class="bench-bar-bg"><div class="bench-bar" id="bb-stab" style="width:0%"></div></div><span class="bench-val" id="bv-stab">-</span></div>
+        </div>
+        <div class="bench-join-box" id="b-join">
+            <h3 data-i18n="bj_title">Your machine is ready!</h3>
+            <p id="b-rec" style="color:var(--text2);font-size:0.95rem;"></p>
+            <p style="color:var(--text2);font-size:0.9rem;margin:0.5rem 0;" data-i18n="bj_desc">Join the IAMINE network now with a single command:</p>
+            <div class="install-box">
+                <code id="b-install-cmd">pip install iamine-ai -i https://iamine.org/pypi && python -m iamine worker --auto</code>
+                <button class="copy-btn" onclick="copyInstall(this,'b-install-cmd')">Copy</button>
+            </div>
+            <p style="color:var(--text2);font-size:0.8rem;margin-top:0.5rem;" data-i18n="bj_note">This will install IAMINE, download the optimal model for your machine, and connect to the pool automatically.</p>
+        </div>
+
+        <!-- Uninstall -->
+        <details style="margin-top:2rem;color:var(--text2);font-size:0.85rem;">
+            <summary style="cursor:pointer;" data-i18n="uninstall_title">Uninstall IAMINE</summary>
+            <div style="margin-top:0.5rem;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1rem;">
+                <div style="background:rgba(248,81,73,0.1);border:1px solid var(--red);border-radius:6px;padding:0.75rem;margin-bottom:0.75rem;">
+                    <div style="color:var(--red);font-weight:600;font-size:0.85rem;" data-i18n="uninstall_warn">Warning: This will delete your local wallet (wallet.json). Back it up first!</div>
+                    <div style="color:var(--text2);font-size:0.8rem;margin-top:0.25rem;" data-i18n="uninstall_backup">Backup command: copy wallet.json wallet.json.backup</div>
+                </div>
+                <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.5rem;" data-i18n="uninstall_step1">Step 1: Uninstall the package</div>
+                <div class="install-box" style="margin:0 0 0.5rem 0;">
+                    <code>pip uninstall iamine-ai -y</code>
+                    <button class="copy-btn" onclick="copyEl('uninst1')">Copy</button>
+                </div>
+                <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.5rem;" data-i18n="uninstall_step2">Step 2: Delete data (optional)</div>
+                <div class="install-box" style="margin:0 0 0.5rem 0;">
+                    <code id="uninst-win">del wallet.json config.json && rmdir /s /q models</code>
+                    <span style="font-size:0.7rem;color:var(--text2);margin-right:0.5rem;">Win</span>
+                    <button class="copy-btn" onclick="copyEl('uninst-win')">Copy</button>
+                </div>
+                <div class="install-box" style="margin:0;">
+                    <code id="uninst-linux">rm -rf wallet.json config.json models/</code>
+                    <span style="font-size:0.7rem;color:var(--text2);margin-right:0.5rem;">Linux</span>
+                    <button class="copy-btn" onclick="copyEl('uninst-linux')">Copy</button>
+                </div>
+                <p id="uninst1" style="display:none;">pip uninstall iamine-ai -y</p>
+                <p style="margin-top:0.75rem;font-size:0.8rem;color:var(--accent2);" data-i18n="uninstall_note">Your earned $IAMINE credits on the pool are preserved even after uninstall.</p>
+            </div>
+        </details>
+    </div>
+</div>
+
+<!-- ============ TOKEN ============ -->
+<div class="page" id="page-token">
+    <div class="page-content">
+        <div class="token-hero">
+            <h2>$IAMINE</h2>
+            <p style="color:var(--text2);font-size:1.1rem;" data-i18n="tk_sub">Contribute compute. Earn tokens. Simple.</p>
+        </div>
+        <div class="token-cards">
+            <div class="tcard"><div class="ico" style="color:var(--accent2);">+</div><h4 data-i18n="tk_e">Earn</h4><p data-i18n="tk_ed">Every AI request processed generates $IAMINE proportional to your compute.</p></div>
+            <div class="tcard"><div class="ico" style="color:var(--accent);">~</div><h4 data-i18n="tk_t">Trade</h4><p data-i18n="tk_td">Tradeable on DEX. Your compute power has real value.</p></div>
+            <div class="tcard"><div class="ico" style="color:var(--accent3);">*</div><h4 data-i18n="tk_u">Use</h4><p data-i18n="tk_ud">Spend $IAMINE for premium models and priority inference.</p></div>
+            <div class="tcard"><div class="ico" style="color:var(--purple);">%</div><h4 data-i18n="tk_g">Govern</h4><p data-i18n="tk_gd">Holders vote on models, fees, and network upgrades.</p></div>
+        </div>
+        <div style="text-align:center;margin-top:1rem;">
+            <div class="install-box" style="max-width:500px;margin:0 auto;">
+                <code>pip install iamine-ai -i https://iamine.org/pypi && python -m iamine worker --auto</code>
+                <button class="copy-btn" onclick="copyInstall(this)">Copy</button>
+            </div>
+        </div>
+
+        <!-- EXPORT WALLET -->
+        <div style="background:var(--bg2);border:1px solid var(--gold);border-radius:12px;padding:1.5rem;margin-top:2rem;">
+            <h3 style="color:var(--gold);margin-bottom:0.5rem;" data-i18n="tk_export_title">Export to your wallet</h3>
+            <p style="color:var(--text2);font-size:0.9rem;margin-bottom:1rem;" data-i18n="tk_export_desc">When the $IAMINE token is deployed on-chain, you will be able to export your earned tokens to any EVM-compatible wallet.</p>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                <!-- Rabby -->
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1.2rem;text-align:center;">
+                    <div style="font-size:1.5rem;margin-bottom:0.5rem;">🦊</div>
+                    <h4>Rabby Wallet</h4>
+                    <p style="color:var(--text2);font-size:0.8rem;margin:0.5rem 0;" data-i18n="tk_rabby_desc">Multi-chain wallet. Add IAMINE token with one click.</p>
+                    <button class="btn btn-gold" style="padding:0.4rem 1rem;font-size:0.85rem;opacity:0.6;cursor:not-allowed;" disabled data-i18n="tk_export_soon">Coming soon</button>
+                </div>
+                <!-- Metamask -->
+                <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1.2rem;text-align:center;">
+                    <div style="font-size:1.5rem;margin-bottom:0.5rem;">🔶</div>
+                    <h4>MetaMask</h4>
+                    <p style="color:var(--text2);font-size:0.8rem;margin:0.5rem 0;" data-i18n="tk_meta_desc">The most popular Web3 wallet. Export and trade freely.</p>
+                    <button class="btn btn-gold" style="padding:0.4rem 1rem;font-size:0.85rem;opacity:0.6;cursor:not-allowed;" disabled data-i18n="tk_export_soon">Coming soon</button>
+                </div>
+            </div>
+
+            <!-- Export preview -->
+            <div style="background:var(--bg);border-radius:8px;padding:1rem;">
+                <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.5rem;" data-i18n="tk_export_preview">How it will work:</div>
+                <div style="display:flex;flex-direction:column;gap:0.5rem;font-size:0.85rem;">
+                    <div style="display:flex;align-items:center;gap:0.75rem;">
+                        <span style="background:var(--accent);color:var(--bg);width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;">1</span>
+                        <span data-i18n="tk_exp_s1">Connect your wallet (Rabby, MetaMask, or any EVM wallet)</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:0.75rem;">
+                        <span style="background:var(--accent);color:var(--bg);width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;">2</span>
+                        <span data-i18n="tk_exp_s2">Enter your API token (iam_xxx) to verify your balance</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:0.75rem;">
+                        <span style="background:var(--accent);color:var(--bg);width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;">3</span>
+                        <span data-i18n="tk_exp_s3">Choose amount to export and confirm the transaction</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:0.75rem;">
+                        <span style="background:var(--accent2);color:var(--bg);width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;">✓</span>
+                        <span data-i18n="tk_exp_s4">$IAMINE tokens appear in your wallet — trade on any DEX</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Token contract info (placeholder) -->
+            <div style="margin-top:1rem;padding:0.75rem;background:var(--bg3);border-radius:8px;font-size:0.8rem;color:var(--text2);">
+                <span data-i18n="tk_contract_info">Token contract will be published here after deployment.</span>
+                <br><span style="color:var(--text2);opacity:0.6;">Chain: TBD (Hyperliquid / Base / Arbitrum) &middot; Standard: ERC-20 &middot; Supply: proportional to network compute</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ API ============ -->
+<div class="page" id="page-api">
+    <div class="page-content">
+        <h2><span data-i18n="api_title">Your API Access</span></h2>
+        <p style="color:var(--text2);margin-bottom:1.5rem;" data-i18n="api_sub">Contribute compute, earn credits. Use credits to access the AI API. 1 request served = 1 request earned.</p>
+
+        <!-- Auto-detected worker banner -->
+        <div class="worker-banner" id="api-worker-banner">
+            <div style="display:flex;align-items:center;gap:0.5rem;font-weight:600;">
+                <span class="wb-dot"></span>
+                <span data-i18n="wb_title">Your worker is running!</span>
+            </div>
+            <div class="wb-grid">
+                <div class="wb-item"><div class="wb-val" id="api-wb-credits">-</div><div class="wb-lbl">$IAMINE</div></div>
+                <div class="wb-item"><div class="wb-val" id="api-wb-earned">-</div><div class="wb-lbl" data-i18n="wb_earned">Earned</div></div>
+                <div class="wb-item"><div class="wb-val" id="api-wb-used">-</div><div class="wb-lbl" data-i18n="api_used">Used</div></div>
+                <div class="wb-item"><div class="wb-val" id="api-wb-state">-</div><div class="wb-lbl">Status</div></div>
+            </div>
+        </div>
+
+        <!-- Token lookup -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;">
+            <label style="font-size:0.85rem;color:var(--text2);display:block;margin-bottom:0.5rem;" data-i18n="api_enter">Enter your API token to check your balance:</label>
+            <div style="display:flex;gap:0.5rem;">
+                <input type="text" id="api-token-input" placeholder="iam_xxxxxxxxxxxx" style="flex:1;padding:0.6rem;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:monospace;font-size:0.9rem;">
+                <button class="btn btn-primary" id="api-check" style="padding:0.6rem 1.2rem;" data-i18n="api_check">Check</button>
+            </div>
+            <div id="api-result" style="margin-top:1rem;display:none;">
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1rem;">
+                    <div style="background:var(--bg);border-radius:8px;padding:1rem;text-align:center;">
+                        <div style="font-size:2rem;font-weight:700;color:var(--accent2);" id="api-credits">-</div>
+                        <div style="font-size:0.8rem;color:var(--text2);">$IAMINE Credits</div>
+                    </div>
+                    <div style="background:var(--bg);border-radius:8px;padding:1rem;text-align:center;">
+                        <div style="font-size:2rem;font-weight:700;color:var(--accent);" id="api-used">-</div>
+                        <div style="font-size:0.8rem;color:var(--text2);" data-i18n="api_used">Requests used</div>
+                    </div>
+                    <div style="background:var(--bg);border-radius:8px;padding:1rem;text-align:center;">
+                        <div style="font-size:2rem;font-weight:700;" id="api-status-val">-</div>
+                        <div style="font-size:0.8rem;color:var(--text2);">Status</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- How it works -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;">
+            <h3 style="margin-bottom:1rem;" data-i18n="api_how">How API credits work</h3>
+            <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:1rem;align-items:center;text-align:center;">
+                <div>
+                    <div style="font-size:2rem;">⬆</div>
+                    <div style="font-size:0.85rem;color:var(--text2);" data-i18n="api_earn">You serve AI tokens</div>
+                </div>
+                <div style="font-size:1.5rem;color:var(--text2);">=</div>
+                <div>
+                    <div style="font-size:2rem;">⬇</div>
+                    <div style="font-size:0.85rem;color:var(--text2);" data-i18n="api_spend">You use the API</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Usage -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;">
+            <h3 style="margin-bottom:1rem;" data-i18n="api_usage">API Usage</h3>
+            <p style="color:var(--text2);font-size:0.9rem;margin-bottom:1rem;" data-i18n="api_compat">OpenAI-compatible. Works with any client.</p>
+
+            <div style="background:var(--bg);border-radius:8px;padding:1rem;margin-bottom:0.75rem;">
+                <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.25rem;">Terminal</div>
+                <code style="font-size:0.85rem;color:var(--accent2);display:block;white-space:pre-wrap;">python -m iamine ask "What is quantum computing?"</code>
+            </div>
+
+            <div style="background:var(--bg);border-radius:8px;padding:1rem;margin-bottom:0.75rem;">
+                <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.25rem;">curl</div>
+                <code style="font-size:0.85rem;color:var(--accent2);display:block;white-space:pre-wrap;">curl https://iamine.org/v1/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{"api_token":"iam_xxx","messages":[{"role":"user","content":"Hello"}]}'</code>
+            </div>
+
+            <div style="background:var(--bg);border-radius:8px;padding:1rem;">
+                <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.25rem;">Python</div>
+                <code style="font-size:0.85rem;color:var(--accent2);display:block;white-space:pre-wrap;">import requests
+r = requests.post("https://iamine.org/v1/api/chat", json={
+    "api_token": "iam_xxx",
+    "messages": [{"role": "user", "content": "Hello"}]
+})
+print(r.json()["choices"][0]["message"]["content"])</code>
+            </div>
+        </div>
+
+        <!-- OpenWebUI integration -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-top:1.5rem;">
+            <h3 style="margin-bottom:0.5rem;" data-i18n="api_owui_title">Connect to Open WebUI</h3>
+            <p style="color:var(--text2);font-size:0.9rem;margin-bottom:1rem;" data-i18n="api_owui_desc">Use IAMINE as a backend for Open WebUI. Copy these settings:</p>
+
+            <div style="background:var(--bg);border-radius:8px;padding:1rem;margin-bottom:0.75rem;">
+                <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.5rem;">Open WebUI Settings > Connections > OpenAI API</div>
+                <table style="width:100%;font-size:0.85rem;">
+                    <tr><td style="color:var(--text2);padding:0.3rem 0;width:140px;">API Base URL</td><td><div class="install-box" style="margin:0;padding:0.4rem 0.6rem;"><code id="owui-url" style="font-size:0.85rem;">http://localhost:8080/v1</code><button class="copy-btn" onclick="copyEl('owui-url')" style="font-size:0.7rem;padding:0.15rem 0.5rem;">Copy</button></div></td></tr>
+                    <tr><td style="color:var(--text2);padding:0.3rem 0;">API Key</td><td><div class="install-box" style="margin:0;padding:0.4rem 0.6rem;"><code id="owui-key" style="font-size:0.85rem;">-</code><button class="copy-btn" onclick="copyEl('owui-key')" style="font-size:0.7rem;padding:0.15rem 0.5rem;">Copy</button></div></td></tr>
+                </table>
+            </div>
+
+            <div style="background:var(--bg);border-radius:8px;padding:1rem;">
+                <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.25rem;">docker-compose.yml</div>
+                <div class="install-box" style="margin:0;"><code id="owui-docker" style="font-size:0.8rem;white-space:pre-wrap;">docker run -d -p 3000:8080 \
+  -e OPENAI_API_BASE_URL=http://host.docker.internal:8080/v1 \
+  -e OPENAI_API_KEY=iam_YOUR_TOKEN_HERE \
+  --name open-webui \
+  ghcr.io/open-webui/open-webui:main</code><button class="copy-btn" onclick="copyEl('owui-docker')" style="font-size:0.7rem;padding:0.15rem 0.5rem;">Copy</button></div>
+            </div>
+        </div>
+
+        <!-- Full API Reference -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-top:1.5rem;">
+            <h3 style="margin-bottom:0.5rem;" data-i18n="api_ref_title">Full API Reference</h3>
+            <table style="width:100%;font-size:0.85rem;border-collapse:collapse;">
+                <tr style="border-bottom:1px solid var(--border);"><th style="text-align:left;padding:0.5rem;color:var(--text2);">Endpoint</th><th style="text-align:left;padding:0.5rem;color:var(--text2);">Method</th><th style="text-align:left;padding:0.5rem;color:var(--text2);">Description</th><th style="text-align:left;padding:0.5rem;color:var(--text2);">Auth</th></tr>
+                <tr style="border-bottom:1px solid var(--border);"><td style="padding:0.5rem;color:var(--accent);">/v1/chat/completions</td><td>POST</td><td data-i18n="api_r1">Chat (free, demo)</td><td>-</td></tr>
+                <tr style="border-bottom:1px solid var(--border);"><td style="padding:0.5rem;color:var(--accent);">/v1/api/chat</td><td>POST</td><td data-i18n="api_r2">Chat (1 credit/request)</td><td>api_token</td></tr>
+                <tr style="border-bottom:1px solid var(--border);"><td style="padding:0.5rem;color:var(--accent);">/v1/status</td><td>GET</td><td data-i18n="api_r3">Pool status</td><td>-</td></tr>
+                <tr style="border-bottom:1px solid var(--border);"><td style="padding:0.5rem;color:var(--accent);">/v1/pool/power</td><td>GET</td><td data-i18n="api_r4">Pool power analysis</td><td>-</td></tr>
+                <tr style="border-bottom:1px solid var(--border);"><td style="padding:0.5rem;color:var(--accent);">/v1/wallet/{token}</td><td>GET</td><td data-i18n="api_r5">Check balance</td><td>token in URL</td></tr>
+                <tr style="border-bottom:1px solid var(--border);"><td style="padding:0.5rem;color:var(--accent);">/v1/models/available</td><td>GET</td><td data-i18n="api_r6">List server models</td><td>-</td></tr>
+                <tr style="border-bottom:1px solid var(--border);"><td style="padding:0.5rem;color:var(--accent);">/v1/models</td><td>GET</td><td data-i18n="api_r7">List worker models</td><td>-</td></tr>
+                <tr><td style="padding:0.5rem;color:var(--accent);">/v1/admin/models</td><td>GET</td><td data-i18n="api_r8">Model tiers + unlock status</td><td>-</td></tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ============ MY WORKERS ============ -->
+<div class="page" id="page-workers">
+    <div class="page-content">
+        <!-- Mono-worker (detected locally, no login needed) -->
+        <div id="mw-solo" style="display:none;">
+            <h2><span data-i18n="mw_title">My Worker</span></h2>
+            <div class="worker-banner visible" style="display:block;">
+                <div style="display:flex;align-items:center;gap:0.5rem;font-weight:600;">
+                    <span class="wb-dot"></span><span id="mw-name">-</span>
+                </div>
+                <div class="wb-grid" style="margin-top:0.75rem;">
+                    <div class="wb-item"><div class="wb-val" id="mw-credits">-</div><div class="wb-lbl">$IAMINE</div></div>
+                    <div class="wb-item"><div class="wb-val" id="mw-earned">-</div><div class="wb-lbl" data-i18n="mw_earned">Earned</div></div>
+                    <div class="wb-item"><div class="wb-val" id="mw-jobs">-</div><div class="wb-lbl">Jobs</div></div>
+                    <div class="wb-item"><div class="wb-val" id="mw-state">-</div><div class="wb-lbl">Status</div></div>
+                </div>
+                <div class="wb-token" style="margin-top:0.75rem;">
+                    <span style="color:var(--text2);font-size:0.75rem;">API Token:</span>
+                    <code id="mw-token">-</code>
+                    <button class="copy-btn" onclick="copyEl('mw-token')" style="font-size:0.7rem;padding:0.2rem 0.5rem;">Copy</button>
+                </div>
+            </div>
+            <p style="color:var(--text2);font-size:0.9rem;margin-top:1rem;" data-i18n="mw_multi_hint">Want to manage multiple workers? Create an account to link them all and consolidate your $IAMINE.</p>
+            <button class="btn btn-secondary" style="margin-top:0.5rem;" onclick="document.getElementById('mw-register').style.display='block';document.getElementById('mw-solo-extra').style.display='none';" data-i18n="mw_register_btn">Create Account (optional)</button>
+            <div id="mw-solo-extra"></div>
+        </div>
+
+        <!-- No worker detected -->
+        <div id="mw-none" style="text-align:center;padding:3rem 0;">
+            <h2><span data-i18n="mw_no_title">No worker detected</span></h2>
+            <p style="color:var(--text2);margin:1rem 0;" data-i18n="mw_no_desc">Start a worker on this machine to see it here, or log in to manage multiple workers.</p>
+            <div class="install-box" style="max-width:500px;margin:1rem auto;">
+                <code>pip install iamine-ai -i https://iamine.org/pypi && python -m iamine worker --auto</code>
+                <button class="copy-btn" onclick="copyInstall(this)">Copy</button>
+            </div>
+            <p style="color:var(--text2);margin-top:1.5rem;" data-i18n="mw_or">— or —</p>
+            <button class="btn btn-secondary" style="margin-top:0.5rem;" onclick="document.getElementById('mw-register').style.display='block';document.getElementById('mw-none').style.display='none';" data-i18n="mw_login_btn">Log in / Register</button>
+        </div>
+
+        <!-- Register/Login form -->
+        <div id="mw-register" style="display:none;max-width:400px;margin:2rem auto;">
+            <h3 style="text-align:center;margin-bottom:1rem;" data-i18n="mw_auth_title">Account</h3>
+
+            <!-- Google Sign-In -->
+            <div id="g_id_onload"
+                data-client_id="106098942094-u10np9r0n03pg0g0370m0su0tgcjede0.apps.googleusercontent.com"
+                data-callback="handleGoogleLogin"
+                data-auto_prompt="false"
+                data-auto_select="false">
+            </div>
+            <div style="display:flex;justify-content:center;margin-bottom:1rem;">
+                <div class="g_id_signin"
+                    data-type="standard"
+                    data-shape="rectangular"
+                    data-theme="filled_black"
+                    data-text="continue_with"
+                    data-size="large"
+                    data-logo_alignment="center"
+                    data-width="360">
+                </div>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">
+                <div style="flex:1;height:1px;background:var(--border);"></div>
+                <span style="color:var(--text2);font-size:0.8rem;" data-i18n="mw_or_email">or with email</span>
+                <div style="flex:1;height:1px;background:var(--border);"></div>
+            </div>
+
+            <input type="email" id="mw-email" placeholder="email" style="width:100%;padding:0.6rem;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);margin-bottom:0.5rem;">
+            <input type="password" id="mw-pass" placeholder="password (min 8)" style="width:100%;padding:0.6rem;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);margin-bottom:0.5rem;">
+            <div style="display:flex;gap:0.5rem;">
+                <button class="btn btn-primary" style="flex:1;" id="mw-do-register" data-i18n="mw_do_register">Register</button>
+                <button class="btn btn-secondary" style="flex:1;" id="mw-do-login" data-i18n="mw_do_login">Log in</button>
+            </div>
+            <p id="mw-auth-msg" style="text-align:center;margin-top:0.5rem;font-size:0.85rem;color:var(--red);display:none;"></p>
+        </div>
+
+        <!-- Multi-workers dashboard (after login) -->
+        <div id="mw-dashboard" style="display:none;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+                <h2><span data-i18n="mw_dash_title">My Workers</span></h2>
+                <div style="font-size:0.85rem;color:var(--text2);" id="mw-dash-email">-</div>
+            </div>
+            <div style="display:flex;gap:2rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+                <div style="text-align:center;"><div style="font-size:2rem;font-weight:700;color:var(--accent2);" id="mw-dash-credits">-</div><div style="font-size:0.75rem;color:var(--text2);">$IAMINE Total</div></div>
+                <div style="text-align:center;"><div style="font-size:2rem;font-weight:700;color:var(--accent);" id="mw-dash-earned">-</div><div style="font-size:0.75rem;color:var(--text2);" data-i18n="mw_earned">Earned</div></div>
+                <div style="text-align:center;"><div style="font-size:2rem;font-weight:700;color:var(--accent3);" id="mw-dash-count">-</div><div style="font-size:0.75rem;color:var(--text2);">Workers</div></div>
+            </div>
+            <!-- Account token -->
+            <div id="mw-acc-token-box" style="display:none;background:var(--bg2);border:1px solid var(--accent);border-radius:8px;padding:0.75rem;margin-bottom:1rem;">
+                <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.3rem;" data-i18n="mw_acc_token">Your account API key (all workers combined):</div>
+                <div class="install-box" style="margin:0;">
+                    <code id="mw-acc-token" style="font-size:0.85rem;">-</code>
+                    <button class="copy-btn" onclick="copyEl('mw-acc-token')">Copy</button>
+                </div>
+            </div>
+            <div id="mw-dash-workers"></div>
+
+            <!-- Link a new worker -->
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-top:1.5rem;">
+                <h4 data-i18n="mw_link_title">Link a new worker</h4>
+                <p style="color:var(--text2);font-size:0.85rem;margin-bottom:0.5rem;" data-i18n="mw_link_desc">Enter the API token of a worker to add it to your account.</p>
+                <div style="display:flex;gap:0.5rem;">
+                    <input type="text" id="mw-link-token" placeholder="iam_xxxx" style="flex:1;padding:0.5rem;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:monospace;">
+                    <button class="btn btn-primary" id="mw-link-btn" style="padding:0.5rem 1rem;" data-i18n="mw_link_btn">Link</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ TUTO ============ -->
+<div class="page" id="page-tuto">
+    <div class="page-content">
+        <h2><span data-i18n="tuto_title">Tutorials</span></h2>
+        <p style="color:var(--text2);margin-bottom:1.5rem;" data-i18n="tuto_sub">Use IAMINE with your favorite tools. The API is OpenAI-compatible.</p>
+
+        <!-- Claude via IAMINE -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;">
+            <h3 style="margin-bottom:0.5rem;">Claude Code + IAMINE</h3>
+            <p style="color:var(--text2);font-size:0.9rem;margin-bottom:1rem;" data-i18n="tuto_claude_desc">Use Claude Code with IAMINE as a backend. The quality depends on the pool's available models — the more workers join, the more powerful models become available.</p>
+            <div style="background:var(--bg);border-radius:8px;padding:1rem;margin-bottom:0.75rem;">
+                <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.25rem;">Configuration</div>
+                <code style="font-size:0.85rem;color:var(--accent2);display:block;white-space:pre-wrap;">export OPENAI_API_BASE=https://iamine.org/v1
+export OPENAI_API_KEY=iam_YOUR_TOKEN_HERE
+
+claude --model iamine</code>
+            </div>
+            <div class="info" style="background:rgba(88,166,255,0.1);border-left:3px solid var(--accent);padding:0.75rem;border-radius:0 6px 6px 0;font-size:0.85rem;color:var(--text2);" data-i18n="tuto_claude_note">Note: The AI capability depends on the pool's power. With more workers, larger models (7B, 14B...) become available and responses improve.</div>
+        </div>
+
+        <!-- Open WebUI -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;">
+            <h3 style="margin-bottom:0.5rem;">Open WebUI</h3>
+            <p style="color:var(--text2);font-size:0.9rem;margin-bottom:1rem;" data-i18n="tuto_owui_desc">Connect Open WebUI to the IAMINE network for a ChatGPT-like interface.</p>
+            <div style="background:var(--bg);border-radius:8px;padding:1rem;margin-bottom:0.75rem;">
+                <code style="font-size:0.85rem;color:var(--accent2);display:block;white-space:pre-wrap;">docker run -d -p 3000:8080 \
+  -e OPENAI_API_BASE_URL=https://iamine.org/v1 \
+  -e OPENAI_API_KEY=iam_YOUR_TOKEN \
+  --name open-webui \
+  ghcr.io/open-webui/open-webui:main</code>
+            </div>
+        </div>
+
+        <!-- Python -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;">
+            <h3 style="margin-bottom:0.5rem;">Python (OpenAI SDK)</h3>
+            <div style="background:var(--bg);border-radius:8px;padding:1rem;">
+                <code style="font-size:0.85rem;color:var(--accent2);display:block;white-space:pre-wrap;">from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://iamine.org/v1",
+    api_key="iam_YOUR_TOKEN"
+)
+
+response = client.chat.completions.create(
+    model="auto",
+    messages=[{"role": "user", "content": "Hello!"}]
+)
+print(response.choices[0].message.content)</code>
+            </div>
+        </div>
+
+        <!-- curl -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;">
+            <h3 style="margin-bottom:0.5rem;">curl</h3>
+            <div style="background:var(--bg);border-radius:8px;padding:1rem;">
+                <code style="font-size:0.85rem;color:var(--accent2);display:block;white-space:pre-wrap;">curl https://iamine.org/v1/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "api_token": "iam_YOUR_TOKEN",
+    "messages": [{"role": "user", "content": "Hello!"}]
+  }'</code>
+            </div>
+        </div>
+
+        <!-- IAMINE CLI -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;">
+            <h3 style="margin-bottom:0.5rem;">IAMINE CLI</h3>
+            <div style="background:var(--bg);border-radius:8px;padding:1rem;">
+                <code style="font-size:0.85rem;color:var(--accent2);display:block;white-space:pre-wrap;"># Check balance
+python -m iamine wallet
+
+# Ask a question (costs 1+ $IAMINE)
+python -m iamine ask "What is quantum computing?"
+
+# See recommended model for your machine
+python -m iamine recommend</code>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ CONTACT ============ -->
+<div class="page" id="page-contact">
+    <div class="page-content">
+        <h2 style="text-align:center;"><span data-i18n="ct_title">Get in touch</span></h2>
+        <div class="founders">
+            <div class="founder"><div class="founder-av">DM</div><div class="founder-name">David M.</div><div class="founder-role" data-i18n="f1">Co-founder & Architecture</div></div>
+            <div class="founder"><div class="founder-av">RP</div><div class="founder-name">Regis P.</div><div class="founder-role" data-i18n="f2">Co-founder & Strategy</div></div>
+        </div>
+        <div class="contact-form">
+            <input type="text" id="ct-name" data-i18n-placeholder="ct_n" placeholder="Your name">
+            <input type="email" id="ct-email" data-i18n-placeholder="ct_e" placeholder="Your email">
+            <textarea id="ct-msg" data-i18n-placeholder="ct_m" placeholder="Your message"></textarea>
+            <button class="btn btn-primary" style="width:100%;" id="ct-send" data-i18n="ct_btn">Send</button>
+            <p id="ct-ok" style="text-align:center;margin-top:0.5rem;color:var(--accent2);display:none;" data-i18n="ct_ok">Sent!</p>
+        </div>
+    </div>
+</div>
+
+<!-- ============ WHITEPAPER ============ -->
+<div class="page" id="page-whitepaper">
+    <div class="page-content" style="max-width:800px;">
+        <h1 style="text-align:center;font-size:2rem;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">IAMINE.ORG</h1>
+        <h2 style="text-align:center;font-size:1.2rem;color:var(--text2);margin-bottom:2rem;" data-i18n="wp_subtitle">Whitepaper — Distributed AI Inference Network</h2>
+
+        <!-- Abstract -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:2rem;">
+            <h3 style="color:var(--accent);margin-bottom:0.5rem;" data-i18n="wp_abstract_t">Abstract</h3>
+            <p style="color:var(--text2);font-size:0.9rem;" data-i18n="wp_abstract">IAMINE is a decentralized AI inference network that transforms idle computing power into a shared artificial intelligence resource. By contributing CPU cycles, participants earn $IAMINE tokens proportional to their compute contribution. These tokens can be spent to access AI models more powerful than any single participant could run locally. The network uses smart routing to optimally match requests to workers based on context size, model capability, and performance.</p>
+        </div>
+
+        <!-- 1. Problem -->
+        <h3 style="color:var(--accent);margin-bottom:0.5rem;" data-i18n="wp_1t">1. The Problem</h3>
+        <p style="color:var(--text2);font-size:0.9rem;margin-bottom:1.5rem;" data-i18n="wp_1">Access to powerful AI is concentrated in the hands of a few corporations. Running a high-quality language model requires expensive hardware (GPUs, large RAM) that most people don't have. Meanwhile, billions of PCs sit idle with unused CPU cycles. The current AI economy extracts value from users (their data, their attention) without giving back. There is no way for individuals to participate in the AI economy as producers, only as consumers.</p>
+
+        <!-- 2. Solution -->
+        <h3 style="color:var(--accent);margin-bottom:0.5rem;" data-i18n="wp_2t">2. The IAMINE Solution</h3>
+        <p style="color:var(--text2);font-size:0.9rem;margin-bottom:0.75rem;" data-i18n="wp_2">IAMINE inverts the model: anyone with a PC becomes an AI provider. The network consists of three components:</p>
+        <ul style="color:var(--text2);font-size:0.9rem;margin-bottom:1.5rem;padding-left:1.5rem;">
+            <li style="margin-bottom:0.5rem;" data-i18n="wp_2a"><strong style="color:var(--text);">Workers</strong> — Lightweight software that runs on any PC (Windows, Linux, Android). Each worker loads an open-source AI model (GGUF format) optimized for its hardware and connects to the pool.</li>
+            <li style="margin-bottom:0.5rem;" data-i18n="wp_2b"><strong style="color:var(--text);">Pool</strong> — Central orchestrator that receives AI requests and routes them to the best available worker using smart routing algorithms. Provides an OpenAI-compatible API.</li>
+            <li style="margin-bottom:0.5rem;" data-i18n="wp_2c"><strong style="color:var(--text);">$IAMINE Token</strong> — The network's native currency. Workers earn tokens for compute contributed, and spend them to access more powerful AI. Exportable to EVM wallets.</li>
+        </ul>
+
+        <!-- 3. Smart Routing -->
+        <h3 style="color:var(--accent);margin-bottom:0.5rem;" data-i18n="wp_3t">3. Smart Routing</h3>
+        <p style="color:var(--text2);font-size:0.9rem;margin-bottom:0.75rem;" data-i18n="wp_3">The core innovation of IAMINE is its intelligent request routing. Unlike simple round-robin load balancers, IAMINE considers:</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1.5rem;">
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:0.75rem;"><div style="font-weight:600;font-size:0.85rem;" data-i18n="wp_3a">Context Awareness</div><div style="color:var(--text2);font-size:0.8rem;" data-i18n="wp_3a2">Tracks accumulated conversation tokens. Routes long conversations to workers with larger context windows — proactively, before limits are hit.</div></div>
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:0.75rem;"><div style="font-weight:600;font-size:0.85rem;" data-i18n="wp_3b">Model Matching</div><div style="color:var(--text2);font-size:0.8rem;" data-i18n="wp_3b2">Users can request specific models. The router finds a worker that has it loaded, or suggests the best available alternative.</div></div>
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:0.75rem;"><div style="font-weight:600;font-size:0.85rem;" data-i18n="wp_3c">Worker Affinity</div><div style="color:var(--text2);font-size:0.8rem;" data-i18n="wp_3c2">Within a conversation, the router prefers the same worker for consistency and cache efficiency.</div></div>
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:0.75rem;"><div style="font-weight:600;font-size:0.85rem;" data-i18n="wp_3d">Performance Scoring</div><div style="color:var(--text2);font-size:0.8rem;" data-i18n="wp_3d2">Workers are scored by benchmark results, RAM, context capacity. The fastest capable worker wins.</div></div>
+        </div>
+
+        <!-- 4. Tokenomics -->
+        <h3 style="color:var(--gold);margin-bottom:0.5rem;" data-i18n="wp_4t">4. $IAMINE Tokenomics</h3>
+        <p style="color:var(--text2);font-size:0.9rem;margin-bottom:0.75rem;" data-i18n="wp_4">The $IAMINE token creates a self-sustaining economy:</p>
+        <table style="width:100%;border-collapse:collapse;font-size:0.85rem;margin-bottom:0.75rem;">
+            <tr style="border-bottom:1px solid var(--border);"><th style="text-align:left;padding:0.5rem;color:var(--text2);" data-i18n="wp_4_model">Model</th><th style="text-align:right;padding:0.5rem;color:var(--accent2);" data-i18n="wp_4_earn">Earn (serve 100 tokens)</th><th style="text-align:right;padding:0.5rem;color:var(--accent);" data-i18n="wp_4_cost">Cost (use per request)</th></tr>
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:0.4rem 0.5rem;">Qwen 0.5B</td><td style="text-align:right;padding:0.4rem;color:var(--accent2);">+0.5 $IAMINE</td><td style="text-align:right;padding:0.4rem;color:var(--accent);">1 $IAMINE</td></tr>
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:0.4rem 0.5rem;">Qwen 1.5B</td><td style="text-align:right;padding:0.4rem;color:var(--accent2);">+1.0</td><td style="text-align:right;padding:0.4rem;color:var(--accent);">2</td></tr>
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:0.4rem 0.5rem;">Qwen 3B</td><td style="text-align:right;padding:0.4rem;color:var(--accent2);">+2.0</td><td style="text-align:right;padding:0.4rem;color:var(--accent);">3</td></tr>
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:0.4rem 0.5rem;">Qwen 7B</td><td style="text-align:right;padding:0.4rem;color:var(--accent2);">+4.0</td><td style="text-align:right;padding:0.4rem;color:var(--accent);">5</td></tr>
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:0.4rem 0.5rem;">Qwen 14B</td><td style="text-align:right;padding:0.4rem;color:var(--accent2);">+8.0</td><td style="text-align:right;padding:0.4rem;color:var(--accent);">15</td></tr>
+            <tr style="border-bottom:1px solid var(--border);"><td style="padding:0.4rem 0.5rem;">Qwen 32B</td><td style="text-align:right;padding:0.4rem;color:var(--accent2);">+15.0</td><td style="text-align:right;padding:0.4rem;color:var(--accent);">30</td></tr>
+            <tr><td style="padding:0.4rem 0.5rem;">Qwen 72B</td><td style="text-align:right;padding:0.4rem;color:var(--accent2);">+25.0</td><td style="text-align:right;padding:0.4rem;color:var(--accent);">50</td></tr>
+        </table>
+        <p style="color:var(--text2);font-size:0.85rem;margin-bottom:1.5rem;" data-i18n="wp_4note">Larger models cost more to use but earn more for workers who serve them. This incentivizes participants to upgrade their hardware, strengthening the network.</p>
+
+        <!-- 5. Level Progression -->
+        <h3 style="color:var(--accent);margin-bottom:0.5rem;" data-i18n="wp_5t">5. Level Progression</h3>
+        <p style="color:var(--text2);font-size:0.9rem;margin-bottom:1.5rem;" data-i18n="wp_5">As the network grows, larger models become available — but they require workers with sufficient resources (RAM, compute) to run them. The pool tracks total power and worker capabilities to determine which models can be served. This creates a virtuous cycle: powerful workers unlock premium models and earn more tokens.</p>
+
+        <!-- 6. Privacy -->
+        <h3 style="color:var(--accent);margin-bottom:0.5rem;" data-i18n="wp_6t">6. Privacy & Security</h3>
+        <p style="color:var(--text2);font-size:0.9rem;margin-bottom:1.5rem;" data-i18n="wp_6">IAMINE stores zero conversation data. Conversations exist only in temporary memory during the active session and are automatically purged after 1 hour of inactivity. No logs, no history, no training on user data. The smart router tracks only token counts for routing decisions, not message content. Workers process requests in real-time and do not persist any data.</p>
+
+        <!-- 7. Architecture -->
+        <h3 style="color:var(--accent);margin-bottom:0.5rem;" data-i18n="wp_7t">7. Technical Architecture</h3>
+        <ul style="color:var(--text2);font-size:0.9rem;margin-bottom:1.5rem;padding-left:1.5rem;">
+            <li style="margin-bottom:0.3rem;"><strong style="color:var(--text);">Worker:</strong> Python + llama.cpp (GGUF models). Runs on Windows, Linux, Android (future).</li>
+            <li style="margin-bottom:0.3rem;"><strong style="color:var(--text);">Pool:</strong> FastAPI + WebSocket. Smart routing, OpenAI-compatible API, model serving.</li>
+            <li style="margin-bottom:0.3rem;"><strong style="color:var(--text);">Database:</strong> PostgreSQL for accounts, tokens, jobs. Conversations in temporary memory only.</li>
+            <li style="margin-bottom:0.3rem;"><strong style="color:var(--text);">Auth:</strong> Hybrid Web2 (email/password) + Web3 (ETH wallet export).</li>
+            <li style="margin-bottom:0.3rem;"><strong style="color:var(--text);">Models:</strong> Served directly from the pool. Workers download automatically via <code>--auto</code>.</li>
+        </ul>
+
+        <!-- 8. Roadmap -->
+        <h3 style="color:var(--accent);margin-bottom:0.5rem;" data-i18n="wp_8t">8. Roadmap</h3>
+        <div style="display:flex;flex-direction:column;gap:0.75rem;margin-bottom:1.5rem;">
+            <div style="display:flex;gap:0.75rem;align-items:flex-start;"><div style="min-width:80px;font-weight:700;color:var(--accent2);">Q1 2026</div><div style="color:var(--text2);font-size:0.9rem;" data-i18n="wp_r1">MVP launch. Pool + Worker + Website. Models 0.5B to 3B. Token system (off-chain).</div></div>
+            <div style="display:flex;gap:0.75rem;align-items:flex-start;"><div style="min-width:80px;font-weight:700;color:var(--accent);">Q2 2026</div><div style="color:var(--text2);font-size:0.9rem;" data-i18n="wp_r2">Linux + Android workers. Models up to 14B. Smart routing v2. Multi-worker accounts.</div></div>
+            <div style="display:flex;gap:0.75rem;align-items:flex-start;"><div style="min-width:80px;font-weight:700;color:var(--accent3);">Q3 2026</div><div style="color:var(--text2);font-size:0.9rem;" data-i18n="wp_r3">$IAMINE token on-chain (ERC-20). DEX listing. Wallet export (MetaMask, Rabby). Governance votes.</div></div>
+            <div style="display:flex;gap:0.75rem;align-items:flex-start;"><div style="min-width:80px;font-weight:700;color:var(--gold);">Q4 2026</div><div style="color:var(--text2);font-size:0.9rem;" data-i18n="wp_r4">Pipeline parallelism (split large models across workers). Models up to 72B. Enterprise API. SDK for developers.</div></div>
+        </div>
+
+        <!-- 9. Team -->
+        <h3 style="color:var(--accent);margin-bottom:0.5rem;" data-i18n="wp_9t">9. Team</h3>
+        <div style="display:flex;gap:2rem;margin-bottom:2rem;">
+            <div><strong>David M.</strong><div style="color:var(--text2);font-size:0.85rem;" data-i18n="wp_9a">Co-founder. Architecture & Engineering. Designed the smart routing engine and distributed infrastructure.</div></div>
+            <div><strong>Regis P.</strong><div style="color:var(--text2);font-size:0.85rem;" data-i18n="wp_9b">Co-founder. Strategy & Business. Drives tokenomics design, partnerships, and go-to-market.</div></div>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align:center;padding:1.5rem;border-top:1px solid var(--border);color:var(--text2);font-size:0.85rem;">
+            IAMINE.ORG — v1.0 — March 2026<br>
+            <a href="mailto:contact@iamine.org" style="color:var(--accent);text-decoration:none;">contact@iamine.org</a>
+        </div>
+    </div>
+</div>
+
+<div class="foot">IAMINE.ORG &mdash; Open Source &mdash; <a href="mailto:contact@iamine.org">contact@iamine.org</a></div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+const API = window.location.origin;
+const INSTALL_CMD = 'pip install iamine-ai -i https://iamine.org/pypi && python -m iamine worker --auto';
+
+// ====== NAVIGATION ======
+function go(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(`page-${page}`).classList.add('active');
+    document.querySelector(`.nav-tab[data-page="${page}"]`)?.classList.add('active');
+}
+document.querySelectorAll('.nav-tab').forEach(t => t.addEventListener('click', () => go(t.dataset.page)));
+
+// ====== COPY ======
+function copyInstall(btn, id) {
+    const cmd = id ? document.getElementById(id).textContent : INSTALL_CMD;
+    navigator.clipboard.writeText(cmd);
+    btn.textContent = 'Copied!'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+}
+
+// ====== I18N ======
+const L = {
+en: {
+    nav_home:"Home",nav_levels:"Levels",nav_demo:"Demo",nav_bench:"Benchmark",nav_token:"$IAMINE",nav_contact:"Contact",
+    home_sub:"Simplicity. Efficiency. AI for Everyone.",
+    home_desc:"Your PC has unused power. We turn it into AI. Join the network in 60 seconds with a single command. No cloud, no GPU, no hassle.",
+    home_cta1:"Test your machine",home_cta2:"Try the AI",home_cta3:"Earn $IAMINE",
+    p1t:"Copy",p1d:"Copy the install command above.",p2t:"Paste",p2d:"Paste it in your terminal. That's it.",p3t:"Earn",p3d:"Your PC serves AI and earns $IAMINE tokens.",
+    nav_pool:"Pool",nav_api:"API",nav_login:"Log in",nav_logout:"Logout",nav_workers:"My Workers",nav_tuto:"Tutorials",nav_wp:"Whitepaper",
+    concept_title:"How IAMINE works",c1t:"You share your PC's power",c1d:"Your idle CPU runs a lightweight AI model. No GPU needed. Works on any PC with 4 GB+ RAM.",c2t:"The pool combines everyone's power",c2d:"Smart routing sends each request to the best available worker. Larger models require workers with enough RAM and compute power to run them.",c3t:"You earn $IAMINE tokens",c3d:"Every AI token your machine generates earns you $IAMINE. More context = more tokens = more rewards.",c4t:"Spend tokens on powerful AI",c4d:"Use your $IAMINE to access models your PC could never run: 7B, 14B, even 32B — powered by the pool's combined compute.",c5t:"Export to your wallet",c5d:"$IAMINE tokens will be tradeable on DEX. Export to MetaMask or Rabby and trade your compute power.",concept_wp:"Read the Whitepaper",
+    wb_title:"Your worker is running!",wb_earned:"Earned",wb_jobs:"Jobs",wb_your_token:"Your API token:",
+    s_workers:"Workers",s_jobs:"Jobs",s_tps:"Network t/s",s_power:"Pool Power",s_best:"Best Model",
+    lvl_serve:"Serve",lvl_serve_desc:"Run a model on your PC, earn $IAMINE for every token generated",lvl_use:"Use",lvl_use_desc:"Spend $IAMINE to use bigger models you can't run locally",
+    lvl_example:"Example: Your 8 GB PC serves a 0.5B model → earns $IAMINE → you spend them to use a 14B model running on a 32 GB machine in the pool. Access AI you could never run locally.",
+    pool_title:"IAMINE Pool — Live Network",pool_sub:"Real-time view of the distributed AI network. Each node is a worker contributing compute power.",pool_best:"Best Model",
+    api_title:"Your API Access",api_sub:"Contribute compute, earn credits. Use credits to access the AI API. 1 request served = 1 request earned.",
+    api_enter:"Enter your API token to check your balance:",api_check:"Check",api_used:"Requests used",
+    api_how:"How API credits work",api_earn:"You serve AI tokens → earn $IAMINE (100 tokens = 0.5 to 25 $IAMINE depending on model)",api_spend:"You use the API → cost varies by model (1 to 50 $IAMINE per request)",
+    api_usage:"API Usage",api_compat:"OpenAI-compatible. Works with any client.",
+    lvl_title:"Network Progression",lvl_sub:"Every worker that joins unlocks more powerful AI. Level up together.",
+    demo_title:"Live AI Chat",c_off:"Offline",c_welcome:"Welcome! Ask anything to test the distributed AI network.",c_ph:"Type your message...",c_send:"Send",c_on:"online",c_clear:"Clear",c_nohistory:"No conversation history stored",
+    b_title:"Benchmark your machine",b_sub:"See what your PC can do. We find the best AI model for you.",b_rounds:"Rounds",b_tokens:"Tokens/round",b_go:"Run Benchmark",b_lat:"Latency",b_stab:"Stability",
+    bj_title:"Your machine is ready!",bj_desc:"Join the IAMINE network now with a single command:",bj_note:"Installs IAMINE, downloads the optimal model, and connects to the pool automatically.",
+    b_run:"Running...",b_rd:"Round",b_again:"Run Again",
+    b_hi:"Excellent! ({tps} t/s) — Your machine can serve multiple requests.",b_mid:"Good ({tps} t/s) — Default config is optimal.",b_lo:"Ready ({tps} t/s) — Every contribution counts!",
+    tk_sub:"Contribute compute. Earn tokens. Simple.",tk_e:"Earn",tk_ed:"Every AI request processed generates $IAMINE proportional to your compute.",tk_t:"Trade",tk_td:"Tradeable on DEX. Your compute power has real value.",tk_u:"Use",tk_ud:"Spend $IAMINE for premium models and priority inference.",tk_g:"Govern",tk_gd:"Holders vote on models, fees, and network upgrades.",
+    tk_export_title:"Export to your wallet",tk_export_desc:"When the $IAMINE token is deployed on-chain, you will be able to export your earned tokens to any EVM-compatible wallet.",tk_rabby_desc:"Multi-chain wallet. Add IAMINE token with one click.",tk_meta_desc:"The most popular Web3 wallet. Export and trade freely.",tk_export_soon:"Coming soon",tk_export_preview:"How it will work:",tk_exp_s1:"Connect your wallet (Rabby, MetaMask, or any EVM wallet)",tk_exp_s2:"Enter your API token (iam_xxx) to verify your balance",tk_exp_s3:"Choose amount to export and confirm the transaction",tk_exp_s4:"$IAMINE tokens appear in your wallet — trade on any DEX",tk_contract_info:"Token contract will be published here after deployment.",
+    ct_title:"Get in touch",f1:"Co-founder & Architecture",f2:"Co-founder & Strategy",ct_n:"Your name",ct_e:"Your email",ct_m:"Your message",ct_btn:"Send",ct_ok:"Sent!",
+    mw_title:"My Worker",mw_or_email:"or with email",mw_earned:"Earned",mw_multi_hint:"Want to manage multiple workers? Create an account to link them all and consolidate your $IAMINE.",mw_register_btn:"Create Account (optional)",mw_no_title:"No worker detected",mw_no_desc:"Start a worker on this machine to see it here, or log in to manage multiple workers.",mw_or:"— or —",mw_login_btn:"Log in / Register",mw_auth_title:"Account",mw_do_register:"Register",mw_do_login:"Log in",mw_dash_title:"My Workers",mw_link_title:"Link a new worker",mw_link_desc:"Enter the API token of a worker to add it to your account.",mw_link_btn:"Link",
+    api_owui_title:"Connect to Open WebUI",api_owui_desc:"Use IAMINE as a backend for Open WebUI. Copy these settings:",api_ref_title:"Full API Reference",api_r1:"Chat (free demo, 3 msg limit)",api_r2:"Chat (token-based)",api_r3:"Pool status",api_r4:"Pool power analysis",api_r5:"Check balance",api_r6:"List server models",api_r7:"List worker models",api_r8:"Model tiers + unlock status",
+    tuto_title:"Tutorials",tuto_sub:"Use IAMINE with your favorite tools. The API is OpenAI-compatible.",tuto_claude_desc:"Use Claude Code with IAMINE as a backend. The quality depends on the pool's available models.",tuto_claude_note:"Note: The AI capability depends on the pool's power. With more workers, larger models become available.",tuto_owui_desc:"Connect Open WebUI to the IAMINE network for a ChatGPT-like interface.",
+    uninstall_title:"Uninstall IAMINE",uninstall_warn:"Warning: This will delete your local wallet (wallet.json). Back it up first!",uninstall_backup:"Backup command: copy wallet.json wallet.json.backup",uninstall_step1:"Step 1: Uninstall the package",uninstall_step2:"Step 2: Delete data (optional)",uninstall_note:"Your earned $IAMINE credits on the pool are preserved even after uninstall.",
+    wp_subtitle:"Whitepaper — Distributed AI Inference Network",wp_abstract_t:"Abstract",wp_abstract:"IAMINE is a decentralized AI inference network that transforms idle computing power into a shared artificial intelligence resource. By contributing CPU cycles, participants earn $IAMINE tokens proportional to their compute contribution.",wp_1t:"1. The Problem",wp_1:"Access to powerful AI is concentrated in the hands of a few corporations. Running a high-quality language model requires expensive hardware that most people don't have. Meanwhile, billions of PCs sit idle with unused CPU cycles.",wp_2t:"2. The IAMINE Solution",wp_2:"IAMINE inverts the model: anyone with a PC becomes an AI provider.",wp_2a:"Workers — Lightweight software that runs on any PC. Each worker loads an open-source AI model optimized for its hardware.",wp_2b:"Pool — Central orchestrator that receives AI requests and routes them to the best available worker using smart routing.",wp_2c:"$IAMINE Token — The network's native currency. Workers earn tokens for compute contributed, and spend them to access more powerful AI.",wp_3t:"3. Smart Routing",wp_3:"The core innovation of IAMINE is its intelligent request routing:",wp_3a:"Context Awareness",wp_3a2:"Tracks accumulated conversation tokens. Routes long conversations to workers with larger context windows — proactively.",wp_3b:"Model Matching",wp_3b2:"Users can request specific models. The router finds a worker that has it loaded.",wp_3c:"Worker Affinity",wp_3c2:"Within a conversation, the router prefers the same worker for consistency.",wp_3d:"Performance Scoring",wp_3d2:"Workers are scored by benchmark results, RAM, context capacity.",wp_4t:"4. $IAMINE Tokenomics",wp_4:"The $IAMINE token creates a self-sustaining economy:",wp_4_model:"Model",wp_4_earn:"Earn (serve 100 tok)",wp_4_cost:"Cost (use/request)",wp_4note:"Larger models cost more to use but earn more for workers who serve them.",wp_5t:"5. Level Progression",wp_5:"As the network grows, larger models are automatically unlocked. This gamification drives organic growth.",wp_6t:"6. Privacy & Security",wp_6:"IAMINE stores zero conversation data. Conversations exist only in temporary memory and are purged after 1 hour of inactivity.",wp_7t:"7. Technical Architecture",wp_8t:"8. Roadmap",wp_r1:"MVP launch. Pool + Worker + Website. Models 0.5B to 3B. Token system.",wp_r2:"Linux + Android workers. Models up to 14B. Smart routing v2.",wp_r3:"$IAMINE token on-chain (ERC-20). DEX listing. Wallet export.",wp_r4:"Pipeline parallelism. Models up to 72B. Enterprise API.",wp_9t:"9. Team",wp_9a:"Co-founder. Architecture & Engineering. Designed the smart routing engine.",wp_9b:"Co-founder. Strategy & Business. Drives tokenomics and go-to-market.",
+},
+fr: {
+    nav_home:"Accueil",nav_pool:"Pool",nav_levels:"Niveaux",nav_demo:"Demo",nav_bench:"Benchmark",nav_workers:"Mes Workers",nav_api:"API",nav_token:"$IAMINE",nav_tuto:"Tuto",nav_contact:"Contact",nav_wp:"Livre blanc",nav_login:"Se connecter",nav_logout:"Deconnexion",
+    concept_title:"Comment fonctionne IAMINE",c1t:"Vous partagez la puissance de votre PC",c1d:"Votre CPU inutilise fait tourner un modele IA leger. Pas de GPU requis. Fonctionne sur tout PC avec 4 Go+ de RAM.",c2t:"Le pool combine la puissance de tous",c2d:"Le routage intelligent envoie chaque requete au meilleur worker disponible. Les modeles plus gros necessitent des workers avec assez de RAM et de puissance pour les faire tourner.",c3t:"Vous gagnez des tokens $IAMINE",c3d:"Chaque token IA genere par votre machine vous rapporte des $IAMINE. Plus de contexte = plus de tokens = plus de recompenses.",c4t:"Depensez pour une IA puissante",c4d:"Utilisez vos $IAMINE pour acceder a des modeles que votre PC ne pourrait jamais faire tourner : 7B, 14B, meme 32B — alimente par la puissance combinee du pool.",c5t:"Exportez vers votre wallet",c5d:"Les tokens $IAMINE seront echangeables sur les DEX. Exportez vers MetaMask ou Rabby et echangez votre puissance de calcul.",concept_wp:"Lire le livre blanc",
+    lvl_serve:"Servir",lvl_serve_desc:"Faites tourner un modele sur votre PC, gagnez des $IAMINE pour chaque token genere",lvl_use:"Utiliser",lvl_use_desc:"Depensez des $IAMINE pour utiliser des modeles plus gros que votre PC ne peut faire tourner",
+    lvl_example:"Exemple : Votre PC 8 Go sert un modele 0.5B → gagne des $IAMINE → vous les depensez pour utiliser un modele 14B sur une machine 32 Go du pool. Accedez a une IA que vous ne pourriez jamais faire tourner localement.",
+    pool_title:"Pool IAMINE — Reseau en direct",pool_sub:"Vue en temps reel du reseau IA distribue. Chaque noeud est un worker qui contribue de la puissance de calcul.",pool_best:"Meilleur modele",
+    home_sub:"Simplicite. Efficacite. L'IA pour tous.",
+    home_desc:"Votre PC a de la puissance inutilisee. On la transforme en IA. Rejoignez le reseau en 60 secondes avec une seule commande. Pas de cloud, pas de GPU.",
+    home_cta1:"Testez votre machine",home_cta2:"Essayez l'IA",home_cta3:"Gagnez des $IAMINE",
+    p1t:"Copier",p1d:"Copiez la commande ci-dessus.",p2t:"Coller",p2d:"Collez-la dans votre terminal. C'est tout.",p3t:"Gagner",p3d:"Votre PC sert de l'IA et gagne des tokens $IAMINE.",
+    nav_api:"API",
+    s_workers:"Workers",s_jobs:"Jobs",s_tps:"t/s reseau",s_power:"Puissance Pool",s_best:"Meilleur modele",
+    api_title:"Votre acces API",api_sub:"Contribuez du calcul, gagnez des credits. Utilisez les credits pour l'API. 1 requete servie = 1 requete gagnee.",
+    api_enter:"Entrez votre token API pour verifier votre solde :",api_check:"Verifier",api_used:"Requetes utilisees",
+    api_how:"Comment marchent les credits API",api_earn:"Vous servez des tokens IA → gagnez des $IAMINE (100 tokens = 0.5 a 25 $IAMINE selon le modele)",api_spend:"Vous utilisez l'API → cout variable selon le modele (1 a 50 $IAMINE par requete)",
+    api_usage:"Utilisation de l'API",api_compat:"Compatible OpenAI. Fonctionne avec n'importe quel client.",
+    lvl_title:"Progression du Reseau",lvl_sub:"Chaque worker qui rejoint debloque une IA plus puissante. Progressez ensemble.",
+    demo_title:"Chat IA en direct",c_off:"Hors ligne",c_welcome:"Bienvenue ! Posez une question pour tester le reseau IA distribue.",c_ph:"Ecrivez votre message...",c_send:"Envoyer",c_on:"en ligne",c_clear:"Effacer",c_nohistory:"Aucun historique de conversation conserve",
+    b_title:"Benchmarkez votre machine",b_sub:"Voyez ce que votre PC peut faire. On trouve le meilleur modele IA pour vous.",b_rounds:"Rounds",b_tokens:"Tokens/round",b_go:"Lancer",b_lat:"Latence",b_stab:"Stabilite",
+    bj_title:"Votre machine est prete !",bj_desc:"Rejoignez le reseau IAMINE maintenant avec une seule commande :",bj_note:"Installe IAMINE, telecharge le modele optimal et se connecte au pool automatiquement.",
+    b_run:"En cours...",b_rd:"Round",b_again:"Relancer",
+    b_hi:"Excellent ! ({tps} t/s) — Votre machine peut servir plusieurs requetes.",b_mid:"Bien ({tps} t/s) — La config par defaut est optimale.",b_lo:"Pret ({tps} t/s) — Chaque contribution compte !",
+    tk_sub:"Contribuez du calcul. Gagnez des tokens. Simple.",tk_e:"Gagner",tk_ed:"Chaque requete IA traitee genere des $IAMINE proportionnels a votre contribution.",tk_t:"Echanger",tk_td:"Echangeable sur DEX. Votre puissance de calcul a une vraie valeur.",tk_u:"Utiliser",tk_ud:"Depensez des $IAMINE pour des modeles premium et l'inference prioritaire.",tk_g:"Gouverner",tk_gd:"Les detenteurs votent sur les modeles, frais et mises a jour.",
+    tk_export_title:"Exporter vers votre wallet",tk_export_desc:"Quand le jeton $IAMINE sera deploye on-chain, vous pourrez exporter vos tokens gagnes vers n'importe quel wallet compatible EVM.",tk_rabby_desc:"Wallet multi-chain. Ajoutez le token IAMINE en un clic.",tk_meta_desc:"Le wallet Web3 le plus populaire. Exportez et echangez librement.",tk_export_soon:"Bientot disponible",tk_export_preview:"Comment ca marchera :",tk_exp_s1:"Connectez votre wallet (Rabby, MetaMask ou tout wallet EVM)",tk_exp_s2:"Entrez votre token API (iam_xxx) pour verifier votre solde",tk_exp_s3:"Choisissez le montant a exporter et confirmez la transaction",tk_exp_s4:"Les tokens $IAMINE apparaissent dans votre wallet — echangez sur n'importe quel DEX",tk_contract_info:"L'adresse du contrat sera publiee ici apres le deploiement.",
+    ct_title:"Nous contacter",f1:"Co-fondateur & Architecture",f2:"Co-fondateur & Strategie",ct_n:"Votre nom",ct_e:"Votre email",ct_m:"Votre message",ct_btn:"Envoyer",ct_ok:"Envoye !",
+    wb_title:"Votre worker tourne !",wb_earned:"Gagne",wb_jobs:"Jobs",wb_your_token:"Votre token API :",
+    mw_title:"Mon Worker",mw_or_email:"ou par email",mw_earned:"Gagne",mw_multi_hint:"Vous voulez gerer plusieurs workers ? Creez un compte pour les lier et consolider vos $IAMINE.",mw_register_btn:"Creer un compte (optionnel)",mw_no_title:"Aucun worker detecte",mw_no_desc:"Lancez un worker sur cette machine pour le voir ici, ou connectez-vous pour gerer plusieurs workers.",mw_or:"— ou —",mw_login_btn:"Se connecter / S'inscrire",mw_auth_title:"Compte",mw_do_register:"S'inscrire",mw_do_login:"Se connecter",mw_dash_title:"Mes Workers",mw_link_title:"Lier un nouveau worker",mw_link_desc:"Entrez le token API d'un worker pour l'ajouter a votre compte.",mw_link_btn:"Lier",
+    api_owui_title:"Connecter a Open WebUI",api_owui_desc:"Utilisez IAMINE comme backend pour Open WebUI. Copiez ces parametres :",api_ref_title:"Reference API complete",api_r1:"Chat (demo gratuite, limite 3 msg)",api_r2:"Chat (base tokens)",api_r3:"Status du pool",api_r4:"Analyse puissance du pool",api_r5:"Verifier le solde",api_r6:"Lister les modeles serveur",api_r7:"Lister les modeles workers",api_r8:"Tiers de modeles + statut deblocage",
+    tuto_title:"Tutoriels",tuto_sub:"Utilisez IAMINE avec vos outils preferes. L'API est compatible OpenAI.",tuto_claude_desc:"Utilisez Claude Code avec IAMINE comme backend. La qualite depend des modeles disponibles dans le pool.",tuto_claude_note:"Note : La capacite IA depend de la puissance du pool. Plus il y a de workers, plus les modeles disponibles sont puissants.",tuto_owui_desc:"Connectez Open WebUI au reseau IAMINE pour une interface type ChatGPT.",
+    uninstall_title:"Desinstaller IAMINE",uninstall_warn:"Attention : cela supprimera votre wallet local (wallet.json). Faites une sauvegarde avant !",uninstall_backup:"Commande de sauvegarde : copy wallet.json wallet.json.backup",uninstall_step1:"Etape 1 : Desinstaller le package",uninstall_step2:"Etape 2 : Supprimer les donnees (optionnel)",uninstall_note:"Vos credits $IAMINE gagnes sur le pool sont preserves meme apres desinstallation.",
+    wp_subtitle:"Livre blanc — Reseau d'inference IA distribue",wp_abstract_t:"Resume",wp_abstract:"IAMINE est un reseau decentralise d'inference IA qui transforme la puissance de calcul inutilisee en une ressource d'intelligence artificielle partagee. En contribuant des cycles CPU, les participants gagnent des tokens $IAMINE proportionnels a leur contribution.",wp_1t:"1. Le probleme",wp_1:"L'acces a une IA puissante est concentre entre les mains de quelques entreprises. Faire tourner un modele de langage de qualite necessite du materiel couteux que la plupart des gens n'ont pas. Pendant ce temps, des milliards de PC restent inactifs.",wp_2t:"2. La solution IAMINE",wp_2:"IAMINE inverse le modele : n'importe qui avec un PC devient un fournisseur d'IA.",wp_2a:"Workers — Logiciel leger qui tourne sur n'importe quel PC. Chaque worker charge un modele IA open-source optimise pour son materiel.",wp_2b:"Pool — Orchestrateur central qui recoit les requetes IA et les route vers le meilleur worker disponible via le routage intelligent.",wp_2c:"Token $IAMINE — La monnaie native du reseau. Les workers gagnent des tokens pour le calcul contribue et les depensent pour acceder a une IA plus puissante.",wp_3t:"3. Routage intelligent",wp_3:"L'innovation cle de IAMINE est son routage intelligent des requetes :",wp_3a:"Gestion du contexte",wp_3a2:"Suit les tokens de conversation accumules. Route les longues conversations vers des workers avec de plus grandes fenetres de contexte — de maniere proactive.",wp_3b:"Correspondance de modele",wp_3b2:"Les utilisateurs peuvent demander un modele specifique. Le routeur trouve un worker qui l'a charge.",wp_3c:"Affinite worker",wp_3c2:"Au sein d'une conversation, le routeur prefere le meme worker pour la coherence.",wp_3d:"Scoring de performance",wp_3d2:"Les workers sont notes par benchmark, RAM et capacite de contexte.",wp_4t:"4. Tokenomics $IAMINE",wp_4:"Le token $IAMINE cree une economie auto-suffisante :",wp_4_model:"Modele",wp_4_earn:"Gagner (servir 100 tok)",wp_4_cost:"Cout (utiliser/requete)",wp_4note:"Les plus gros modeles coutent plus cher mais rapportent plus aux workers qui les servent.",wp_5t:"5. Progression par niveaux",wp_5:"A mesure que le reseau grandit, des modeles plus puissants sont automatiquement debloques. Cette gamification stimule la croissance organique.",wp_6t:"6. Vie privee & Securite",wp_6:"IAMINE ne stocke aucune donnee de conversation. Les conversations n'existent qu'en memoire temporaire et sont purgees apres 1h d'inactivite.",wp_7t:"7. Architecture technique",wp_8t:"8. Feuille de route",wp_r1:"Lancement MVP. Pool + Worker + Site. Modeles 0.5B a 3B. Systeme de tokens.",wp_r2:"Workers Linux + Android. Modeles jusqu'a 14B. Routage intelligent v2.",wp_r3:"Token $IAMINE on-chain (ERC-20). Listing DEX. Export wallet.",wp_r4:"Parallelisme pipeline. Modeles jusqu'a 72B. API entreprise.",wp_9t:"9. Equipe",wp_9a:"Co-fondateur. Architecture & Ingenierie. Concepteur du moteur de routage intelligent.",wp_9b:"Co-fondateur. Strategie & Business. Pilote les tokenomics et la mise sur le marche.",
+},
+es: {
+    nav_home:"Inicio",nav_pool:"Pool",nav_levels:"Niveles",nav_demo:"Demo",nav_bench:"Benchmark",nav_workers:"Mis Workers",nav_api:"API",nav_token:"$IAMINE",nav_tuto:"Tuto",nav_contact:"Contacto",nav_wp:"Whitepaper",nav_login:"Conectarse",nav_logout:"Salir",
+    concept_title:"Como funciona IAMINE",c1t:"Comparta la potencia de su PC",c1d:"Su CPU inactiva ejecuta un modelo IA ligero. Sin GPU. Funciona en cualquier PC con 4 GB+ de RAM.",c2t:"El pool combina la potencia de todos",c2d:"El enrutamiento inteligente envia cada solicitud al mejor worker disponible. Los modelos mas grandes requieren workers con suficiente RAM y potencia para ejecutarlos.",c3t:"Gane tokens $IAMINE",c3d:"Cada token IA generado por su maquina le genera $IAMINE. Mas contexto = mas tokens = mas recompensas.",c4t:"Gaste en IA potente",c4d:"Use sus $IAMINE para acceder a modelos que su PC nunca podria ejecutar: 7B, 14B, hasta 32B — impulsado por la potencia combinada del pool.",c5t:"Exporte a su wallet",c5d:"Los tokens $IAMINE seran intercambiables en DEX. Exporte a MetaMask o Rabby e intercambie su potencia de calculo.",concept_wp:"Leer el whitepaper",
+    lvl_serve:"Servir",lvl_serve_desc:"Ejecute un modelo en su PC, gane $IAMINE por cada token generado",lvl_use:"Usar",lvl_use_desc:"Gaste $IAMINE para usar modelos mas grandes que su PC no puede ejecutar",
+    lvl_example:"Ejemplo: Su PC de 8 GB sirve un modelo 0.5B → gana $IAMINE → los gasta para usar un modelo 14B en una maquina de 32 GB del pool. Acceda a IA que nunca podria ejecutar localmente.",
+    pool_title:"Pool IAMINE — Red en vivo",pool_sub:"Vista en tiempo real de la red de IA distribuida. Cada nodo es un worker que contribuye potencia de calculo.",pool_best:"Mejor modelo",
+    home_sub:"Simplicidad. Eficiencia. IA para todos.",
+    home_desc:"Su PC tiene potencia sin usar. La convertimos en IA. Unase a la red en 60 segundos con un solo comando. Sin cloud, sin GPU.",
+    home_cta1:"Pruebe su maquina",home_cta2:"Pruebe la IA",home_cta3:"Gane $IAMINE",
+    p1t:"Copiar",p1d:"Copie el comando de arriba.",p2t:"Pegar",p2d:"Peguelo en su terminal. Eso es todo.",p3t:"Ganar",p3d:"Su PC sirve IA y gana tokens $IAMINE.",
+    nav_api:"API",
+    s_workers:"Workers",s_jobs:"Jobs",s_tps:"t/s red",s_power:"Potencia Pool",s_best:"Mejor modelo",
+    api_title:"Su acceso API",api_sub:"Contribuya calculo, gane creditos. Use creditos para la API. 1 solicitud servida = 1 solicitud ganada.",
+    api_enter:"Ingrese su token API para verificar su saldo:",api_check:"Verificar",api_used:"Solicitudes usadas",
+    api_how:"Como funcionan los creditos API",api_earn:"Sirve tokens IA → gana $IAMINE (100 tokens = 0.5 a 25 $IAMINE segun el modelo)",api_spend:"Usa la API → costo variable segun modelo (1 a 50 $IAMINE por solicitud)",
+    api_usage:"Uso de la API",api_compat:"Compatible con OpenAI. Funciona con cualquier cliente.",
+    lvl_title:"Progresion de la Red",lvl_sub:"Cada worker que se une desbloquea IA mas potente. Progresen juntos.",
+    demo_title:"Chat IA en vivo",c_off:"Desconectado",c_welcome:"Bienvenido! Pregunte algo para probar la red de IA distribuida.",c_ph:"Escriba su mensaje...",c_send:"Enviar",c_on:"en linea",c_clear:"Borrar",c_nohistory:"No se guarda historial de conversacion",
+    b_title:"Benchmark de su maquina",b_sub:"Vea lo que su PC puede hacer. Encontramos el mejor modelo IA para usted.",b_rounds:"Rondas",b_tokens:"Tokens/ronda",b_go:"Ejecutar",b_lat:"Latencia",b_stab:"Estabilidad",
+    bj_title:"Su maquina esta lista!",bj_desc:"Unase a la red IAMINE ahora con un solo comando:",bj_note:"Instala IAMINE, descarga el modelo optimo y se conecta al pool automaticamente.",
+    b_run:"En curso...",b_rd:"Ronda",b_again:"Reiniciar",
+    b_hi:"Excelente! ({tps} t/s) — Su maquina puede servir varias solicitudes.",b_mid:"Bien ({tps} t/s) — La config por defecto es optima.",b_lo:"Listo ({tps} t/s) — Cada contribucion cuenta!",
+    tk_sub:"Contribuya calculo. Gane tokens. Simple.",tk_e:"Ganar",tk_ed:"Cada solicitud de IA genera $IAMINE proporcionales a su contribucion.",tk_t:"Intercambiar",tk_td:"Intercambiable en DEX. Su potencia tiene valor real.",tk_u:"Usar",tk_ud:"Gaste $IAMINE para modelos premium e inferencia prioritaria.",tk_g:"Gobernar",tk_gd:"Los poseedores votan sobre modelos, tarifas y actualizaciones.",
+    tk_export_title:"Exportar a su wallet",tk_export_desc:"Cuando el token $IAMINE se despliegue on-chain, podra exportar sus tokens ganados a cualquier wallet compatible EVM.",tk_rabby_desc:"Wallet multi-chain. Agregue el token IAMINE con un clic.",tk_meta_desc:"El wallet Web3 mas popular. Exporte e intercambie libremente.",tk_export_soon:"Proximamente",tk_export_preview:"Como funcionara:",tk_exp_s1:"Conecte su wallet (Rabby, MetaMask o cualquier wallet EVM)",tk_exp_s2:"Ingrese su token API (iam_xxx) para verificar su saldo",tk_exp_s3:"Elija el monto a exportar y confirme la transaccion",tk_exp_s4:"Los tokens $IAMINE aparecen en su wallet — intercambie en cualquier DEX",tk_contract_info:"La direccion del contrato se publicara aqui despues del despliegue.",
+    ct_title:"Contactenos",f1:"Co-fundador & Arquitectura",f2:"Co-fundador & Estrategia",ct_n:"Su nombre",ct_e:"Su email",ct_m:"Su mensaje",ct_btn:"Enviar",ct_ok:"Enviado!",
+    wb_title:"Su worker esta activo!",wb_earned:"Ganado",wb_jobs:"Jobs",wb_your_token:"Su token API:",
+    mw_title:"Mi Worker",mw_or_email:"o con email",mw_earned:"Ganado",mw_multi_hint:"Quiere gestionar varios workers? Cree una cuenta para vincularlos y consolidar sus $IAMINE.",mw_register_btn:"Crear cuenta (opcional)",mw_no_title:"Ningun worker detectado",mw_no_desc:"Inicie un worker en esta maquina para verlo aqui, o inicie sesion para gestionar varios workers.",mw_or:"— o —",mw_login_btn:"Iniciar sesion / Registrarse",mw_auth_title:"Cuenta",mw_do_register:"Registrarse",mw_do_login:"Iniciar sesion",mw_dash_title:"Mis Workers",mw_link_title:"Vincular un nuevo worker",mw_link_desc:"Ingrese el token API de un worker para agregarlo a su cuenta.",mw_link_btn:"Vincular",
+    api_owui_title:"Conectar a Open WebUI",api_owui_desc:"Use IAMINE como backend para Open WebUI. Copie estos ajustes:",api_ref_title:"Referencia API completa",api_r1:"Chat (demo gratis, limite 3 msg)",api_r2:"Chat (basado en tokens)",api_r3:"Estado del pool",api_r4:"Analisis potencia del pool",api_r5:"Verificar saldo",api_r6:"Listar modelos del servidor",api_r7:"Listar modelos de workers",api_r8:"Tiers de modelos + estado desbloqueo",
+    tuto_title:"Tutoriales",tuto_sub:"Use IAMINE con sus herramientas favoritas. La API es compatible con OpenAI.",tuto_claude_desc:"Use Claude Code con IAMINE como backend. La calidad depende de los modelos disponibles en el pool.",tuto_claude_note:"Nota: La capacidad IA depende de la potencia del pool. Con mas workers, modelos mas grandes estan disponibles.",tuto_owui_desc:"Conecte Open WebUI a la red IAMINE para una interfaz tipo ChatGPT.",
+    uninstall_title:"Desinstalar IAMINE",uninstall_warn:"Atencion: esto eliminara su wallet local (wallet.json). Haga una copia de seguridad primero!",uninstall_backup:"Comando de respaldo: copy wallet.json wallet.json.backup",uninstall_step1:"Paso 1: Desinstalar el paquete",uninstall_step2:"Paso 2: Eliminar datos (opcional)",uninstall_note:"Sus creditos $IAMINE ganados en el pool se conservan incluso despues de desinstalar.",
+    wp_subtitle:"Whitepaper — Red de inferencia IA distribuida",wp_abstract_t:"Resumen",wp_abstract:"IAMINE es una red descentralizada de inferencia IA que transforma la potencia de calculo inactiva en un recurso de inteligencia artificial compartido. Al contribuir ciclos de CPU, los participantes ganan tokens $IAMINE proporcionales a su contribucion.",wp_1t:"1. El problema",wp_1:"El acceso a IA potente esta concentrado en manos de pocas corporaciones. Ejecutar un modelo de lenguaje de calidad requiere hardware costoso que la mayoria no tiene. Mientras tanto, miles de millones de PCs permanecen inactivos.",wp_2t:"2. La solucion IAMINE",wp_2:"IAMINE invierte el modelo: cualquiera con un PC se convierte en proveedor de IA.",wp_2a:"Workers — Software ligero que funciona en cualquier PC. Cada worker carga un modelo IA de codigo abierto optimizado para su hardware.",wp_2b:"Pool — Orquestador central que recibe solicitudes de IA y las enruta al mejor worker disponible mediante enrutamiento inteligente.",wp_2c:"Token $IAMINE — La moneda nativa de la red. Los workers ganan tokens por el calculo contribuido y los gastan para acceder a IA mas potente.",wp_3t:"3. Enrutamiento inteligente",wp_3:"La innovacion central de IAMINE es su enrutamiento inteligente de solicitudes:",wp_3a:"Gestion de contexto",wp_3a2:"Rastrea los tokens de conversacion acumulados. Enruta conversaciones largas a workers con ventanas de contexto mas grandes — proactivamente.",wp_3b:"Correspondencia de modelo",wp_3b2:"Los usuarios pueden solicitar modelos especificos. El router encuentra un worker que lo tenga cargado.",wp_3c:"Afinidad de worker",wp_3c2:"Dentro de una conversacion, el router prefiere el mismo worker para consistencia.",wp_3d:"Puntuacion de rendimiento",wp_3d2:"Los workers se puntuan por benchmark, RAM y capacidad de contexto.",wp_4t:"4. Tokenomics $IAMINE",wp_4:"El token $IAMINE crea una economia autosuficiente:",wp_4_model:"Modelo",wp_4_earn:"Ganar (servir 100 tok)",wp_4_cost:"Costo (usar/solicitud)",wp_4note:"Los modelos mas grandes cuestan mas pero generan mas para los workers que los sirven.",wp_5t:"5. Progresion por niveles",wp_5:"A medida que la red crece, modelos mas potentes se desbloquean automaticamente. Esta gamificacion impulsa el crecimiento organico.",wp_6t:"6. Privacidad y Seguridad",wp_6:"IAMINE no almacena datos de conversacion. Las conversaciones solo existen en memoria temporal y se purgan tras 1h de inactividad.",wp_7t:"7. Arquitectura tecnica",wp_8t:"8. Hoja de ruta",wp_r1:"Lanzamiento MVP. Pool + Worker + Sitio. Modelos 0.5B a 3B. Sistema de tokens.",wp_r2:"Workers Linux + Android. Modelos hasta 14B. Enrutamiento inteligente v2.",wp_r3:"Token $IAMINE on-chain (ERC-20). Listing DEX. Exportacion wallet.",wp_r4:"Paralelismo pipeline. Modelos hasta 72B. API empresarial.",wp_9t:"9. Equipo",wp_9a:"Co-fundador. Arquitectura e Ingenieria. Disenador del motor de enrutamiento inteligente.",wp_9b:"Co-fundador. Estrategia y Negocios. Impulsa tokenomics y salida al mercado.",
+}};
+
+let cl = localStorage.getItem('iamine-lang')||'en';
+function setLang(l) {
+    cl=l; localStorage.setItem('iamine-lang',l);
+    document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.textContent.trim().toLowerCase()===l));
+    document.querySelectorAll('[data-i18n]').forEach(e=>{const k=e.getAttribute('data-i18n');if(L[l]?.[k])e.textContent=L[l][k];});
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(e=>{const k=e.getAttribute('data-i18n-placeholder');if(L[l]?.[k])e.placeholder=L[l][k];});
+    refreshLevels();
+}
+function t(k,v){let s=L[cl]?.[k]||L.en[k]||k;if(v)Object.entries(v).forEach(([a,b])=>{s=s.replace(`{${a}}`,b);});return s;}
+setLang(cl);
+
+// ====== STATS ======
+async function refreshStats(){try{const r=await fetch(`${API}/v1/status`),d=await r.json();document.getElementById('h-workers').textContent=d.workers_online||0;document.getElementById('h-jobs').textContent=d.total_jobs||0;document.getElementById('h-tps').textContent=d.workers_online>0?`~${(d.workers_online*15).toFixed(0)}`:'0';const dot=document.getElementById('c-dot'),st=document.getElementById('c-status');if(d.workers_online>0){dot.classList.add('on');st.textContent=`${d.workers_online} ${t('c_on')}`;}else{dot.classList.remove('on');st.textContent=t('c_off');}}catch(e){}try{const r2=await fetch(`${API}/v1/pool/power`),p=await r2.json();document.getElementById('h-power').textContent=`${p.pool_capacity_tps||0} t/s`;document.getElementById('h-best').textContent=p.best_individual?.model_name||'-';}catch(e){}}
+refreshStats();setInterval(refreshStats,10000);
+
+// ====== LEVELS ======
+const ICONS=['I','II','III','IV','V','VI','VII'],REWARDS=['0.5','1.2','2.5','5','12','25','50'];
+async function refreshLevels(){try{const r=await fetch(`${API}/v1/admin/models`),d=await r.json(),ms=d.models||[],tps=d.pool_tps||0,maxRam=d.max_worker_ram_gb||0;const tk=document.getElementById('level-track');tk.querySelectorAll('.level-item').forEach(e=>e.remove());
+
+// Trouver le premier modele non-active pour le marquer NEXT
+let firstNonActive=-1;
+ms.forEach((m,i)=>{if(m.status!=='active'&&firstNonActive===-1)firstNonActive=i;});
+let lastA=-1;
+
+ms.forEach((m,i)=>{
+    const isActive=m.status==='active';
+    const isNext=i===firstNonActive;
+    // unlocked = seuil t/s atteint mais RAM insuffisante
+    const isUnlocked=m.status==='unlocked'&&!isActive;
+    const isLocked=m.status==='locked';
+    if(isActive)lastA=i;
+
+    let cc,bc,bt,barC;
+    if(isActive){
+        cc='active';bc='lvl-active';barC='green';
+        bt=cl==='fr'?'ACTIF':cl==='es'?'ACTIVO':'ACTIVE';
+    }else if(isUnlocked&&isNext){
+        cc='next';bc='lvl-next';barC='blue';
+        bt=cl==='fr'?'RAM REQUISE':cl==='es'?'RAM NECESARIA':'NEEDS RAM';
+    }else if(isNext){
+        cc='next';bc='lvl-next';barC='blue';
+        bt=cl==='fr'?'PROCHAIN':cl==='es'?'SIGUIENTE':'NEXT';
+    }else if(isUnlocked){
+        cc='locked';bc='lvl-locked';barC='gray';
+        bt=cl==='fr'?'RAM REQUISE':cl==='es'?'RAM NECESARIA':'NEEDS RAM';
+    }else{
+        cc='locked';bc='lvl-locked';barC='gray';
+        bt=cl==='fr'?'VERROUILLE':cl==='es'?'BLOQUEADO':'LOCKED';
+    }
+
+    const p=m.unlock_threshold_tps>0?Math.min(100,(tps/m.unlock_threshold_tps)*100):100;
+
+    let ps;
+    if(isActive){
+        ps=`${m.params} — Q=${m.quality_score}/100`;
+    }else if(isUnlocked){
+        ps=cl==='fr'?`Deblocage OK — besoin d'un worker avec ${m.ram_required_gb}+ GB RAM (max actuel: ${maxRam.toFixed(0)} GB)`
+          :cl==='es'?`Desbloqueo OK — necesita un worker con ${m.ram_required_gb}+ GB RAM (max actual: ${maxRam.toFixed(0)} GB)`
+          :`Unlock OK — needs a worker with ${m.ram_required_gb}+ GB RAM (current max: ${maxRam.toFixed(0)} GB)`;
+    }else{
+        ps=`${tps.toFixed(0)}/${m.unlock_threshold_tps} t/s — ${p.toFixed(0)}%`;
+    }
+
+    const el=document.createElement('div');el.className='level-item';
+    const earn = m.earn_per_100tok || 0;
+    const cost = m.cost_per_request || 0;
+    const serveTxt={en:'Serve',fr:'Servir',es:'Servir'}[cl]||'Serve';
+    const useTxt={en:'Use',fr:'Utiliser',es:'Usar'}[cl]||'Use';
+    const reqTxt={en:'request',fr:'requete',es:'solicitud'}[cl]||'request';
+    el.innerHTML=`<div class="level-circle ${cc}">${ICONS[i]||'?'}</div><div class="level-info"><div class="level-header"><span class="level-name">${m.name}</span><span class="lvl-badge ${bc}">${bt}</span></div><div class="level-sub">${m.size_gb} GB · ${m.ram_required_gb} GB RAM · ${ps}</div><div class="level-bar-bg"><div class="level-bar bar-${barC}" style="width:${p}%"></div></div><div style="display:flex;gap:1.5rem;margin-top:0.3rem;font-size:0.8rem;"><span style="color:var(--accent2);">⬆ ${serveTxt}: +${earn} $IAMINE/100tok</span><span style="color:var(--accent);">⬇ ${useTxt}: ${cost} $IAMINE/${reqTxt}</span></div></div>`;
+    tk.appendChild(el);
+});
+document.getElementById('level-line-fill').style.height=`${ms.length>0?((lastA+1.5)/ms.length)*100:0}%`;}catch(e){}}
+refreshLevels();setInterval(refreshLevels,15000);
+
+// ====== CHAT ======
+const cMsgs=document.getElementById('chat-msgs'),cIn=document.getElementById('c-input'),cSend=document.getElementById('c-send');
+function addM(txt,r,meta){const d=document.createElement('div');d.className=`msg ${r}`;d.textContent=txt;if(meta){const m=document.createElement('div');m.className='meta';m.textContent=meta;d.appendChild(m);}cMsgs.appendChild(d);cMsgs.scrollTop=cMsgs.scrollHeight;return d;}
+const LANG_SYSTEM={en:"You are IAMINE AI. Answer in English. Be concise and helpful.",fr:"Tu es IAMINE AI. Reponds en francais. Sois concis et utile.",es:"Eres IAMINE AI. Responde en espanol. Se conciso y util."};
+
+// Load available models into select
+async function loadChatModels(){
+    try{
+        const r=await fetch(`${API}/v1/admin/models`);const d=await r.json();
+        const sel=document.getElementById('c-model');
+        sel.innerHTML='';
+        (d.models||[]).filter(m=>m.status==='active').forEach(m=>{
+            const opt=document.createElement('option');
+            opt.value=m.id;opt.textContent=`${m.name} (${m.cost_per_request} $IAMINE)`;
+            sel.appendChild(opt);
+        });
+        // Add a free option at the top
+        const free=document.createElement('option');
+        free.value='auto';free.textContent='Auto (free demo)';
+        sel.prepend(free);sel.value='auto';
+    }catch(e){}
+}
+loadChatModels();
+
+let chatConvId = null;
+async function doChat(){const txt=cIn.value.trim();if(!txt)return;cIn.value='';cSend.disabled=true;addM(txt,'user');const th=addM('...','bot');
+const selectedModel=document.getElementById('c-model').value;
+if(!chatConvId) chatConvId = 'web_' + Math.random().toString(36).substr(2,12);
+const body={messages:[{role:'system',content:LANG_SYSTEM[cl]||LANG_SYSTEM.en},{role:'user',content:txt}],max_tokens:256,conv_id:chatConvId};
+if(selectedModel!=='auto') body.model=selectedModel;
+if(localWorker?.api_token_full) body.api_token=localWorker.api_token_full;
+try{const r=await fetch(`${API}/v1/chat/completions`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(d.error){th.textContent=d.error;if(d.hint)addM(d.hint,'bot');return;}th.textContent=d.choices?.[0]?.message?.content||'';}catch(e){th.textContent=e.message;}finally{cSend.disabled=false;cIn.focus();}}
+cSend.addEventListener('click',doChat);cIn.addEventListener('keydown',e=>{if(e.key==='Enter')doChat();});
+document.getElementById('c-clear').addEventListener('click',()=>{const msgs=document.getElementById('chat-msgs');msgs.innerHTML='<div class="msg bot">'+t('c_welcome')+'</div>';if(chatConvId){fetch(`${API}/v1/conversation/${chatConvId}`,{method:'DELETE'}).catch(()=>{});}chatConvId=null;});
+
+// ====== BENCHMARK ======
+const bStart=document.getElementById('b-start'),prompts=["Explain quantum computing.","Write a haiku about AI.","Benefits of distributed computing?","How do neural networks work?","What is edge computing?"];
+async function doBench(){const rounds=+document.getElementById('b-rounds').value,maxTok=+document.getElementById('b-tokens').value;bStart.disabled=true;bStart.textContent=t('b_run');document.getElementById('b-results').style.display='block';document.getElementById('b-join').style.display='none';const res=[];for(let i=0;i<rounds;i++){bStart.textContent=`${t('b_rd')} ${i+1}/${rounds}`;try{const t0=performance.now(),r=await fetch(`${API}/v1/chat/completions`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:prompts[i%5]}],max_tokens:maxTok})}),el=(performance.now()-t0)/1000,d=await r.json(),inf=d.iamine||{};res.push({tps:inf.tokens_per_sec||0,dur:inf.duration_sec||el,tok:d.usage?.completion_tokens||0,ttft:el-(inf.duration_sec||el)});updateB(res);}catch(e){}}showBJ(res);bStart.disabled=false;bStart.textContent=t('b_again');}
+function updateB(r){const a=r.reduce((s,x)=>s+x.tps,0)/r.length,at=r.reduce((s,x)=>s+x.ttft,0)/r.length,std=Math.sqrt(r.map(x=>x.tps).reduce((s,v)=>s+(v-a)**2,0)/r.length),st=a>0?Math.max(0,(1-std/a)*100):0;document.getElementById('bb-tps').style.width=`${Math.min(100,(a/50)*100)}%`;document.getElementById('bv-tps').textContent=`${a.toFixed(1)} t/s`;document.getElementById('bb-lat').style.width=`${Math.min(100,Math.max(5,100-at*50))}%`;document.getElementById('bv-lat').textContent=`${(at*1000).toFixed(0)} ms`;document.getElementById('bb-stab').style.width=`${st}%`;document.getElementById('bv-stab').textContent=`${st.toFixed(0)}%`;}
+function showBJ(r){const a=r.reduce((s,x)=>s+x.tps,0)/r.length;const k=a>15?'b_hi':a>8?'b_mid':'b_lo';document.getElementById('b-rec').textContent=t(k,{tps:a.toFixed(1)});document.getElementById('b-join').style.display='block';}
+bStart.addEventListener('click',doBench);
+
+// ====== POOL VISUALIZATION ======
+let poolNodes = [];
+let poolAnim = null;
+async function refreshPool() {
+    try {
+        const [sr, pr] = await Promise.all([fetch(`${API}/v1/status`), fetch(`${API}/v1/pool/power`)]);
+        const status = await sr.json(), power = await pr.json();
+        document.getElementById('pool-workers').textContent = status.workers_online || 0;
+        document.getElementById('pool-tps').textContent = (power.pool_capacity_tps || 0).toFixed(0);
+        document.getElementById('pool-jobs').textContent = status.total_jobs || 0;
+        document.getElementById('pool-best').textContent = power.best_individual?.model_name || '-';
+
+        // Build node list
+        poolNodes = (status.workers || []).map((w, i) => ({
+            id: w.id, busy: w.busy, jobs: w.jobs_done, model: (w.model||'').split('/').pop(),
+            ram: w.ram_gb, isLocal: localWorker && localWorker.worker_id === w.id,
+        }));
+
+        // Worker list under canvas
+        const list = document.getElementById('pool-list');
+        list.innerHTML = poolNodes.map(n => `
+            <div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;background:var(--bg2);border:1px solid ${n.isLocal?'var(--accent2)':'var(--border)'};border-radius:8px;margin-bottom:0.5rem;">
+                <div style="width:10px;height:10px;border-radius:50%;background:${n.busy?'var(--accent3)':'var(--accent2)'};${n.isLocal?'box-shadow:0 0 10px var(--accent2);animation:pulse 2s infinite;':''}"></div>
+                <span style="font-weight:600;color:${n.isLocal?'var(--accent2)':'var(--text)'};">${n.id}</span>
+                ${n.isLocal?'<span style="font-size:0.7rem;background:var(--accent2);color:var(--bg);padding:0.1rem 0.4rem;border-radius:8px;">YOU</span>':''}
+                <span style="flex:1;"></span>
+                <span style="font-size:0.8rem;color:var(--text2);">${n.model}</span>
+                <span style="font-size:0.8rem;color:var(--text2);">${n.ram||'?'} GB</span>
+                <span style="font-size:0.8rem;color:${n.busy?'var(--accent3)':'var(--accent2)'};">${n.busy?'BUSY':'IDLE'}</span>
+            </div>
+        `).join('');
+    } catch(e) {}
+}
+
+function drawPool() {
+    const canvas = document.getElementById('pool-canvas');
+    if (!canvas || !canvas.offsetParent) { poolAnim = requestAnimationFrame(drawPool); return; }
+    const ctx = canvas.getContext('2d');
+    const W = canvas.offsetWidth, H = canvas.offsetHeight;
+    canvas.width = W * 2; canvas.height = H * 2;
+    ctx.scale(2, 2);
+    ctx.clearRect(0, 0, W, H);
+
+    const cx = W / 2, cy = H / 2;
+    const t = Date.now() / 1000;
+
+    // Central pool node
+    ctx.beginPath();
+    const poolR = 30 + Math.sin(t * 2) * 3;
+    ctx.arc(cx, cy, poolR, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(88,166,255,0.15)';
+    ctx.fill();
+    ctx.strokeStyle = '#58a6ff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#58a6ff';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('IAMINE', cx, cy - 3);
+    ctx.font = '9px sans-serif';
+    ctx.fillStyle = '#8b949e';
+    ctx.fillText('POOL', cx, cy + 10);
+
+    // Worker nodes around
+    const n = poolNodes.length;
+    if (n === 0) {
+        ctx.fillStyle = '#8b949e';
+        ctx.font = '12px sans-serif';
+        ctx.fillText('No workers connected', cx, cy + 60);
+        poolAnim = requestAnimationFrame(drawPool);
+        return;
+    }
+
+    const radius = Math.min(W, H) * 0.35;
+    poolNodes.forEach((node, i) => {
+        const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
+        const wobble = node.isLocal ? Math.sin(t * 3 + i) * 5 : Math.sin(t + i) * 2;
+        const nx = cx + Math.cos(angle) * (radius + wobble);
+        const ny = cy + Math.sin(angle) * (radius + wobble);
+
+        // Connection line
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(nx, ny);
+        ctx.strokeStyle = node.busy ? 'rgba(240,136,62,0.4)' : 'rgba(63,185,80,0.2)';
+        ctx.lineWidth = node.busy ? 2 : 1;
+        ctx.stroke();
+
+        // Data packets animation (when busy)
+        if (node.busy) {
+            const pkt = (t * 2 + i) % 1;
+            const px = cx + (nx - cx) * pkt;
+            const py = cy + (ny - cy) * pkt;
+            ctx.beginPath();
+            ctx.arc(px, py, 3, 0, Math.PI * 2);
+            ctx.fillStyle = '#f0883e';
+            ctx.fill();
+        }
+
+        // Node circle
+        const nodeR = node.isLocal ? 20 + Math.sin(t * 4) * 3 : 16;
+        ctx.beginPath();
+        ctx.arc(nx, ny, nodeR, 0, Math.PI * 2);
+        const color = node.isLocal ? '#3fb950' : node.busy ? '#f0883e' : '#30363d';
+        ctx.fillStyle = color + '30';
+        ctx.fill();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = node.isLocal ? 3 : 1.5;
+        ctx.stroke();
+
+        // Glow for local worker
+        if (node.isLocal) {
+            ctx.beginPath();
+            ctx.arc(nx, ny, nodeR + 8 + Math.sin(t * 3) * 4, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(63,185,80,' + (0.2 + Math.sin(t * 3) * 0.15) + ')';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+
+        // Node label
+        ctx.fillStyle = node.isLocal ? '#3fb950' : '#e6edf3';
+        ctx.font = `${node.isLocal ? 'bold ' : ''}9px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText(node.id.split('-')[0], nx, ny + 3);
+    });
+
+    poolAnim = requestAnimationFrame(drawPool);
+}
+refreshPool(); setInterval(refreshPool, 5000);
+requestAnimationFrame(drawPool);
+
+// ====== LOCAL WORKER DETECTION ======
+let localWorker = null;
+async function detectLocalWorker() {
+    try {
+        const r = await fetch('http://127.0.0.1:8081/wallet', {signal: AbortSignal.timeout(2000)});
+        const d = await r.json();
+        localWorker = d;
+
+        // API page banner only (pas la Home — le visiteur n'a pas forcement installe)
+        const ab = document.getElementById('api-worker-banner');
+        ab.classList.add('visible');
+        document.getElementById('api-wb-credits').textContent = d.credits?.toFixed(1) || '0';
+        document.getElementById('api-wb-earned').textContent = d.total_earned?.toFixed(1) || '0';
+        document.getElementById('api-wb-used').textContent = d.requests_made || 0;
+        document.getElementById('api-wb-state').textContent = (d.state || 'offline').toUpperCase();
+
+        // Auto-fill API token input
+        if (d.api_token_full) {
+            document.getElementById('api-token-input').value = d.api_token_full;
+            updateOwuiToken();
+        }
+    } catch(e) {
+        // No local worker
+        document.getElementById('api-worker-banner').classList.remove('visible');
+        localWorker = null;
+    }
+}
+detectLocalWorker(); setInterval(detectLocalWorker, 10000);
+
+// ====== COPY HELPER ======
+function copyEl(id) {
+    const el = document.getElementById(id);
+    navigator.clipboard.writeText(el.textContent);
+    const btn = event.target; btn.textContent='OK!'; setTimeout(()=>btn.textContent='Copy',1500);
+}
+
+// ====== AUTO-FILL OWUI TOKEN ======
+function updateOwuiToken() {
+    if (localWorker?.api_token_full) {
+        document.getElementById('owui-key').textContent = localWorker.api_token_full;
+    }
+}
+
+// ====== API TOKEN CHECK ======
+document.getElementById('api-check').addEventListener('click',async()=>{const tk=document.getElementById('api-token-input').value.trim();if(!tk)return;try{const r=await fetch(`${API}/v1/wallet/${tk}`);const d=await r.json();const res=document.getElementById('api-result');if(d.error){res.style.display='none';alert(d.error);return;}res.style.display='block';document.getElementById('api-credits').textContent=d.credits;document.getElementById('api-used').textContent=d.requests_used;const sv=document.getElementById('api-status-val');if(d.is_online){sv.textContent='ONLINE';sv.style.color='var(--accent2)';}else if(d.credits>=1){sv.textContent='CREDITS';sv.style.color='var(--accent)';}else{sv.textContent='EMPTY';sv.style.color='var(--red)';}}catch(e){alert('Error: '+e.message);}});
+
+// ====== MY WORKERS ======
+let mwSession = localStorage.getItem('iamine-session') || '';
+
+function updateMyWorkers() {
+    const solo = document.getElementById('mw-solo');
+    const none = document.getElementById('mw-none');
+    const dash = document.getElementById('mw-dashboard');
+
+    if (mwSession) {
+        // Logged in — show dashboard
+        solo.style.display = 'none'; none.style.display = 'none'; dash.style.display = 'block';
+        refreshDashboard();
+    } else if (localWorker) {
+        // Local worker detected — show solo view
+        solo.style.display = 'block'; none.style.display = 'none'; dash.style.display = 'none';
+        document.getElementById('mw-name').textContent = localWorker.worker_id || '-';
+        document.getElementById('mw-credits').textContent = localWorker.credits?.toFixed(1) || '0';
+        document.getElementById('mw-earned').textContent = localWorker.total_earned?.toFixed(1) || '0';
+        document.getElementById('mw-jobs').textContent = localWorker.jobs_done || 0;
+        document.getElementById('mw-state').textContent = (localWorker.state || 'offline').toUpperCase();
+        document.getElementById('mw-token').textContent = localWorker.api_token_full || '-';
+    } else {
+        solo.style.display = 'none'; none.style.display = 'block'; dash.style.display = 'none';
+    }
+}
+
+async function refreshDashboard() {
+    try {
+        const r = await fetch(`${API}/v1/account/my-workers?session_id=${mwSession}`);
+        const d = await r.json();
+        if (d.error) { mwSession = ''; localStorage.removeItem('iamine-session'); updateMyWorkers(); return; }
+        document.getElementById('mw-dash-email').textContent = d.email || '';
+        document.getElementById('mw-dash-credits').textContent = d.total_credits?.toFixed(1) || '0';
+        document.getElementById('mw-dash-earned').textContent = d.total_earned?.toFixed(1) || '0';
+        document.getElementById('mw-dash-count').textContent = d.worker_count || 0;
+        // Account token
+        if (d.account_token) {
+            document.getElementById('mw-acc-token-box').style.display = 'block';
+            document.getElementById('mw-acc-token').textContent = d.account_token;
+        }
+        const wl = document.getElementById('mw-dash-workers');
+        wl.innerHTML = (d.workers || []).map(w => `
+            <div style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0.75rem;background:var(--bg2);border:1px solid var(--border);border-radius:8px;margin-bottom:0.5rem;">
+                <div style="width:10px;height:10px;border-radius:50%;background:${w.is_online?'var(--accent2)':'var(--red)'};"></div>
+                <span style="font-weight:600;color:var(--accent);">${w.worker_id}</span>
+                <span style="flex:1;"></span>
+                <span style="font-size:0.8rem;color:var(--text2);">${w.model}</span>
+                <span style="font-size:0.8rem;font-weight:600;color:var(--accent2);">${w.credits} $IAMINE</span>
+                <span style="font-size:0.8rem;color:${w.is_online?'var(--accent2)':'var(--red)'};">${w.is_online?'ONLINE':'OFFLINE'}</span>
+            </div>
+        `).join('') || '<p style="color:var(--text2);">No workers linked yet.</p>';
+    } catch(e) {}
+}
+
+document.getElementById('mw-do-register').addEventListener('click', async () => {
+    const email = document.getElementById('mw-email').value;
+    const pass = document.getElementById('mw-pass').value;
+    const msg = document.getElementById('mw-auth-msg');
+    try {
+        const r = await fetch(`${API}/v1/auth/register`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+        const d = await r.json();
+        if (d.error) { msg.textContent = d.error; msg.style.display = 'block'; return; }
+        mwSession = d.session_id; localStorage.setItem('iamine-session', mwSession);
+        // Auto-link local worker if present
+        if (localWorker?.api_token_full) {
+            await fetch(`${API}/v1/account/link-worker`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:mwSession,api_token:localWorker.api_token_full})});
+        }
+        updateMyWorkers(); updateNavAuth();
+    } catch(e) { msg.textContent = e.message; msg.style.display = 'block'; }
+});
+
+document.getElementById('mw-do-login').addEventListener('click', async () => {
+    const email = document.getElementById('mw-email').value;
+    const pass = document.getElementById('mw-pass').value;
+    const msg = document.getElementById('mw-auth-msg');
+    try {
+        const r = await fetch(`${API}/v1/auth/login`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+        const d = await r.json();
+        if (d.error) { msg.textContent = d.error; msg.style.display = 'block'; return; }
+        mwSession = d.session_id; localStorage.setItem('iamine-session', mwSession);
+        if (localWorker?.api_token_full) {
+            await fetch(`${API}/v1/account/link-worker`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:mwSession,api_token:localWorker.api_token_full})});
+        }
+        updateMyWorkers(); updateNavAuth();
+    } catch(e) { msg.textContent = e.message; msg.style.display = 'block'; }
+});
+
+document.getElementById('mw-link-btn').addEventListener('click', async () => {
+    const token = document.getElementById('mw-link-token').value.trim();
+    if (!token || !mwSession) return;
+    await fetch(`${API}/v1/account/link-worker`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:mwSession,api_token:token})});
+    document.getElementById('mw-link-token').value = '';
+    refreshDashboard();
+});
+
+// Google Sign-In callback
+async function handleGoogleLogin(response) {
+    try {
+        const r = await fetch(`${API}/v1/auth/google`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({credential: response.credential})
+        });
+        const d = await r.json();
+        if (d.error) {
+            const msg = document.getElementById('mw-auth-msg');
+            msg.textContent = d.error; msg.style.display = 'block';
+            return;
+        }
+        mwSession = d.session_id;
+        localStorage.setItem('iamine-session', mwSession);
+        // Auto-link local worker
+        if (localWorker?.api_token_full) {
+            await fetch(`${API}/v1/account/link-worker`, {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({session_id: mwSession, api_token: localWorker.api_token_full})
+            });
+        }
+        updateMyWorkers();
+        updateNavAuth();
+    } catch(e) {
+        const msg = document.getElementById('mw-auth-msg');
+        msg.textContent = e.message; msg.style.display = 'block';
+    }
+}
+
+// Nav login/logout buttons
+function updateNavAuth() {
+    const loginBtn = document.getElementById('nav-login-btn');
+    const logoutBtn = document.getElementById('nav-logout-btn');
+    const userInfo = document.getElementById('nav-user-info');
+    document.getElementById('nav-tab-workers').style.display = mwSession ? 'block' : 'none';
+    if (mwSession) {
+        loginBtn.style.display = 'none';
+        logoutBtn.style.display = 'inline-block';
+        // Fetch display name
+        fetch(`${API}/v1/account/my-workers?session_id=${mwSession}`).then(r=>r.json()).then(d=>{
+            if(d.display_name){userInfo.textContent=d.display_name;userInfo.style.display='inline';}
+        }).catch(()=>{});
+    } else {
+        loginBtn.style.display = 'inline-block';
+        logoutBtn.style.display = 'none';
+        userInfo.style.display = 'none';
+    }
+}
+
+document.getElementById('nav-login-btn').addEventListener('click', () => {
+    go('workers');
+    document.getElementById('mw-register').style.display = 'block';
+    document.getElementById('mw-none').style.display = 'none';
+    document.getElementById('mw-solo').style.display = 'none';
+    // Re-render le bouton Google (il ne se rend pas dans un element cache)
+    setTimeout(() => {
+        if (window.google?.accounts?.id) {
+            google.accounts.id.renderButton(
+                document.querySelector('.g_id_signin'),
+                {theme:'filled_black', size:'large', text:'continue_with', shape:'rectangular', width:360, logo_alignment:'center'}
+            );
+        }
+    }, 100);
+});
+document.getElementById('nav-logout-btn').addEventListener('click', () => {
+    mwSession = '';
+    localStorage.removeItem('iamine-session');
+    updateNavAuth();
+    updateMyWorkers();
+    document.getElementById('mw-register').style.display = 'none';
+    go('home');
+});
+
+// Init
+setTimeout(() => { updateMyWorkers(); updateNavAuth(); }, 2000);
+
+// ====== CONTACT ======
+document.getElementById('ct-send').addEventListener('click',async()=>{const n=document.getElementById('ct-name').value,e=document.getElementById('ct-email').value,m=document.getElementById('ct-msg').value;if(!e||!m)return;try{await fetch(`${API}/v1/contact`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n,email:e,message:m})});}catch(x){}document.getElementById('ct-ok').style.display='block';document.getElementById('ct-name').value='';document.getElementById('ct-email').value='';document.getElementById('ct-msg').value='';});
+</script>
+</body>
+</html>
