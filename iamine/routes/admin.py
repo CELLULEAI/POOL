@@ -11,6 +11,78 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 router = APIRouter()
+
+# ── Cellule.ai styled pages ──────────────────────────────────────────────────
+
+_CELLULE_STYLE = "body{background:#0a0a0f;color:#e0e0e0;font-family:'Inter',system-ui,-apple-system,sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}.card{background:rgba(15,15,25,0.95);padding:2.5rem;border-radius:16px;border:1px solid rgba(0,212,255,0.2);width:420px;text-align:center;box-shadow:0 0 60px rgba(0,212,255,0.08),0 0 120px rgba(0,255,136,0.04);backdrop-filter:blur(20px)}h2{background:linear-gradient(135deg,#00d4ff,#00ff88);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:0.3rem;font-size:1.8rem;font-weight:800;letter-spacing:-0.5px}.sub{color:rgba(255,255,255,0.4);font-size:0.85rem;margin-bottom:2rem;letter-spacing:0.3px}input{width:100%;padding:0.8rem 1rem;margin:0.4rem 0;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);color:#e0e0e0;border-radius:10px;font-size:14px;box-sizing:border-box;transition:border-color 0.2s}input:focus{outline:none;border-color:rgba(0,212,255,0.4);box-shadow:0 0 20px rgba(0,212,255,0.08)}input::placeholder{color:rgba(255,255,255,0.2)}button{width:100%;padding:0.85rem;background:linear-gradient(135deg,#00d4ff,#00ff88);color:#0a0a0f;border:none;border-radius:10px;font-size:0.95rem;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:1px;margin-top:0.8rem;transition:all 0.2s}button:hover{opacity:0.9;transform:translateY(-1px);box-shadow:0 4px 20px rgba(0,212,255,0.3)}.err{color:#ff4466;font-size:0.85rem;margin-top:1rem;display:none;padding:0.5rem;border-radius:8px;background:rgba(255,68,102,0.08)}.ok{color:#00ff88;font-size:0.85rem;margin-top:1rem;display:none;padding:0.5rem;border-radius:8px;background:rgba(0,255,136,0.08)}.logo{font-size:0.75rem;color:rgba(255,255,255,0.15);margin-top:1.5rem;letter-spacing:2px;text-transform:uppercase}"
+
+SETUP_PAGE_HTML = """<!DOCTYPE html>
+<html><head><title>Cellule.ai — Pool Setup</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>""" + _CELLULE_STYLE + """</style></head>
+<body><div class="card"><h2>Pool Setup</h2>
+<p class="sub">Create your administrator account</p>
+<input type="email" id="em" placeholder="Email">
+<input type="password" id="pw" placeholder="Password (min 6 characters)">
+<input type="password" id="pw2" placeholder="Confirm password" onkeydown="if(event.key==='Enter')doSetup()">
+<button onclick="doSetup()">Create Admin Account</button>
+<div class="err" id="err"></div>
+<div class="ok" id="ok"></div>
+<div class="logo">Cellule.ai</div>
+<script>
+async function doSetup() {
+    var em=document.getElementById('em').value;
+    var pw=document.getElementById('pw').value;
+    var pw2=document.getElementById('pw2').value;
+    var err=document.getElementById('err');
+    var ok=document.getElementById('ok');
+    err.style.display='none'; ok.style.display='none';
+    if(!em||!pw){err.textContent='Email and password required';err.style.display='block';return;}
+    if(pw!==pw2){err.textContent='Passwords do not match';err.style.display='block';return;}
+    if(pw.length<6){err.textContent='Password must be at least 6 characters';err.style.display='block';return;}
+    var r=await fetch('/admin/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:em,password:pw})});
+    var d=await r.json();
+    if(d.ok){ok.textContent='Account created! Redirecting...';ok.style.display='block';setTimeout(function(){location.reload()},1500);}
+    else{err.textContent=d.error||'Error';err.style.display='block';}
+}
+</script></div></body></html>"""
+
+LOGIN_PAGE_HTML = """<!DOCTYPE html>
+<html><head><title>Cellule.ai — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>""" + _CELLULE_STYLE + """.sep{margin:1.2rem 0;color:rgba(255,255,255,0.1);font-size:0.8rem;letter-spacing:2px}</style>
+<script src="https://accounts.google.com/gsi/client" async></script></head>
+<body><div class="card"><h2>Cellule.ai</h2>
+<p class="sub">Pool Administration</p>
+<div id="g_id_onload" data-client_id="106098942094-u10np9r0n03pg0g0370m0su0tgcjede0.apps.googleusercontent.com" data-callback="onGoogleLogin" data-auto_prompt="false"></div>
+<div class="g_id_signin" data-type="standard" data-size="large" data-theme="filled_black" data-text="sign_in_with" data-shape="rectangular" data-logo_alignment="left" data-width="380"></div>
+<div class="sep">— or —</div>
+<input type="email" id="em" placeholder="Email">
+<input type="password" id="pw" placeholder="Password" onkeydown="if(event.key==='Enter')loginPw()">
+<button onclick="loginPw()">Sign In</button>
+<div class="err" id="err"></div>
+<div class="logo">Cellule.ai</div>
+<script>
+function onGoogleLogin(response) {
+    fetch('/v1/auth/google', {method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({credential: response.credential})
+    }).then(r=>r.json()).then(d=>{
+        if(d.session_id) {
+            document.cookie='session_id='+d.session_id+';path=/;max-age=86400;SameSite=Lax';
+            location.reload();
+        }
+        else { document.getElementById('err').style.display='block'; document.getElementById('err').textContent=d.error||'Not authorized'; }
+    });
+}
+async function loginPw() {
+    const r = await fetch('/admin/login', {method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({email:document.getElementById('em').value, password:document.getElementById('pw').value})});
+    if(r.ok) location.reload();
+    else { document.getElementById('err').style.display='block'; document.getElementById('err').textContent='Invalid email or password'; }
+}
+</script></div></body></html>"""
+
+
 log = logging.getLogger("iamine.pool")
 
 
@@ -172,88 +244,16 @@ async def admin_page(request: Request):
         async with _pool().store.pool.acquire() as conn:
             admin_count = await conn.fetchval("SELECT count(*) FROM admin_users")
         if admin_count == 0:
-            return HTMLResponse("""<!DOCTYPE html>
-<html><head><title>Pool Setup</title>
-<style>body{background:#0a0a0a;color:#f0f0f0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
-.setup{background:#111;padding:2rem;border-radius:12px;border:1px solid #00ff88;width:420px;text-align:center;box-shadow:0 0 40px rgba(0,255,136,0.2)}
-h2{background:linear-gradient(135deg,#00ff88,#00d4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:0.5rem;font-size:1.6rem}
-.sub{color:#888;font-size:0.85rem;margin-bottom:1.5rem}
-input{width:100%;padding:0.7rem;margin:0.3rem 0;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:#f0f0f0;border-radius:6px;font-size:14px;box-sizing:border-box}
-button{width:100%;padding:0.75rem;background:linear-gradient(135deg,#00ff88,#00d4ff);color:#000;border:none;border-radius:6px;font-size:0.95rem;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;margin-top:0.5rem}
-button:hover{opacity:0.9;transform:translateY(-1px)}
-.err{color:#ff4444;font-size:0.85rem;margin-top:1rem;display:none}
-.ok{color:#00ff88;font-size:0.85rem;margin-top:1rem;display:none}</style></head>
-<body><div class="setup"><h2>Pool Setup</h2>
-<p class="sub">Create your administrator account</p>
-<input type="email" id="em" placeholder="Email">
-<input type="password" id="pw" placeholder="Password (min 6 characters)">
-<input type="password" id="pw2" placeholder="Confirm password" onkeydown="if(event.key==='Enter')doSetup()">
-<button onclick="doSetup()">Create Admin Account</button>
-<div class="err" id="err"></div>
-<div class="ok" id="ok"></div>
-<script>
-async function doSetup() {
-    var em=document.getElementById('em').value;
-    var pw=document.getElementById('pw').value;
-    var pw2=document.getElementById('pw2').value;
-    var err=document.getElementById('err');
-    var ok=document.getElementById('ok');
-    err.style.display='none'; ok.style.display='none';
-    if(!em||!pw){err.textContent='Email and password required';err.style.display='block';return;}
-    if(pw!==pw2){err.textContent='Passwords do not match';err.style.display='block';return;}
-    if(pw.length<6){err.textContent='Password must be at least 6 characters';err.style.display='block';return;}
-    var r=await fetch('/admin/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:em,password:pw})});
-    var d=await r.json();
-    if(d.ok){ok.textContent='Account created! Redirecting...';ok.style.display='block';setTimeout(function(){location.reload()},1500);}
-    else{err.textContent=d.error||'Error';err.style.display='block';}
-}
-</script></div></body></html>""")
+            return HTMLResponse(SETUP_PAGE_HTML)
     except Exception:
         pass
     if not admin_email:
-        # Rediriger vers le login Google
-        return HTMLResponse("""<!DOCTYPE html>
-<html><head><title>IAMINE Admin</title>
-<style>body{background:#0a0a0a;color:#f0f0f0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
-.login{background:#111;padding:2rem;border-radius:12px;border:1px solid #00d4ff;width:380px;text-align:center;box-shadow:0 0 40px rgba(0,212,255,0.2)}
-h2{background:linear-gradient(135deg,#00d4ff,#00ff88);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:0.5rem;font-size:1.6rem}.sub{color:#888;font-size:0.85rem;margin-bottom:1.5rem}
-button{width:100%;padding:0.75rem;background:linear-gradient(135deg,#00d4ff,#00ff88);color:#000;border:none;border-radius:6px;font-size:0.95rem;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:0.5px}
-button:hover{opacity:0.9;transform:translateY(-1px)}.err{color:#ff4444;font-size:0.85rem;margin-top:1rem;display:none}</style>
-<script src="https://accounts.google.com/gsi/client" async></script></head>
-<body><div class="login"><h2>IAMINE Admin</h2>
-<p class="sub">Connecte-toi avec ton compte autorise</p>
-<div id="g_id_onload" data-client_id="106098942094-u10np9r0n03pg0g0370m0su0tgcjede0.apps.googleusercontent.com" data-callback="onGoogleLogin" data-auto_prompt="false"></div>
-<div class="g_id_signin" data-type="standard" data-size="large" data-theme="filled_black" data-text="sign_in_with" data-shape="rectangular" data-logo_alignment="left" data-width="340"></div>
-<div style="margin:1rem 0;color:rgba(255,255,255,0.3);font-size:0.8rem">— ou —</div>
-<input type="email" id="em" placeholder="Email" style="width:100%;padding:0.7rem;margin:0.3rem 0;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:#f0f0f0;border-radius:6px;font-size:14px">
-<input type="password" id="pw" placeholder="Mot de passe" onkeydown="if(event.key==='Enter')loginPw()" style="width:100%;padding:0.7rem;margin:0.3rem 0;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:#f0f0f0;border-radius:6px;font-size:14px">
-<button onclick="loginPw()" style="margin-top:0.5rem">Connexion</button>
-<div class="err" id="err">Compte non autorise</div>
-<script>
-function onGoogleLogin(response) {
-    fetch('/v1/auth/google', {method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({credential: response.credential})
-    }).then(r=>r.json()).then(d=>{
-        if(d.session_id) {
-            document.cookie='session_id='+d.session_id+';path=/;max-age=86400;SameSite=Lax';
-            location.reload();
-        }
-        else { document.getElementById('err').style.display='block'; document.getElementById('err').textContent=d.error||'Non autorise'; }
-    });
-}
-async function loginPw() {
-    const r = await fetch('/admin/login', {method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({email:document.getElementById('em').value, password:document.getElementById('pw').value})});
-    if(r.ok) location.reload();
-    else { document.getElementById('err').style.display='block'; document.getElementById('err').textContent='Email ou mot de passe incorrect'; }
-}
-</script></div></body></html>""")
+        return HTMLResponse(LOGIN_PAGE_HTML)
     static_dir = _static_dir()
     admin_file = static_dir / "admin.html"
     if admin_file.exists():
         from fastapi.responses import FileResponse as FR
         resp = FR(str(admin_file))
-        # Set admin_token cookie so API calls work
         resp.set_cookie("admin_token", os.environ.get("ADMIN_PASSWORD"),
                         httponly=False, max_age=86400, samesite="lax")
         return resp
@@ -748,49 +748,6 @@ async def admin_list_admins(request: Request):
 async def admin_add_admin(request: Request):
     """Ajouter un admin."""
     admin_email = await _check_admin(request)
-    # Check if first-time setup needed (no admin exists)
-    try:
-        async with _pool().store.pool.acquire() as conn:
-            admin_count = await conn.fetchval("SELECT count(*) FROM admin_users")
-        if admin_count == 0:
-            return HTMLResponse("""<!DOCTYPE html>
-<html><head><title>Pool Setup</title>
-<style>body{background:#0a0a0a;color:#f0f0f0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
-.setup{background:#111;padding:2rem;border-radius:12px;border:1px solid #00ff88;width:420px;text-align:center;box-shadow:0 0 40px rgba(0,255,136,0.2)}
-h2{background:linear-gradient(135deg,#00ff88,#00d4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:0.5rem;font-size:1.6rem}
-.sub{color:#888;font-size:0.85rem;margin-bottom:1.5rem}
-input{width:100%;padding:0.7rem;margin:0.3rem 0;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:#f0f0f0;border-radius:6px;font-size:14px;box-sizing:border-box}
-button{width:100%;padding:0.75rem;background:linear-gradient(135deg,#00ff88,#00d4ff);color:#000;border:none;border-radius:6px;font-size:0.95rem;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;margin-top:0.5rem}
-button:hover{opacity:0.9;transform:translateY(-1px)}
-.err{color:#ff4444;font-size:0.85rem;margin-top:1rem;display:none}
-.ok{color:#00ff88;font-size:0.85rem;margin-top:1rem;display:none}</style></head>
-<body><div class="setup"><h2>Pool Setup</h2>
-<p class="sub">Create your administrator account</p>
-<input type="email" id="em" placeholder="Email">
-<input type="password" id="pw" placeholder="Password (min 6 characters)">
-<input type="password" id="pw2" placeholder="Confirm password" onkeydown="if(event.key==='Enter')doSetup()">
-<button onclick="doSetup()">Create Admin Account</button>
-<div class="err" id="err"></div>
-<div class="ok" id="ok"></div>
-<script>
-async function doSetup() {
-    var em=document.getElementById('em').value;
-    var pw=document.getElementById('pw').value;
-    var pw2=document.getElementById('pw2').value;
-    var err=document.getElementById('err');
-    var ok=document.getElementById('ok');
-    err.style.display='none'; ok.style.display='none';
-    if(!em||!pw){err.textContent='Email and password required';err.style.display='block';return;}
-    if(pw!==pw2){err.textContent='Passwords do not match';err.style.display='block';return;}
-    if(pw.length<6){err.textContent='Password must be at least 6 characters';err.style.display='block';return;}
-    var r=await fetch('/admin/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:em,password:pw})});
-    var d=await r.json();
-    if(d.ok){ok.textContent='Account created! Redirecting...';ok.style.display='block';setTimeout(function(){location.reload()},1500);}
-    else{err.textContent=d.error||'Error';err.style.display='block';}
-}
-</script></div></body></html>""")
-    except Exception:
-        pass
     if not admin_email:
         return JSONResponse({"error": "unauthorized"}, status_code=401)
     pool = _pool()
@@ -812,49 +769,6 @@ async function doSetup() {
 async def admin_remove_admin(email: str, request: Request):
     """Retirer un admin."""
     admin_email = await _check_admin(request)
-    # Check if first-time setup needed (no admin exists)
-    try:
-        async with _pool().store.pool.acquire() as conn:
-            admin_count = await conn.fetchval("SELECT count(*) FROM admin_users")
-        if admin_count == 0:
-            return HTMLResponse("""<!DOCTYPE html>
-<html><head><title>Pool Setup</title>
-<style>body{background:#0a0a0a;color:#f0f0f0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
-.setup{background:#111;padding:2rem;border-radius:12px;border:1px solid #00ff88;width:420px;text-align:center;box-shadow:0 0 40px rgba(0,255,136,0.2)}
-h2{background:linear-gradient(135deg,#00ff88,#00d4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:0.5rem;font-size:1.6rem}
-.sub{color:#888;font-size:0.85rem;margin-bottom:1.5rem}
-input{width:100%;padding:0.7rem;margin:0.3rem 0;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:#f0f0f0;border-radius:6px;font-size:14px;box-sizing:border-box}
-button{width:100%;padding:0.75rem;background:linear-gradient(135deg,#00ff88,#00d4ff);color:#000;border:none;border-radius:6px;font-size:0.95rem;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;margin-top:0.5rem}
-button:hover{opacity:0.9;transform:translateY(-1px)}
-.err{color:#ff4444;font-size:0.85rem;margin-top:1rem;display:none}
-.ok{color:#00ff88;font-size:0.85rem;margin-top:1rem;display:none}</style></head>
-<body><div class="setup"><h2>Pool Setup</h2>
-<p class="sub">Create your administrator account</p>
-<input type="email" id="em" placeholder="Email">
-<input type="password" id="pw" placeholder="Password (min 6 characters)">
-<input type="password" id="pw2" placeholder="Confirm password" onkeydown="if(event.key==='Enter')doSetup()">
-<button onclick="doSetup()">Create Admin Account</button>
-<div class="err" id="err"></div>
-<div class="ok" id="ok"></div>
-<script>
-async function doSetup() {
-    var em=document.getElementById('em').value;
-    var pw=document.getElementById('pw').value;
-    var pw2=document.getElementById('pw2').value;
-    var err=document.getElementById('err');
-    var ok=document.getElementById('ok');
-    err.style.display='none'; ok.style.display='none';
-    if(!em||!pw){err.textContent='Email and password required';err.style.display='block';return;}
-    if(pw!==pw2){err.textContent='Passwords do not match';err.style.display='block';return;}
-    if(pw.length<6){err.textContent='Password must be at least 6 characters';err.style.display='block';return;}
-    var r=await fetch('/admin/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:em,password:pw})});
-    var d=await r.json();
-    if(d.ok){ok.textContent='Account created! Redirecting...';ok.style.display='block';setTimeout(function(){location.reload()},1500);}
-    else{err.textContent=d.error||'Error';err.style.display='block';}
-}
-</script></div></body></html>""")
-    except Exception:
-        pass
     if not admin_email:
         return JSONResponse({"error": "unauthorized"}, status_code=401)
     if email == "david.mourgues@gmail.com":
