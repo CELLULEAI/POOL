@@ -1,0 +1,1953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CELLULE.AI — Decentralized AI Network</title>
+    <meta name="description" content="CELLULE.AI is a decentralized AI network. Contribute your compute, earn rewards, and access powerful language models.">
+    <meta property="og:title" content="CELLULE.AI — Decentralized AI Network">
+    <meta property="og:description" content="Contribute your compute power. Access decentralized AI. Earn rewards.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://cellule.ai">
+    <meta property="og:image" content="https://cellule.ai/static/iamine_icon.ico">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" href="/static/iamine_icon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles-slim@2/tsparticles.slim.bundle.min.js">
+
+</script>
+<style>
+:root {
+    --bg: #0a0a0a;
+    --bg2: #111111;
+    --bg3: #1a1a1a;
+    --neon-blue: #00d4ff;
+    --neon-green: #00ff88;
+    --text: #f0f0f0;
+    --text2: #888888;
+    --border: #222222;
+}
+
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+a {
+    color: var(--neon-blue);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+a:hover {
+    color: var(--neon-green);
+}
+
+/* ── NAV ────────────────────────────────────────────── */
+nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    height: 64px;
+    background: transparent;
+    transition: background 0.3s, backdrop-filter 0.3s, box-shadow 0.3s;
+}
+
+nav.scrolled {
+    background: rgba(10, 10, 10, 0.92);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 1px 0 var(--border);
+}
+
+.logo {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    background: linear-gradient(135deg, var(--neon-blue), var(--neon-green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    cursor: pointer;
+}
+
+.nav-links {
+    display: flex;
+    gap: 28px;
+}
+
+.nav-links a {
+    color: var(--text2);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    transition: color 0.2s;
+}
+.nav-links a:hover {
+    color: var(--text);
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.btn-lang {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text2);
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+.btn-lang:hover, .btn-lang.active {
+    border-color: var(--neon-blue);
+    color: var(--neon-blue);
+}
+
+.btn-small {
+    display: inline-block;
+    padding: 8px 20px;
+    background: linear-gradient(135deg, var(--neon-blue), var(--neon-green));
+    color: #000;
+    font-weight: 700;
+    font-size: 13px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: opacity 0.2s, transform 0.2s;
+}
+.btn-small:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    color: #000;
+}
+
+/* ── HERO ───────────────────────────────────────────── */
+#hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    overflow: hidden;
+}
+
+#tsparticles {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    padding: 0 24px;
+}
+
+.hero-title {
+    font-size: 96px;
+    font-weight: 900;
+    letter-spacing: 8px;
+    line-height: 1.05;
+    background: linear-gradient(135deg, var(--neon-blue), var(--neon-green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 20px;
+    animation: titleGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes titleGlow {
+    0% { filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.3)); }
+    100% { filter: drop-shadow(0 0 40px rgba(0, 255, 136, 0.4)); }
+}
+
+.hero-subtitle {
+    font-size: 22px;
+    font-weight: 300;
+    color: var(--text2);
+    margin-bottom: 48px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 48px;
+    margin-bottom: 48px;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 42px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--neon-blue), var(--neon-green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.2;
+}
+
+.stat-label {
+    font-size: 13px;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+}
+
+.hero-cta {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.btn-primary {
+    display: inline-block;
+    padding: 14px 36px;
+    background: linear-gradient(135deg, var(--neon-blue), var(--neon-green));
+    color: #000;
+    font-weight: 700;
+    font-size: 15px;
+    border-radius: 8px;
+    letter-spacing: 0.5px;
+    transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 24px rgba(0, 212, 255, 0.25);
+}
+.btn-primary:hover {
+    opacity: 0.95;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0, 212, 255, 0.35);
+    color: #000;
+}
+
+.btn-secondary {
+    display: inline-block;
+    padding: 14px 36px;
+    background: transparent;
+    color: var(--text);
+    font-weight: 600;
+    font-size: 15px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+}
+.btn-secondary:hover {
+    border-color: var(--neon-blue);
+    color: var(--neon-blue);
+    transform: translateY(-2px);
+}
+
+/* ── SECTIONS ───────────────────────────────────────── */
+.section {
+    padding: 100px 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.section-title {
+    font-size: 42px;
+    font-weight: 800;
+    margin-bottom: 16px;
+    letter-spacing: -0.5px;
+}
+
+.section-divider {
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--neon-blue), var(--neon-green));
+    border: none;
+    margin-bottom: 24px;
+    border-radius: 2px;
+}
+
+.section-placeholder {
+    color: var(--text2);
+    font-size: 16px;
+}
+
+/* ── CONTRIBUTE SECTION ─────────────────────────────── */
+.contribute-subtitle {
+    color: var(--text2);
+    font-size: 18px;
+    max-width: 600px;
+    margin: 0 auto 32px;
+}
+
+.install-block {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    position: relative;
+    max-width: 820px;
+    margin: 0 auto 48px;
+    overflow-x: auto;
+}
+
+.install-block code {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 14px;
+    color: var(--neon-green);
+    white-space: pre-wrap;
+    word-break: break-all;
+    line-height: 1.7;
+}
+
+.install-block .btn-copy {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.25s;
+}
+
+.install-block .btn-copy:hover {
+    color: var(--neon-blue);
+    border-color: var(--neon-blue);
+}
+
+.spec-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    max-width: 900px;
+    margin: 0 auto 48px;
+}
+
+.spec-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 24px;
+    text-align: center;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.spec-card:hover {
+    border-color: var(--neon-blue);
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.15);
+}
+
+.spec-card.recommended {
+    border-color: var(--neon-green);
+}
+
+.spec-card.recommended:hover {
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+}
+
+.spec-card.power {
+    border-color: #ff6b00;
+}
+
+.spec-card.power:hover {
+    border-color: #ff6b00;
+    box-shadow: 0 0 20px rgba(255, 107, 0, 0.2);
+}
+
+.spec-card h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.spec-card .spec-details {
+    color: var(--text2);
+    font-size: 14px;
+    margin-bottom: 16px;
+    line-height: 1.6;
+}
+
+.spec-card .spec-reward {
+    font-size: 22px;
+    font-weight: 700;
+    background: linear-gradient(90deg, var(--neon-blue), var(--neon-green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.spec-card.power .spec-reward {
+    background: linear-gradient(90deg, #ff6b00, #ffaa00);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.contribute-cta {
+    margin-top: 8px;
+}
+
+/* alternating background */
+.section-alt {
+    background: var(--bg2);
+}
+
+/* ── FOOTER ─────────────────────────────────────────── */
+footer {
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    color: var(--text2);
+    font-size: 14px;
+    padding: 60px 40px 0;
+}
+
+.footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding-bottom: 40px;
+}
+
+.footer-brand .footer-logo {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+.footer-brand .footer-logo span {
+    background: linear-gradient(90deg, var(--neon-blue), var(--neon-green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.footer-brand .footer-tagline-text {
+    margin-bottom: 16px;
+    color: var(--text2);
+}
+
+.footer-stats {
+    display: flex;
+    gap: 24px;
+}
+
+.footer-stat-val {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.footer-stat-lbl {
+    font-size: 12px;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.footer-col h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+}
+
+.footer-col a {
+    display: block;
+    color: var(--text2);
+    text-decoration: none;
+    margin-bottom: 10px;
+    transition: color 0.25s;
+}
+
+.footer-col a:hover {
+    color: var(--neon-blue);
+}
+
+.footer-bottom {
+    border-top: 1px solid var(--border);
+    text-align: center;
+    padding: 20px 0;
+    color: var(--text2);
+    font-size: 13px;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+/* ── FADE IN ────────────────────────────────────────── */
+.fade-in {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+}
+.fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ── RESPONSIVE ─────────────────────────────────────── */
+@media (max-width: 768px) {
+    nav {
+        padding: 0 20px;
+    }
+    .nav-links {
+        display: none;
+    }
+    .hero-title {
+        font-size: 52px;
+        letter-spacing: 4px;
+    }
+    .hero-subtitle {
+        font-size: 17px;
+    }
+    .hero-stats {
+        gap: 24px;
+    }
+    .stat-value {
+        font-size: 30px;
+    }
+    .hero-cta {
+        flex-direction: column;
+        align-items: center;
+    }
+    .section {
+        padding: 60px 24px;
+    }
+    .section-title {
+        font-size: 30px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-title {
+        font-size: 38px;
+        letter-spacing: 2px;
+    }
+    .hero-subtitle {
+        font-size: 15px;
+    }
+    .hero-stats {
+        flex-direction: column;
+        gap: 16px;
+    }
+    .stat-value {
+        font-size: 28px;
+    }
+    .stat-label {
+        font-size: 11px;
+    }
+    .btn-primary, .btn-secondary {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .spec-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+    .install-block code {
+        font-size: 12px;
+    }
+    footer {
+        padding: 40px 24px 0;
+    }
+}
+
+/* -- HOW IT WORKS GRID ----------------------------------------- */
+.how-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+    margin-top: 48px;
+}
+.how-card {
+    text-align: center;
+    padding: 32px 24px;
+}
+.how-icon {
+    width: 50px;
+    height: 50px;
+    margin: 0 auto 20px;
+    color: var(--neon-blue);
+}
+.how-card h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+}
+.how-card p {
+    color: var(--text2);
+    font-size: 15px;
+    line-height: 1.7;
+}
+
+/* -- POOL STATS BAR -------------------------------------------- */
+.pool-stats {
+    display: flex;
+    justify-content: space-around;
+    gap: 24px;
+    margin-top: 32px;
+    margin-bottom: 48px;
+    padding: 24px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+.pool-stat { text-align: center; }
+.pool-stat-value {
+    font-size: 28px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--neon-blue), var(--neon-green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.pool-stat-label {
+    font-size: 12px;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+}
+
+/* -- ATOM VISUALIZATION ----------------------------------------- */
+.atom-container {
+    position: relative;
+    width: 100%;
+    max-width: 700px;
+    margin: 0 auto;
+}
+#atom-canvas {
+    width: 100%;
+    height: 450px;
+    display: block;
+}
+.atom-tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: rgba(10, 10, 10, 0.92);
+    border: 1px solid var(--neon-blue);
+    color: var(--text);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.15s;
+    box-shadow: 0 0 12px rgba(0, 212, 255, 0.25);
+}
+.atom-tooltip.visible {
+    opacity: 1;
+}
+
+/* -- POOL RESPONSIVE ------------------------------------------- */
+@media (max-width: 768px) {
+    .how-grid { grid-template-columns: 1fr; gap: 32px; }
+    .pool-stats { flex-wrap: wrap; gap: 16px; }
+    .pool-stat { flex: 1 1 40%; }
+    #atom-canvas { height: 350px; }
+}
+@media (max-width: 480px) {
+    .pool-stats { flex-direction: column; align-items: center; }
+    #atom-canvas { height: 280px; }
+}
+
+/* -- OPENCODE SPLIT LAYOUT ---------------------------------------- */
+.oc-split {
+    display: flex;
+    align-items: center;
+    gap: 60px;
+    margin-top: 48px;
+}
+.oc-left {
+    flex: 1;
+    min-width: 0;
+}
+.oc-left p {
+    color: var(--text2);
+    font-size: 16px;
+    line-height: 1.8;
+    margin-bottom: 28px;
+}
+.oc-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 32px;
+}
+.oc-badge {
+    display: inline-block;
+    padding: 6px 18px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    background: transparent;
+}
+.oc-badge--green {
+    border: 1.5px solid var(--neon-green);
+    color: var(--neon-green);
+}
+.oc-badge--blue {
+    border: 1.5px solid var(--neon-blue);
+    color: var(--neon-blue);
+}
+.oc-badge--gradient {
+    border: 1.5px solid transparent;
+    background-image: linear-gradient(var(--bg2), var(--bg2)), linear-gradient(135deg, var(--neon-blue), var(--neon-green));
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+    color: var(--text);
+}
+
+/* -- FAKE TERMINAL ------------------------------------------------ */
+.oc-right {
+    flex: 1;
+    min-width: 0;
+}
+.terminal {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 0 30px rgba(0, 212, 255, 0.08), 0 0 60px rgba(0, 255, 136, 0.04);
+    border: 1px solid var(--border);
+}
+.terminal-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #1a1a1a;
+    border-bottom: 1px solid var(--border);
+}
+.terminal-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+.terminal-dot--red { background: #ff5f57; }
+.terminal-dot--yellow { background: #febc2e; }
+.terminal-dot--green { background: #28c840; }
+.terminal-header span {
+    flex: 1;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text2);
+    font-family: monospace;
+    margin-right: 52px;
+}
+.terminal-body {
+    background: #111;
+    padding: 20px;
+    min-height: 260px;
+    font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+    font-size: 14px;
+    line-height: 1.7;
+}
+.terminal-body .line {
+    white-space: pre;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.3s, transform 0.3s;
+}
+.terminal-body .line.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+.term-prompt { color: var(--neon-green); }
+.term-cmd { color: #fff; }
+.term-ok { color: var(--neon-green); }
+.term-info { color: var(--text2); }
+.term-file { color: var(--neon-blue); }
+.term-cursor {
+    display: inline-block;
+    width: 8px;
+    height: 16px;
+    background: var(--neon-green);
+    vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+}
+@keyframes blink {
+    50% { opacity: 0; }
+}
+
+/* -- OPENCODE RESPONSIVE ------------------------------------------ */
+@media (max-width: 768px) {
+    .oc-split {
+        flex-direction: column;
+        gap: 40px;
+    }
+    .oc-left, .oc-right {
+        width: 100%;
+    }
+    .terminal-body {
+        font-size: 12px;
+        padding: 14px;
+        min-height: 220px;
+    }
+}
+@media (max-width: 480px) {
+    .terminal-body {
+        font-size: 11px;
+    }
+    .oc-badges {
+        gap: 8px;
+    }
+    .oc-badge {
+        font-size: 12px;
+        padding: 5px 14px;
+    }
+}
+
+/* ── ADVANTAGES GRID ─────────────────────────────── */
+.adv-section { padding: 4rem 2rem 2rem; max-width: 1200px; margin: 0 auto; }
+.adv-section .section-title { text-align: center; }
+.adv-grid {
+    display: flex; gap: 1.25rem; overflow-x: auto; scroll-snap-type: x mandatory;
+    padding: 1.5rem 0; -webkit-overflow-scrolling: touch;
+}
+.adv-grid::-webkit-scrollbar { height: 4px; }
+.adv-grid::-webkit-scrollbar-thumb { background: var(--neon-blue); border-radius: 2px; }
+.adv-card {
+    flex: 0 0 220px; scroll-snap-align: start;
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
+    padding: 1.5rem 1.25rem; text-align: center; transition: border-color 0.3s, transform 0.3s;
+}
+.adv-card:hover { border-color: var(--neon-blue); transform: translateY(-4px); }
+.adv-icon { font-size: 2rem; margin-bottom: 0.75rem; display: block; }
+.adv-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.4rem; color: var(--neon-blue); }
+.adv-card p { font-size: 0.8rem; color: var(--text2); line-height: 1.45; }
+@media (min-width: 900px) {
+    .adv-grid { justify-content: center; overflow-x: visible; flex-wrap: wrap; }
+    .adv-card { flex: 0 0 200px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── NAV ──────────────────────────────────────────── -->
+<nav id="main-nav">
+    <a class="logo" href="#hero">CELLULE.AI</a>
+    <div class="nav-links">
+        <a href="#advantages" data-i18n="nav_adv">Advantages</a>
+        <a href="#how" data-i18n="nav_how">How it works</a>
+        <a href="#pool" data-i18n="nav_pool">Network</a>
+        <a href="#opencode" data-i18n="nav_opencode">Build</a>
+        <a href="#contribute" data-i18n="nav_contribute">Contribute</a>
+    </div>
+    <div class="nav-right">
+        <button class="btn-lang" id="btn-en" onclick="setLang('en')">EN</button>
+        <button class="btn-lang active" id="btn-fr" onclick="setLang('fr')">FR</button>
+        <a href="/" class="btn-small" style="background:transparent;border:1px solid var(--neon-blue);margin-right:8px;" data-i18n="nav_login">Login</a>
+            <a href="/" class="btn-small" data-i18n="nav_app">Launch App</a>
+    </div>
+</nav>
+
+<!-- ── HERO ─────────────────────────────────────────── -->
+<section id="hero">
+    <div id="tsparticles"></div>
+    <div class="hero-content">
+        <h1 class="hero-title">CELLULE.AI</h1>
+        <p class="hero-subtitle" data-i18n="hero_subtitle">Decentralized AI powered by the people. Contribute your compute. Access powerful models. Earn rewards.</p>
+        <div class="hero-stats">
+            <div class="stat-item">
+                <div class="stat-value" id="stat-workers">--</div>
+                <div class="stat-label" data-i18n="stat_workers">Workers Online</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="stat-tps">--</div>
+                <div class="stat-label" data-i18n="stat_tps">Tokens / sec</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="stat-jobs">--</div>
+                <div class="stat-label" data-i18n="stat_jobs">Jobs Completed</div>
+            </div>
+        </div>
+        <div class="hero-cta">
+            <a href="#contribute" class="btn-secondary" data-i18n="cta_contribute">Start Contributing</a>
+        </div>
+    </div>
+</section>
+
+
+<!-- ── ADVANTAGES ───────────────────────────────────── -->
+<section id="advantages" class="adv-section fade-in">
+    <h2 class="section-title" data-i18n="adv_title">Why CELLULE.AI?</h2>
+    <hr class="section-divider">
+    <div class="adv-grid">
+        <div class="adv-card">
+            <span class="adv-icon">&#x1f9e0;</span>
+            <h3 data-i18n="adv_mem_t">Infinite Memory</h3>
+            <p data-i18n="adv_mem_d">L1/L2/L3 compaction + vectorized RAG. Your conversations survive beyond the session.</p>
+        </div>
+        <div class="adv-card">
+            <span class="adv-icon">&#x1f4bb;</span>
+            <h3 data-i18n="adv_plat_t">Multi-Platform</h3>
+            <p data-i18n="adv_plat_d">Windows, Linux, macOS. CPU and GPU. From your laptop to your server.</p>
+        </div>
+        <div class="adv-card">
+            <span class="adv-icon">&#x1f310;</span>
+            <h3 data-i18n="adv_pool_t">Heterogeneous Pool</h3>
+            <p data-i18n="adv_pool_d">Models from 0.8B to 35B cooperate. The small one is fast, the big one is smart.</p>
+        </div>
+        <div class="adv-card">
+            <span class="adv-icon">&#x1f512;</span>
+            <h3 data-i18n="adv_priv_t">Privacy First</h3>
+            <p data-i18n="adv_priv_d">Zero-knowledge encryption. Opt-in memory. GDPR compliant.</p>
+        </div>
+        <div class="adv-card">
+            <span class="adv-icon">&#x1f50c;</span>
+            <h3 data-i18n="adv_api_t">OpenAI Compatible</h3>
+            <p data-i18n="adv_api_d">Works with OpenCode, Cursor, aider, Open WebUI, and any compatible tool.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ── HOW IT WORKS ─────────────────────────────────── -->
+<div class="section-alt">
+<section id="how" class="section fade-in">
+    <h2 class="section-title" data-i18n="how_title">How it works</h2>
+    <hr class="section-divider">
+    <div class="how-grid">
+        <div class="how-card fade-in">
+            <div class="how-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="4" y="4" width="16" height="16" rx="2"/>
+                    <rect x="9" y="9" width="6" height="6"/>
+                    <line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/>
+                    <line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/>
+                    <line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/>
+                    <line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/>
+                </svg>
+            </div>
+            <h3 data-i18n="how_1_title">Contribute</h3>
+            <p data-i18n="how_1_desc">Install in 60 seconds. Your CPU or GPU serves an AI model to the network.</p>
+        </div>
+        <div class="how-card fade-in">
+            <div class="how-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6v6l4 2"/>
+                    <circle cx="12" cy="12" r="3"/>
+                </svg>
+            </div>
+            <h3 data-i18n="how_2_title">Earn</h3>
+            <p data-i18n="how_2_desc">Every token generated earns you $IAMINE. The more you contribute, the more you earn.</p>
+        </div>
+        <div class="how-card fade-in">
+            <div class="how-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2a4 4 0 0 1 4 4c0 2-2 3-2 5h-4c0-2-2-3-2-5a4 4 0 0 1 4-4z"/>
+                    <rect x="9" y="13" width="6" height="3" rx="1"/>
+                    <line x1="10" y1="18" x2="14" y2="18"/>
+                    <path d="M8 22h8"/>
+                    <path d="M5 8l-1.5-1"/><path d="M19 8l1.5-1"/>
+                </svg>
+            </div>
+            <h3 data-i18n="how_3_title">Use</h3>
+            <p data-i18n="how_3_desc">Spend your tokens to access models your PC could never run. 30B+ models at your fingertips.</p>
+        </div>
+    </div>
+</section>
+</div>
+
+<!-- ── LIVE NETWORK ─────────────────────────────────── -->
+<section id="pool" class="section fade-in">
+    <h2 class="section-title" data-i18n="pool_title">Live Network</h2>
+    <hr class="section-divider">
+    <div class="pool-stats">
+        <div class="pool-stat">
+            <div class="pool-stat-value" id="pool-workers">--</div>
+            <div class="pool-stat-label" data-i18n="pool_workers">Workers Online</div>
+        </div>
+        <div class="pool-stat">
+            <div class="pool-stat-value" id="pool-tps">--</div>
+            <div class="pool-stat-label" data-i18n="pool_tps">Total t/s</div>
+        </div>
+        <div class="pool-stat">
+            <div class="pool-stat-value" id="pool-models">--</div>
+            <div class="pool-stat-label" data-i18n="pool_models">Models Available</div>
+        </div>
+        <div class="pool-stat">
+            <div class="pool-stat-value" id="pool-uptime">--</div>
+            <div class="pool-stat-label" data-i18n="pool_uptime">Uptime</div>
+        </div>
+    </div>
+    <div class="atom-container">
+        <canvas id="atom-canvas"></canvas>
+        <div id="atom-tooltip" class="atom-tooltip"></div>
+    </div>
+</section>
+
+<!-- ── BUILD WITH CELLULE.AI ────────────────────────────── -->
+<div class="section-alt">
+<section id="opencode" class="section fade-in">
+    <h2 class="section-title" data-i18n="oc_title">Build with CELLULE.AI</h2>
+    <hr class="section-divider">
+    <div class="oc-split">
+        <div class="oc-left">
+            <p data-i18n="oc_desc">OpenAI-compatible API. Use OpenCode, Cursor, or any tool. The pool handles routing, tool-calls, and think delegation automatically.</p>
+            <div class="oc-badges">
+                <span class="oc-badge oc-badge--green" data-i18n="oc_badge_1">22+ t/s</span>
+                <span class="oc-badge oc-badge--blue" data-i18n="oc_badge_2">Native tool-calls</span>
+                <span class="oc-badge oc-badge--gradient" data-i18n="oc_badge_3">Think tool</span>
+            </div>
+            <a href="/" class="btn-primary" data-i18n="oc_cta">Get started</a>
+        </div>
+        <div class="oc-right">
+            <div class="terminal">
+                <div class="terminal-header">
+                    <div class="terminal-dot terminal-dot--red"></div>
+                    <div class="terminal-dot terminal-dot--yellow"></div>
+                    <div class="terminal-dot terminal-dot--green"></div>
+                    <span>opencode &mdash; cellule.ai</span>
+                </div>
+                <div class="terminal-body" id="oc-terminal"></div>
+            </div>
+        </div>
+    </div>
+</section>
+</div>
+
+<!-- ── START EARNING ────────────────────────────────── -->
+<div class="section-alt">
+<section id="contribute" class="section fade-in">
+    <h2 class="section-title" data-i18n="contribute_title">Start earning in 2 minutes</h2>
+    <hr class="section-divider">
+    <div style="display:inline-block;background:linear-gradient(135deg,#f0883e,#ff6b6b);padding:6px 18px;border-radius:20px;font-size:13px;font-weight:700;letter-spacing:1px;margin-bottom:16px;">EARLY ACCESS &mdash; ALPHA</div><br>
+    <p class="contribute-subtitle" data-i18n="contribute_subtitle">Project under active development. Install the worker and start earning $IAMINE.</p>
+
+    <div class="install-block">
+        <button class="btn-copy" onclick="copyInstall()" data-i18n="contribute_copy">Copy</button>
+        <code id="install-cmd">pip install iamine-ai -i https://cellule.ai/pypi --extra-index-url https://pypi.org/simple && python -m iamine worker --auto</code>
+    </div>
+
+    <div class="spec-grid">
+        <div class="spec-card">
+            <h3 data-i18n="contribute_tier1_title">Minimum</h3>
+            <p class="spec-details" data-i18n="contribute_tier1_desc">4 GB RAM, any CPU</p>
+            <div class="spec-reward">~0.5 $IAMINE/min</div>
+        </div>
+        <div class="spec-card recommended">
+            <h3 data-i18n="contribute_tier2_title">Recommended</h3>
+            <p class="spec-details" data-i18n="contribute_tier2_desc">16 GB RAM, GPU</p>
+            <div class="spec-reward">~5 $IAMINE/min</div>
+        </div>
+        <div class="spec-card power">
+            <h3 data-i18n="contribute_tier3_title">Power</h3>
+            <p class="spec-details" data-i18n="contribute_tier3_desc">32+ GB RAM, GPU</p>
+            <div class="spec-reward">~25 $IAMINE/min</div>
+        </div>
+    </div>
+
+    <div class="contribute-cta">
+        <a href="/" class="btn-primary" data-i18n="contribute_cta">Join the network</a>
+    </div>
+</section>
+</div>
+
+<!-- ── FOOTER ───────────────────────────────────────── -->
+<footer id="footer">
+    <div class="footer-grid">
+        <div class="footer-brand">
+            <div class="footer-logo"><span>CELLULE.AI</span></div>
+            <p class="footer-tagline-text" data-i18n="footer_tagline">Decentralized AI for everyone.</p>
+            <div class="footer-stats">
+                <div>
+                    <div class="footer-stat-val" id="footer-workers">--</div>
+                    <div class="footer-stat-lbl" data-i18n="footer_stat_workers">Workers</div>
+                </div>
+                <div>
+                    <div class="footer-stat-val" id="footer-jobs">--</div>
+                    <div class="footer-stat-lbl" data-i18n="footer_stat_jobs">Jobs</div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-col">
+            <h4 data-i18n="footer_links_title">Links</h4>
+            <a href="https://github.com/CELLULEAI/POOL" target="_blank">GitHub</a>
+            <a href="/docs" data-i18n="footer_link_docs">API Docs</a>
+            <a href="mailto:contact@cellule.ai" data-i18n="footer_link_contact">Contact</a>
+            <a href="/static/whitepaper-en.html" target="_blank" data-i18n="footer_whitepaper" id="whitepaper-link" style="color:var(--neon-green);">Read the Whitepaper <span style="font-size:0.7rem;opacity:0.6;"></span></a>
+        </div>
+        <div class="footer-col">
+            <h4 data-i18n="footer_legal_title">Legal</h4>
+            <a href="/privacy" data-i18n="footer_link_privacy">Privacy</a>
+            <a href="/terms" data-i18n="footer_link_terms">Terms</a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <span data-i18n="footer_bottom">&copy; 2026 CELLULE.AI.ORG &mdash; Powered by the community</span>
+    </div>
+</footer>
+
+<script>
+/* ── tsParticles ────────────────────────────────────── */
+tsParticles.load("tsparticles", {
+    fullScreen: false,
+    background: { color: "transparent" },
+    particles: {
+        number: { value: 50, density: { enable: true, area: 900 } },
+        color: { value: "#00d4ff" },
+        opacity: { value: 0.4, random: { enable: true, minimumValue: 0.1 } },
+        size: { value: 2, random: { enable: true, minimumValue: 0.5 } },
+        move: {
+            enable: true,
+            speed: 0.6,
+            direction: "none",
+            outModes: "out"
+        },
+        links: {
+            enable: true,
+            distance: 140,
+            color: "#00d4ff",
+            opacity: 0.15,
+            width: 1
+        }
+    },
+    interactivity: {
+        events: {
+            onHover: { enable: true, mode: "grab" },
+            resize: true
+        },
+        modes: {
+            grab: { distance: 160, links: { opacity: 0.3 } }
+        }
+    },
+    detectRetina: true
+});
+
+/* ── Live stats ─────────────────────────────────────── */
+function refreshStats() {
+    fetch("/v1/status")
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            document.getElementById("stat-workers").textContent = d.workers_online || 0;
+            var totalTps = 0;
+            if (d.workers && d.workers.length) {
+                d.workers.forEach(function(w) {
+                    totalTps += (w.real_tps > 0 ? w.real_tps : w.bench_tps) || 0;
+                });
+            }
+            document.getElementById("stat-tps").textContent = totalTps > 0 ? totalTps.toFixed(0) : "0";
+            document.getElementById("stat-jobs").textContent = d.total_jobs || 0;
+        })
+        .catch(function() {});
+}
+refreshStats();
+setInterval(refreshStats, 10000);
+
+/* ── Copy install command ──────────────────────────── */
+function copyInstall() {
+    var cmd = document.getElementById("install-cmd").textContent;
+    navigator.clipboard.writeText(cmd).then(function() {
+        var btn = document.querySelector(".btn-copy");
+        btn.textContent = "Copied!";
+        setTimeout(function() {
+            var key = "contribute_copy";
+            btn.textContent = (L[currentLang] && L[currentLang][key]) || "Copy";
+        }, 2000);
+    });
+}
+
+/* ── Footer live stats ────────────────────────────── */
+function refreshFooterStats() {
+    fetch("/v1/status")
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            document.getElementById("footer-workers").textContent = d.workers_online || 0;
+            document.getElementById("footer-jobs").textContent = d.total_jobs || 0;
+        })
+        .catch(function() {});
+}
+refreshFooterStats();
+setInterval(refreshFooterStats, 10000);
+
+/* ── i18n ───────────────────────────────────────────── */
+var L = {
+    en: {
+        nav_how: "How it works",
+        nav_pool: "Network",
+        nav_opencode: "Build",
+        nav_contribute: "Contribute",
+            nav_login: "Login",
+            nav_app: "Launch App",
+        hero_subtitle: "Decentralized AI powered by the people. Contribute your compute. Access powerful models. Earn rewards.",
+        stat_workers: "Workers Online",
+        stat_tps: "Tokens / sec",
+        stat_jobs: "Jobs Completed",
+        cta_try: "Try the API",
+        cta_contribute: "Start Contributing",
+        how_title: "How it works",
+        how_1_title: "Contribute",
+        how_1_desc: "Install in 60 seconds. Your CPU or GPU serves an AI model to the network.",
+        how_2_title: "Earn",
+        how_2_desc: "Every token generated earns you $IAMINE. The more you contribute, the more you earn.",
+        how_3_title: "Use",
+        how_3_desc: "Spend your tokens to access models your PC could never run. 30B+ models at your fingertips.",
+        pool_title: "Live Network",
+        pool_workers: "Workers Online",
+        pool_tps: "Total t/s",
+        pool_models: "Models Available",
+        pool_uptime: "Uptime",
+        oc_title: "Build with CELLULE.AI",
+        oc_desc: "OpenAI-compatible API. Use OpenCode, Cursor, or any tool. The pool handles routing, tool-calls, and think delegation automatically.",
+        oc_badge_1: "22+ t/s",
+        oc_badge_2: "Native tool-calls",
+        oc_badge_3: "Think tool",
+        oc_cta: "Get started",
+        contribute_title: "Start earning in 2 minutes",
+        contribute_subtitle: "Project under active development. Install the worker and start earning $IAMINE.",
+        contribute_copy: "Copy",
+        contribute_tier1_title: "Minimum",
+        contribute_tier1_desc: "4 GB RAM, any CPU",
+        contribute_tier2_title: "Recommended",
+        contribute_tier2_desc: "16 GB RAM, GPU",
+        contribute_tier3_title: "Power",
+        contribute_tier3_desc: "32+ GB RAM, GPU",
+        contribute_cta: "Join the network",
+        footer_tagline: "Decentralized AI for everyone.",
+        footer_stat_workers: "Workers",
+        footer_stat_jobs: "Jobs",
+        footer_links_title: "Links",
+        footer_link_docs: "API Docs",
+        footer_link_contact: "Contact",
+        footer_legal_title: "Legal",
+        footer_link_privacy: "Privacy",
+        footer_link_terms: "Terms",
+        nav_adv: "Advantages",
+        adv_title: "Why CELLULE.AI?",
+        adv_mem_t: "Infinite Memory",
+        adv_mem_d: "L1/L2/L3 compaction + vectorized RAG. Your conversations survive beyond the session.",
+        adv_plat_t: "Multi-Platform",
+        adv_plat_d: "Windows, Linux, macOS. CPU and GPU. From your laptop to your server.",
+        adv_pool_t: "Heterogeneous Pool",
+        adv_pool_d: "Models from 0.8B to 35B cooperate. The small one is fast, the big one is smart.",
+        adv_priv_t: "Privacy First",
+        adv_priv_d: "Zero-knowledge encryption. Opt-in memory. GDPR compliant.",
+        adv_api_t: "OpenAI Compatible",
+        adv_api_d: "Works with OpenCode, Cursor, aider, Open WebUI, and any compatible tool.",
+        footer_whitepaper: "Read the Whitepaper",
+        footer_bottom: "\u00a9 2026 CELLULE.AI.ORG \u2014 Powered by the community"
+    },
+    fr: {
+        nav_how: "Comment \u00e7a marche",
+        nav_pool: "R\u00e9seau",
+        nav_opencode: "D\u00e9velopper",
+        nav_contribute: "Contribuer",
+            nav_login: "Connexion",
+            nav_app: "Lancer l'app",
+        hero_subtitle: "IA d\u00e9centralis\u00e9e, propuls\u00e9e par les gens. Partagez votre puissance de calcul. Acc\u00e9dez \u00e0 des mod\u00e8les puissants. Gagnez des r\u00e9compenses.",
+        stat_workers: "Workers en ligne",
+        stat_tps: "Tokens / sec",
+        stat_jobs: "Jobs termin\u00e9s",
+        cta_try: "Essayer l\u0027API",
+        cta_contribute: "Commencer \u00e0 contribuer",
+        how_title: "Comment \u00e7a marche",
+        how_1_title: "Contribuer",
+        how_1_desc: "Installation en 60 secondes. Votre CPU ou GPU sert un mod\u00e8le IA au r\u00e9seau.",
+        how_2_title: "Gagner",
+        how_2_desc: "Chaque token g\u00e9n\u00e9r\u00e9 vous rapporte des $IAMINE. Plus vous contribuez, plus vous gagnez.",
+        how_3_title: "Utiliser",
+        how_3_desc: "D\u00e9pensez vos tokens pour acc\u00e9der \u00e0 des mod\u00e8les que votre PC ne pourrait jamais faire tourner. 30B+ \u00e0 port\u00e9e de main.",
+        pool_title: "R\u00e9seau en direct",
+        pool_workers: "Workers en ligne",
+        pool_tps: "Total t/s",
+        pool_models: "Mod\u00e8les disponibles",
+        pool_uptime: "Disponibilit\u00e9",
+        oc_title: "D\u00e9velopper avec CELLULE.AI",
+        oc_desc: "API compatible OpenAI. Utilisez OpenCode, Cursor, ou n\u0027importe quel outil. Le pool g\u00e8re le routing, les tool-calls et la d\u00e9l\u00e9gation think automatiquement.",
+        oc_badge_1: "22+ t/s",
+        oc_badge_2: "Tool-calls natifs",
+        oc_badge_3: "Outil Think",
+        oc_cta: "Commencer",
+        contribute_title: "Commencez \u00e0 gagner en 2 minutes",
+        contribute_subtitle: "Projet en cours de d\u00e9veloppement. Installez le worker et commencez \u00e0 gagner des $IAMINE imm\u00e9diatement.",
+        contribute_copy: "Copier",
+        contribute_tier1_title: "Minimum",
+        contribute_tier1_desc: "4 Go RAM, n\u0027importe quel CPU",
+        contribute_tier2_title: "Recommand\u00e9",
+        contribute_tier2_desc: "16 Go RAM, GPU",
+        contribute_tier3_title: "Puissance",
+        contribute_tier3_desc: "32+ Go RAM, GPU",
+        contribute_cta: "Rejoindre le r\u00e9seau",
+        footer_tagline: "IA d\u00e9centralis\u00e9e pour tous.",
+        footer_stat_workers: "Workers",
+        footer_stat_jobs: "Jobs",
+        footer_links_title: "Liens",
+        footer_link_docs: "Docs API",
+        footer_link_contact: "Contact",
+        footer_legal_title: "L\u00e9gal",
+        footer_link_privacy: "Confidentialit\u00e9",
+        footer_link_terms: "CGU",
+        nav_adv: "Avantages",
+        adv_title: "Pourquoi CELLULE.AI\u00a0?",
+        adv_mem_t: "M\u00e9moire infinie",
+        adv_mem_d: "Compaction L1/L2/L3 + RAG vectoris\u00e9. Vos conversations survivent au-del\u00e0 de la session.",
+        adv_plat_t: "Multi-plateforme",
+        adv_plat_d: "Windows, Linux, macOS. CPU et GPU. De votre laptop \u00e0 votre serveur.",
+        adv_pool_t: "Pool h\u00e9t\u00e9rog\u00e8ne",
+        adv_pool_d: "Des mod\u00e8les de 0.8B \u00e0 35B coop\u00e8rent. Le petit est rapide, le gros est intelligent.",
+        adv_priv_t: "Confidentialit\u00e9 d'abord",
+        adv_priv_d: "Chiffrement zero-knowledge. M\u00e9moire opt-in. Conforme RGPD.",
+        adv_api_t: "Compatible OpenAI",
+        adv_api_d: "Fonctionne avec OpenCode, Cursor, aider, Open WebUI et tout outil compatible.",
+        footer_whitepaper: "Lire le livre blanc",
+        footer_bottom: "\u00a9 2026 CELLULE.AI.ORG \u2014 Propuls\u00e9 par la communaut\u00e9"
+    }
+};
+
+var currentLang = localStorage.getItem("iamine_lang") || "en";
+
+function setLang(lang) {
+    currentLang = lang;
+    localStorage.setItem("iamine_lang", lang);
+    document.documentElement.lang = lang;
+    document.querySelectorAll("[data-i18n]").forEach(function(el) {
+        var key = el.getAttribute("data-i18n");
+        if (L[lang] && L[lang][key]) {
+            el.textContent = L[lang][key];
+        }
+    });
+    document.getElementById("btn-en").classList.toggle("active", lang === "en");
+    document.getElementById("btn-fr").classList.toggle("active", lang === "fr");
+    var wpLink = document.getElementById("whitepaper-link"); if (wpLink) wpLink.href = "/static/whitepaper-" + lang + ".html";
+}
+setLang(currentLang);
+
+/* ── Fade-in observer ───────────────────────────────── */
+var fadeObserver = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+        if (e.isIntersecting) {
+            e.target.classList.add("visible");
+        }
+    });
+}, { threshold: 0.15 });
+
+document.querySelectorAll(".fade-in").forEach(function(el) { fadeObserver.observe(el); });
+
+/* ── Nav scroll effect ──────────────────────────────── */
+var navEl = document.getElementById("main-nav");
+var heroObserver = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+        navEl.classList.toggle("scrolled", !e.isIntersecting);
+    });
+}, { threshold: 0.05 });
+heroObserver.observe(document.getElementById("hero"));
+
+/* -- Pool section: Atom visualization -------------------------- */
+function formatUptime(sec) {
+    if (sec < 60) return sec + "s";
+    if (sec < 3600) return Math.floor(sec / 60) + "m";
+    if (sec < 86400) return Math.floor(sec / 3600) + "h " + Math.floor((sec % 3600) / 60) + "m";
+    return Math.floor(sec / 86400) + "d " + Math.floor((sec % 86400) / 3600) + "h";
+}
+
+(function() {
+    var canvas = document.getElementById("atom-canvas");
+    var ctx = canvas.getContext("2d");
+    var tooltip = document.getElementById("atom-tooltip");
+    var dpr = window.devicePixelRatio || 1;
+    var atomWorkers = [];
+    var time = 0;
+    /* -- Traveler particle state ---------------------------------- */
+    var traveler = { active: false, x: 0, y: 0, progress: 0, trail: [], startX: 0, startY: 0 };
+    var travelerTimer = 0;
+    var ghostFlash = 0;
+    var bondOpacity = 0;
+    var TRAVEL_INTERVAL = 480;
+    var TRAVEL_DURATION = 120;
+
+    /* -- Job particles (electron <-> nucleus) ------------------------- */
+    var jobParticles = [];
+    var MAX_JOB_PARTICLES = 10;
+    var prevBusyIds = {};
+    var heartbeatTimer = 0;
+
+    function spawnJobParticle(fromX, fromY, toX, toY, color, size, alpha) {
+        if (jobParticles.length >= MAX_JOB_PARTICLES) return;
+        var midX = (fromX + toX) / 2;
+        var midY = (fromY + toY) / 2;
+        var dx = toX - fromX;
+        var dy = toY - fromY;
+        var len = Math.sqrt(dx * dx + dy * dy) || 1;
+        var side = Math.random() > 0.5 ? 1 : -1;
+        var arcStrength = 0.2 + Math.random() * 0.15;
+        var cpX = midX + (-dy / len) * len * arcStrength * side;
+        var cpY = midY + (dx / len) * len * arcStrength * side;
+        jobParticles.push({
+            fromX: fromX, fromY: fromY,
+            toX: toX, toY: toY,
+            cpX: cpX, cpY: cpY,
+            progress: 0,
+            speed: 0.012 + Math.random() * 0.008,
+            color: color,
+            size: size,
+            alpha: alpha,
+            trail: []
+        });
+    }
+
+    function getElectronPos(workerIdx, cx, cy, baseR, currentTime) {
+        var oi = workerIdx % 3;
+        var orbits = assignOrbits(atomWorkers);
+        var arr = orbits[oi];
+        var jInOrbit = Math.floor(workerIdx / 3);
+        if (jInOrbit >= arr.length) jInOrbit = 0;
+        var r = baseR * (0.45 + oi * 0.28);
+        var speed = 0.3 - oi * 0.08;
+        var angle = currentTime * speed + (jInOrbit * 2 * Math.PI / arr.length);
+        return { x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r * 0.6 };
+    }
+
+
+    function resize() {
+        var rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    resize();
+    window.addEventListener("resize", resize);
+
+    function assignOrbits(workers) {
+        var orbits = [[], [], []];
+        workers.forEach(function(w, i) {
+            orbits[i % 3].push(w);
+        });
+        return orbits;
+    }
+
+    function refreshPoolAtom() {
+        fetch("/v1/status").then(function(r) { return r.json(); }).then(function(data) {
+            var workers = data.workers || [];
+            var totalTps = 0;
+            var models = {};
+            workers.forEach(function(w) {
+                totalTps += (w.real_tps > 0 ? w.real_tps : w.bench_tps) || 0;
+                if (w.model) models[w.model] = true;
+            });
+            document.getElementById("pool-workers").textContent = data.workers_online || 0;
+            document.getElementById("pool-tps").textContent = totalTps > 0 ? totalTps.toFixed(0) : "0";
+            document.getElementById("pool-models").textContent = Object.keys(models).length;
+            document.getElementById("pool-uptime").textContent = formatUptime(data.uptime_sec || 0);
+            /* Spawn job particles for newly busy workers */
+            var currentBusyIds = {};
+            workers.forEach(function(w, i) {
+                if (w.busy) {
+                    currentBusyIds[w.id] = i;
+                    if (!prevBusyIds[w.id]) {
+                        var rect = canvas.getBoundingClientRect();
+                        var cw = rect.width, ch = rect.height;
+                        var ccx = cw / 2, ccy = ch / 2;
+                        var br = Math.min(cw, ch) * 0.35;
+                        var pos = getElectronPos(i, ccx, ccy, br, time);
+                        spawnJobParticle(pos.x, pos.y, ccx, ccy, "neon-blue", 3.5, 0.8);
+                        (function(idx) {
+                            setTimeout(function() {
+                                var rect2 = canvas.getBoundingClientRect();
+                                var cw2 = rect2.width, ch2 = rect2.height;
+                                var ccx2 = cw2 / 2, ccy2 = ch2 / 2;
+                                var br2 = Math.min(cw2, ch2) * 0.35;
+                                var pos2 = getElectronPos(idx, ccx2, ccy2, br2, time);
+                                spawnJobParticle(ccx2, ccy2, pos2.x, pos2.y, "neon-green", 3, 0.75);
+                            }, 500 + Math.random() * 300);
+                        })(i);
+                    }
+                }
+            });
+            prevBusyIds = currentBusyIds;
+            atomWorkers = workers;
+        }).catch(function() {});
+    }
+    refreshPoolAtom();
+    setInterval(refreshPoolAtom, 10000);
+
+    var hoveredWorker = null;
+    canvas.addEventListener("mousemove", function(e) {
+        var rect = canvas.getBoundingClientRect();
+        var mx = e.clientX - rect.left;
+        var my = e.clientY - rect.top;
+        var w = rect.width;
+        var h = rect.height;
+        var cx = w / 2;
+        var cy = h / 2;
+        var baseR = Math.min(w, h) * 0.35;
+        var orbits = assignOrbits(atomWorkers);
+        var found = null;
+        for (var oi = 0; oi < 3; oi++) {
+            var r = baseR * (0.45 + oi * 0.28);
+            var speed = 0.3 - oi * 0.08;
+            var arr = orbits[oi];
+            for (var j = 0; j < arr.length; j++) {
+                var angle = time * speed + (j * 2 * Math.PI / arr.length);
+                var ex = cx + Math.cos(angle) * r;
+                var ey = cy + Math.sin(angle) * r * 0.6;
+                var dx = mx - ex;
+                var dy = my - ey;
+                if (dx * dx + dy * dy < 196) {
+                    found = arr[j];
+                    tooltip.textContent = (found.id || "Unknown") + (found.busy ? " [BUSY]" : " [IDLE]");
+                    tooltip.style.left = (ex + 16) + "px";
+                    tooltip.style.top = (ey - 12) + "px";
+                    break;
+                }
+            }
+            if (found) break;
+        }
+        if (found) {
+            tooltip.classList.add("visible");
+            hoveredWorker = found;
+        } else {
+            tooltip.classList.remove("visible");
+            hoveredWorker = null;
+        }
+    });
+    canvas.addEventListener("mouseleave", function() {
+        tooltip.classList.remove("visible");
+        hoveredWorker = null;
+    });
+
+    function draw() {
+        var rect = canvas.getBoundingClientRect();
+        var w = rect.width;
+        var h = rect.height;
+        var cx = w / 2;
+        var cy = h / 2;
+        var baseR = Math.min(w, h) * 0.35;
+
+        ctx.clearRect(0, 0, w, h);
+
+        /* Count busy workers for nucleus intensity */
+        var busyCount = 0;
+        atomWorkers.forEach(function(w) { if (w.busy) busyCount++; });
+        var busyRatio = atomWorkers.length > 0 ? busyCount / atomWorkers.length : 0;
+        var nucleusBoost = busyRatio * 0.4;
+
+        /* Nucleus outer glow -- stronger when jobs are active */
+        var glowRadius = 55 + busyRatio * 20;
+        var grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowRadius);
+        grad.addColorStop(0, "rgba(0, 212, 255, " + (0.35 + nucleusBoost) + ")");
+        grad.addColorStop(0.5, "rgba(0, 212, 255, " + (0.08 + nucleusBoost * 0.3) + ")");
+        grad.addColorStop(1, "rgba(0, 212, 255, 0)");
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, glowRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        /* Pulsing aura -- amplified by busy workers */
+        var pulseSpeed = 1.5 + busyRatio * 2;
+        var pulseAmp = 0.2 + busyRatio * 0.3;
+        var pulse = 0.4 + pulseAmp * Math.sin(time * pulseSpeed);
+        var auraRadius = 70 + busyRatio * 15;
+        var auraGrad = ctx.createRadialGradient(cx, cy, 22, cx, cy, auraRadius);
+        auraGrad.addColorStop(0, "rgba(0, 212, 255, " + (pulse * 0.25 + nucleusBoost * 0.15) + ")");
+        auraGrad.addColorStop(1, "rgba(0, 212, 255, 0)");
+        ctx.fillStyle = auraGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, auraRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        /* Nucleus ring */
+        ctx.beginPath();
+        ctx.arc(cx, cy, 28, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(0, 212, 255, 0.5)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        /* Nucleus fill */
+        var nucGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 22);
+        nucGrad.addColorStop(0, "rgba(0, 212, 255, 0.95)");
+        nucGrad.addColorStop(1, "rgba(0, 180, 220, 0.35)");
+        ctx.fillStyle = nucGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 22, 0, Math.PI * 2);
+        ctx.fill();
+
+        /* Label */
+        ctx.fillStyle = "#000";
+        ctx.font = "bold 13px Inter, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("POOL", cx, cy);
+
+        /* 3 orbit ellipses */
+        for (var oi = 0; oi < 3; oi++) {
+            var r = baseR * (0.45 + oi * 0.28);
+            ctx.beginPath();
+            ctx.ellipse(cx, cy, r, r * 0.6, 0, 0, Math.PI * 2);
+            ctx.strokeStyle = "rgba(0, 212, 255, " + (0.13 - oi * 0.025) + ")";
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 6]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        /* Electrons */
+        var orbits = assignOrbits(atomWorkers);
+        for (var oi = 0; oi < 3; oi++) {
+            var r = baseR * (0.45 + oi * 0.28);
+            var speed = 0.3 - oi * 0.08;
+            var arr = orbits[oi];
+            for (var j = 0; j < arr.length; j++) {
+                var angle = time * speed + (j * 2 * Math.PI / arr.length);
+                var ex = cx + Math.cos(angle) * r;
+                var ey = cy + Math.sin(angle) * r * 0.6;
+                var busy = arr[j].busy;
+                var isHov = hoveredWorker && hoveredWorker.id === arr[j].id;
+                var sz = isHov ? 9 : 6;
+
+                /* Glow */
+                var eGrad = ctx.createRadialGradient(ex, ey, 0, ex, ey, sz + 10);
+                if (busy) {
+                    eGrad.addColorStop(0, "rgba(255, 149, 0, 0.55)");
+                    eGrad.addColorStop(1, "rgba(255, 149, 0, 0)");
+                } else {
+                    eGrad.addColorStop(0, "rgba(0, 255, 136, 0.55)");
+                    eGrad.addColorStop(1, "rgba(0, 255, 136, 0)");
+                }
+                ctx.fillStyle = eGrad;
+                ctx.beginPath();
+                ctx.arc(ex, ey, sz + 10, 0, Math.PI * 2);
+                ctx.fill();
+
+                /* Body */
+                ctx.beginPath();
+                ctx.arc(ex, ey, sz, 0, Math.PI * 2);
+                ctx.fillStyle = busy ? "#ff9500" : "#00ff88";
+                ctx.fill();
+
+                /* Specular highlight */
+                ctx.beginPath();
+                ctx.arc(ex - sz * 0.3, ey - sz * 0.3, sz * 0.35, 0, Math.PI * 2);
+                ctx.fillStyle = "rgba(255,255,255,0.35)";
+                ctx.fill();
+
+                /* Trail (fading arc behind electron) */
+                ctx.beginPath();
+                ctx.ellipse(cx, cy, r, r * 0.6, 0, angle - 0.4, angle);
+                ctx.strokeStyle = busy ? "rgba(255,149,0,0.15)" : "rgba(0,255,136,0.15)";
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            }
+        }
+
+
+        /* -- Ghost atom (bottom-right) -------------------------------- */
+        var ghostX = cx + baseR * 1.6;
+        var ghostY = cy + baseR * 0.7;
+        var ghostR = 14;
+        var ghostBaseAlpha = 0.25;
+        var ghostAlpha = ghostBaseAlpha + ghostFlash;
+        if (ghostFlash > 0) ghostFlash -= 0.015;
+        if (ghostFlash < 0) ghostFlash = 0;
+
+        /* Ghost outer glow */
+        var ggGrad = ctx.createRadialGradient(ghostX, ghostY, 0, ghostX, ghostY, ghostR + 18);
+        ggGrad.addColorStop(0, "rgba(0, 255, 136, " + (ghostAlpha * 0.4) + ")");
+        ggGrad.addColorStop(1, "rgba(0, 255, 136, 0)");
+        ctx.fillStyle = ggGrad;
+        ctx.beginPath();
+        ctx.arc(ghostX, ghostY, ghostR + 18, 0, Math.PI * 2);
+        ctx.fill();
+
+        /* Ghost ring (dashed) */
+        ctx.beginPath();
+        ctx.arc(ghostX, ghostY, ghostR, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(0, 212, 255, " + (ghostAlpha * 0.6) + ")";
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([3, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        /* Ghost fill */
+        var gfGrad = ctx.createRadialGradient(ghostX, ghostY, 0, ghostX, ghostY, ghostR);
+        gfGrad.addColorStop(0, "rgba(0, 212, 255, " + (ghostAlpha * 0.5) + ")");
+        gfGrad.addColorStop(1, "rgba(0, 180, 220, " + (ghostAlpha * 0.15) + ")");
+        ctx.fillStyle = gfGrad;
+        ctx.beginPath();
+        ctx.arc(ghostX, ghostY, ghostR, 0, Math.PI * 2);
+        ctx.fill();
+
+        /* Ghost label */
+        ctx.fillStyle = "rgba(0, 212, 255, " + (ghostAlpha * 0.8) + ")";
+        ctx.font = "bold 11px Inter, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("?", ghostX, ghostY);
+
+        /* Ghost mini orbit ring */
+        ctx.beginPath();
+        ctx.ellipse(ghostX, ghostY, ghostR * 1.6, ghostR * 1.0, 0, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(0, 212, 255, " + (ghostAlpha * 0.2) + ")";
+        ctx.lineWidth = 0.8;
+        ctx.setLineDash([2, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        /* -- Traveler particle logic ---------------------------------- */
+        travelerTimer++;
+        if (!traveler.active && travelerTimer >= TRAVEL_INTERVAL) {
+            travelerTimer = 0;
+            traveler.active = true;
+            traveler.progress = 0;
+            traveler.trail = [];
+            /* Start from a point on the outer orbit */
+            var outerR = baseR * (0.45 + 2 * 0.28);
+            var startAngle = time * (0.3 - 2 * 0.08);
+            traveler.startX = cx + Math.cos(startAngle) * outerR;
+            traveler.startY = cy + Math.sin(startAngle) * outerR * 0.6;
+            traveler.x = traveler.startX;
+            traveler.y = traveler.startY;
+        }
+
+        if (traveler.active) {
+            traveler.progress += 1 / TRAVEL_DURATION;
+            if (traveler.progress >= 1) {
+                traveler.progress = 1;
+                traveler.active = false;
+                ghostFlash = 0.7;
+                bondOpacity = 0.5;
+            }
+            /* Ease in-out */
+            var t = traveler.progress;
+            var ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+            /* Arc path via control point (above midpoint) */
+            var midX = (traveler.startX + ghostX) / 2;
+            var midY = (traveler.startY + ghostY) / 2 - baseR * 0.35;
+            /* Quadratic bezier interpolation */
+            var oneMinT = 1 - ease;
+            traveler.x = oneMinT * oneMinT * traveler.startX + 2 * oneMinT * ease * midX + ease * ease * ghostX;
+            traveler.y = oneMinT * oneMinT * traveler.startY + 2 * oneMinT * ease * midY + ease * ease * ghostY;
+
+            /* Trail */
+            traveler.trail.push({ x: traveler.x, y: traveler.y, age: 0 });
+            if (traveler.trail.length > 30) traveler.trail.shift();
+
+            /* Draw trail */
+            for (var ti = 0; ti < traveler.trail.length; ti++) {
+                var tp = traveler.trail[ti];
+                tp.age++;
+                var ta = Math.max(0, 1 - tp.age / 30);
+                ctx.beginPath();
+                ctx.arc(tp.x, tp.y, 2.5 * ta + 1, 0, Math.PI * 2);
+                ctx.fillStyle = "rgba(0, 255, 136, " + (ta * 0.5) + ")";
+                ctx.fill();
+            }
+
+            /* Draw particle */
+            var pGrad = ctx.createRadialGradient(traveler.x, traveler.y, 0, traveler.x, traveler.y, 12);
+            pGrad.addColorStop(0, "rgba(0, 255, 136, 0.7)");
+            pGrad.addColorStop(1, "rgba(0, 255, 136, 0)");
+            ctx.fillStyle = pGrad;
+            ctx.beginPath();
+            ctx.arc(traveler.x, traveler.y, 12, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(traveler.x, traveler.y, 4, 0, Math.PI * 2);
+            ctx.fillStyle = "#00ff88";
+            ctx.fill();
+
+            /* Specular */
+            ctx.beginPath();
+            ctx.arc(traveler.x - 1.2, traveler.y - 1.2, 1.5, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(255,255,255,0.4)";
+            ctx.fill();
+        }
+
+        /* -- Covalent bond line --------------------------------------- */
+        if (bondOpacity > 0) {
+            bondOpacity -= 0.006;
+            if (bondOpacity < 0) bondOpacity = 0;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(ghostX, ghostY);
+            ctx.strokeStyle = "rgba(0, 255, 136, " + bondOpacity + ")";
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([6, 4]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        /* -- Job particles rendering ---------------------------------- */
+        for (var pi = jobParticles.length - 1; pi >= 0; pi--) {
+            var p = jobParticles[pi];
+            p.progress += p.speed;
+            if (p.progress >= 1) {
+                jobParticles.splice(pi, 1);
+                continue;
+            }
+            var t2 = p.progress;
+            var ease2 = t2 < 0.5 ? 2 * t2 * t2 : 1 - Math.pow(-2 * t2 + 2, 2) / 2;
+            var omt = 1 - ease2;
+            var px = omt * omt * p.fromX + 2 * omt * ease2 * p.cpX + ease2 * ease2 * p.toX;
+            var py = omt * omt * p.fromY + 2 * omt * ease2 * p.cpY + ease2 * ease2 * p.toY;
+
+            p.trail.push({ x: px, y: py, age: 0 });
+            if (p.trail.length > 18) p.trail.shift();
+
+            for (var ti2 = 0; ti2 < p.trail.length; ti2++) {
+                var tp2 = p.trail[ti2];
+                tp2.age++;
+                var ta2 = Math.max(0, 1 - tp2.age / 18);
+                var trailColor = p.color === "neon-blue"
+                    ? "rgba(0, 212, 255, " + (ta2 * p.alpha * 0.4) + ")"
+                    : "rgba(0, 255, 136, " + (ta2 * p.alpha * 0.4) + ")";
+                ctx.beginPath();
+                ctx.arc(tp2.x, tp2.y, (p.size * 0.6) * ta2 + 0.5, 0, Math.PI * 2);
+                ctx.fillStyle = trailColor;
+                ctx.fill();
+            }
+
+            var pColor = p.color === "neon-blue" ? [0, 212, 255] : [0, 255, 136];
+            var jpGrad = ctx.createRadialGradient(px, py, 0, px, py, p.size + 6);
+            jpGrad.addColorStop(0, "rgba(" + pColor.join(",") + ", " + (p.alpha * 0.6) + ")");
+            jpGrad.addColorStop(1, "rgba(" + pColor.join(",") + ", 0)");
+            ctx.fillStyle = jpGrad;
+            ctx.beginPath();
+            ctx.arc(px, py, p.size + 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(px, py, p.size, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(" + pColor.join(",") + ", " + p.alpha + ")";
+            ctx.fill();
+        }
+
+        /* -- Heartbeat micro-particles (idle workers) ----------------- */
+        heartbeatTimer++;
+        if (heartbeatTimer >= 180 + Math.floor(Math.random() * 120)) {
+            heartbeatTimer = 0;
+            var idleWorkers = [];
+            atomWorkers.forEach(function(w, i) { if (!w.busy) idleWorkers.push(i); });
+            if (idleWorkers.length > 0 && jobParticles.length < MAX_JOB_PARTICLES - 2) {
+                var rIdx = idleWorkers[Math.floor(Math.random() * idleWorkers.length)];
+                var pos3 = getElectronPos(rIdx, cx, cy, baseR, time);
+                var toNucleus = Math.random() > 0.5;
+                if (toNucleus) {
+                    spawnJobParticle(pos3.x, pos3.y, cx, cy, "neon-blue", 1.8, 0.3);
+                } else {
+                    spawnJobParticle(cx, cy, pos3.x, pos3.y, "neon-green", 1.8, 0.3);
+                }
+            }
+        }
+
+        time += 0.012;
+        requestAnimationFrame(draw);
+    }
+    draw();
+})();
+
+
+/* -- OpenCode Terminal Animation ---------------------------------- */
+(function() {
+    var term = document.getElementById("oc-terminal");
+    if (!term) return;
+
+    var lines = [
+        { html: '<span class="term-prompt">$ </span><span class="term-cmd">opencode</span>', delay: 600 },
+        { html: '<span class="term-prompt">&gt; </span><span class="term-cmd">lis SPEC.md et commence le d\u00e9veloppement</span>', delay: 1200 },
+        { html: '<span class="term-ok">\u2713</span> <span class="term-info">Read</span> <span class="term-file">SPEC.md</span> <span class="term-info">(1.2s)</span>', delay: 800 },
+        { html: '<span class="term-ok">\u2713</span> <span class="term-info">Write</span> <span class="term-file">taskflow/__init__.py</span> <span class="term-info">(0.8s)</span>', delay: 700 },
+        { html: '<span class="term-ok">\u2713</span> <span class="term-info">Write</span> <span class="term-file">taskflow/cli.py</span> <span class="term-info">(1.5s)</span>', delay: 900 },
+        { html: '<span class="term-ok">\u2713</span> <span class="term-info">Bash</span> <span class="term-cmd">python -m unittest tests/</span> <span class="term-info">(0.3s)</span>', delay: 600 },
+        { html: '  <span class="term-ok">15 tests passed \u2713</span>', delay: 500 },
+        { html: '<span class="term-prompt">&gt; </span><span class="term-ok">Project ready in 8 minutes</span>', delay: 0 }
+    ];
+
+    var animating = false;
+    var animTimeout = null;
+
+    function runAnimation() {
+        if (animating) return;
+        animating = true;
+        term.innerHTML = "";
+        var idx = 0;
+
+        function showNext() {
+            if (idx >= lines.length) {
+                animTimeout = setTimeout(function() {
+                    animating = false;
+                    runAnimation();
+                }, 3000);
+                return;
+            }
+            var div = document.createElement("div");
+            div.className = "line";
+            div.innerHTML = lines[idx].html;
+            if (idx === lines.length - 1) {
+                div.innerHTML += ' <span class="term-cursor"></span>';
+            }
+            term.appendChild(div);
+            void div.offsetWidth;
+            div.classList.add("show");
+            idx++;
+            animTimeout = setTimeout(showNext, lines[idx - 1].delay || 500);
+        }
+        showNext();
+    }
+
+    var ocSection = document.getElementById("opencode");
+    var ocObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) {
+            if (e.isIntersecting && !animating) {
+                runAnimation();
+            }
+        });
+    }, { threshold: 0.3 });
+    ocObserver.observe(ocSection);
+})();
+
+/* Re-observe new fade-in elements */
+document.querySelectorAll(".fade-in:not(.visible)").forEach(function(el) { fadeObserver.observe(el); });
+
+</script>
+</body>
+</html>

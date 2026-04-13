@@ -1,0 +1,1909 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CELLULE.AI.ORG — Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0a; --bg2: #111111; --bg3: #1a1a1a;
+            --accent: #00d4ff; --accent2: #00ff88; --accent3: #ff8844;
+            --text: #f0f0f0; --text2: #888888; --border: #222222;
+            --neon-blue: #00d4ff; --neon-green: #00ff88;
+            --red: #f85149; --purple: #bc8cff;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+
+        nav {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.75rem 2rem; border-bottom: 1px solid var(--border); background: var(--bg2);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .logo { font-size: 1.3rem; font-weight: 700; color: var(--accent); text-decoration: none; letter-spacing: 2px; }
+        .logo span { color: var(--accent3); }
+        .logo small { font-size: 0.7rem; color: var(--purple); margin-left: 0.5rem; }
+        nav a { color: var(--text2); text-decoration: none; margin-left: 2rem; font-size: 0.9rem; transition: color 0.2s; }
+        nav a:hover { color: var(--text); }
+
+        .container { max-width: 1300px; margin: 0 auto; padding: 2rem; }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--neon-blue), var(--neon-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        h2 span {
+            background: linear-gradient(135deg, var(--neon-green), var(--neon-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Stats grid */
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card {
+            background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+            padding: 1.5rem; text-align: center;
+        }
+        .stat-card .value { font-size: 2rem; font-weight: 700; color: var(--accent2); }
+        .stat-card .label { font-size: 0.8rem; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; }
+        th { text-align: left; padding: 0.75rem; color: var(--text2); border-bottom: 2px solid var(--border); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
+        td { padding: 0.75rem; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+
+        /* Model cards */
+        .models-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .model-card {
+            background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+            padding: 1.5rem; position: relative; transition: all 0.3s;
+        }
+        .model-card.locked { opacity: 0.5; }
+        .model-card.active { border-color: var(--accent2); }
+        .model-card.unlocked { border-color: var(--accent3); }
+
+        .model-badge {
+            position: absolute; top: 12px; right: 12px; padding: 0.2rem 0.6rem;
+            border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+        }
+        .badge-active { background: var(--accent2); color: var(--bg); }
+        .badge-unlocked { background: var(--accent3); color: var(--bg); }
+        .badge-locked { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); }
+
+        .model-card h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+        .model-card .params { color: var(--accent); font-weight: 600; }
+        .model-card .details { color: var(--text2); font-size: 0.85rem; margin-top: 0.5rem; }
+        .model-card .progress-bg {
+            height: 6px; background: var(--bg3); border-radius: 3px; margin-top: 0.75rem; overflow: hidden;
+        }
+        .model-card .progress-bar {
+            height: 100%; border-radius: 3px; transition: width 1s ease;
+        }
+        .progress-green { background: var(--accent2); }
+        .progress-orange { background: var(--accent3); }
+        .progress-gray { background: var(--text2); }
+        .model-card .threshold { font-size: 0.8rem; color: var(--text2); margin-top: 0.25rem; }
+
+        /* Workers */
+        .worker-row td:first-child { color: var(--accent); font-weight: 600; }
+        .worker-status { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 0.5rem; }
+        .worker-status.idle { background: var(--accent2); }
+        .worker-status.busy { background: var(--accent3); }
+
+        /* Auto-refresh indicator */
+        .refresh-bar {
+            position: fixed; bottom: 0; left: 0; right: 0; height: 3px; background: var(--bg3); z-index: 100;
+        }
+        .refresh-progress {
+            height: 100%; background: var(--accent); transition: width linear;
+        }
+
+        .section { margin-bottom: 3rem; }
+
+        /* Tabs */
+        .tab-btn { padding:0.4rem 1rem; background:transparent; color:var(--text2); border:1px solid var(--border); border-radius:6px; cursor:pointer; font-size:0.85rem; transition: all 0.2s; }
+        .tab-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+        .tab-btn:hover { color:var(--text); border-color: var(--text2); }
+    
+
+        .tab-content { display:block; }
+
+        /* ═══════════ HOME MODULE CARDS ═══════════ */
+        .home-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+        .module-card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0;
+            overflow: hidden;
+            transition: all 0.25s ease;
+            position: relative;
+        }
+        .module-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(88, 166, 255, 0.08);
+        }
+        .module-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1.25rem 1.25rem 0.75rem;
+        }
+        .module-icon {
+            width: 42px; height: 42px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+        .module-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .module-header .module-badge {
+            margin-left: auto;
+            padding: 0.15rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .module-body {
+            padding: 0 1.25rem;
+        }
+        .module-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .module-stat {
+            text-align: center;
+            padding: 0.5rem 0.25rem;
+            background: var(--bg3);
+            border-radius: 8px;
+        }
+        .module-stat .ms-val {
+            font-size: 1.3rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        .module-stat .ms-lbl {
+            font-size: 0.65rem;
+            color: var(--text2);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .module-footer {
+            padding: 0.75rem 1.25rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .module-action-btn {
+            padding: 0.45rem 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg3);
+            color: var(--text);
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .module-action-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(88, 166, 255, 0.08);
+        }
+        .module-action-btn:active { transform: scale(0.96); }
+        .module-action-btn.primary {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+        .module-action-btn.primary:hover {
+            background: #4a94e8;
+            border-color: #4a94e8;
+            color: #fff;
+        }
+        .module-result {
+            font-size: 0.8rem;
+            color: var(--text2);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+            min-width: 0;
+        }
+        .module-result.success { color: var(--accent2); }
+        .module-result.error { color: var(--red); }
+
+        /* Spinner */
+        .spinner {
+            display: inline-block;
+            width: 14px; height: 14px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            vertical-align: middle;
+            margin-right: 0.4rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Quick links row */
+        .quick-links {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+        .quick-link {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text2);
+            text-decoration: none;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .quick-link:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(88, 166, 255, 0.05);
+        }
+
+        /* Notification toast */
+        .notif {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 0.75rem 1.25rem;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            z-index: 200;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            max-width: 400px;
+        }
+        .notif.show { opacity: 1; transform: translateY(0); }
+        .notif.success { background: var(--accent2); color: #000; }
+        .notif.error { background: var(--red); color: #fff; }
+        .notif.info { background: var(--accent); color: #fff; }
+
+        /* === A2/A3/A4 polish v2 === */
+        .stat-card { transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s; }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.15);
+        }
+        .module-card { transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s; }
+        .module-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--neon-blue) !important;
+            box-shadow: 0 0 25px rgba(0, 212, 255, 0.18);
+        }
+        .module-action-btn:hover {
+            box-shadow: 0 0 12px rgba(0, 212, 255, 0.4);
+        }
+        .module-action-btn.primary:hover {
+            box-shadow: 0 0 18px rgba(0, 255, 136, 0.4);
+        }
+        .tab-btn.active {
+            box-shadow: 0 0 12px rgba(0, 212, 255, 0.4);
+        }
+        .model-card { transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s; }
+        .model-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.15);
+        }
+        .model-card.active { box-shadow: 0 0 15px rgba(0, 255, 136, 0.2); }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div>
+        <a href="/admin" class="logo">IA<span>MINE</span><small>ADMIN</small></a>
+    </div>
+    <div style="display:flex;gap:0.5rem;">
+        <button class="tab-btn active" onclick="showTab('home')">Accueil</button>
+        <button class="tab-btn" onclick="showTab('pool')">Pool</button>
+        <button class="tab-btn" onclick="showTab('workers-tab')">Workers</button>
+        <button class="tab-btn" onclick="showTab('accounts-tab')">Comptes</button>
+        <button class="tab-btn" onclick="showTab('config-tab')">Config</button>
+
+        <button class="tab-btn" onclick="showTab('checker-tab')" style="color:#f0b429;">Checker</button>
+        <button class="tab-btn" onclick="showTab('queue-tab')" style="color:var(--accent);">Queue</button>
+        <button class="tab-btn" onclick="showTab('federation')" style="color:#8b5cf6;">Fédération</button>
+    </div>
+    <div>
+        <a href="/">Site</a>
+        <a href="/docs">API Docs</a>
+    </div>
+</nav>
+
+<div class="container">
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- TAB: HOME — Dashboard with Module Cards    -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="tab-home" class="tab-content">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:0.5rem;">
+        <div>
+            <h2 style="margin-bottom:0.2rem;">Tableau de <span>bord</span></h2>
+            <p style="color:var(--text2);font-size:0.85rem;">Vue d'ensemble du pool CELLULE.AI — mise a jour toutes les 10s</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+            <span id="home-last-update" style="font-size:0.75rem;color:var(--text2);"></span>
+            <button onclick="loadHomeStats()" class="module-action-btn" style="font-size:0.75rem;">Rafraichir</button>
+        </div>
+    </div>
+
+    <!-- Quick links -->
+    <div class="quick-links">
+        <a href="/admin/models" class="quick-link" target="_blank">Dashboard Modeles</a>
+        <a href="/admin/api/stats" class="quick-link" target="_blank">Stats JSON</a>
+        <a href="/admin/api/hardware-db" class="quick-link" target="_blank">Base Hardware</a>
+        <a href="/admin/api/assignments" class="quick-link" target="_blank">Assignations</a>
+        <a href="/admin/api/families" class="quick-link" target="_blank">Familles LLM</a>
+
+        <a href="/admin/api/lessons" class="quick-link" target="_blank">Apprentissages</a>
+        <a href="/admin/api/admins" class="quick-link" target="_blank">Admins</a>
+        <a href="/v1/admin/tasks" class="quick-link" target="_blank">Taches</a>
+        <a href="/admin/api/capabilities" class="quick-link" target="_blank">Capacites API</a>
+        <a href="/v1/dev/inbox" class="quick-link" target="_blank">Boite de reception</a>
+    </div>
+
+    <!-- Module Cards Grid -->
+    <div class="home-grid">
+
+        <!-- ══ POOL LIVE ══ -->
+        <div class="module-card" id="mc-pool">
+            <div class="module-header">
+                <div class="module-icon" style="background:rgba(88,166,255,0.12);color:var(--accent);">&#x26A1;</div>
+                <h3>Pool Live</h3>
+                <span class="module-badge" id="mc-pool-badge" style="background:var(--bg3);color:var(--text2);">--</span>
+            </div>
+            <div class="module-body">
+                <div class="module-stats">
+                    <div class="module-stat">
+                        <div class="ms-val" style="color:var(--accent2);" id="mc-pool-online">-</div>
+                        <div class="ms-lbl">Online</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="ms-val" style="color:var(--accent3);" id="mc-pool-busy">-</div>
+                        <div class="ms-lbl">Busy</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="ms-val" style="color:var(--accent);" id="mc-pool-tps">-</div>
+                        <div class="ms-lbl">t/s total</div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:1rem;font-size:0.8rem;color:var(--text2);margin-bottom:0.5rem;">
+                    <span>Jobs: <strong style="color:var(--text);" id="mc-pool-jobs">-</strong></span>
+                    <span>Uptime: <strong style="color:var(--text);" id="mc-pool-uptime">-</strong></span>
+                    <span>Strategy: <strong style="color:var(--text);" id="mc-pool-strat">-</strong></span>
+                </div>
+            </div>
+            <div class="module-footer">
+                <button class="module-action-btn primary" onclick="testInference()">Test inference</button>
+                <span class="module-result" id="mc-pool-result"></span>
+            </div>
+        </div>
+
+        <!-- ══ WORKERS ══ -->
+        <div class="module-card" id="mc-workers">
+            <div class="module-header">
+                <div class="module-icon" style="background:rgba(63,185,80,0.12);color:var(--accent2);">&#x2699;</div>
+                <h3>Workers</h3>
+                <span class="module-badge" id="mc-workers-badge" style="background:var(--bg3);color:var(--text2);">--</span>
+            </div>
+            <div class="module-body">
+                <div class="module-stats">
+                    <div class="module-stat">
+                        <div class="ms-val" style="color:var(--accent2);" id="mc-w-idle">-</div>
+                        <div class="ms-lbl">Idle</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="ms-val" style="color:var(--accent3);" id="mc-w-busy">-</div>
+                        <div class="ms-lbl">Busy</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="ms-val" style="color:var(--text2);" id="mc-w-gpu">-</div>
+                        <div class="ms-lbl">GPU</div>
+                    </div>
+                </div>
+                <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.5rem;">
+                    Capacite bench: <strong style="color:var(--text);" id="mc-w-bench">-</strong> t/s
+                </div>
+            </div>
+            <div class="module-footer">
+                <button class="module-action-btn" onclick="showTab('workers-tab')">Gestion Workers</button>
+                <button class="module-action-btn" onclick="analyzeDistribution()">Analyser</button>
+                <span class="module-result" id="mc-workers-result"></span>
+            </div>
+        </div>
+
+        <!-- ══ QUEUE ══ -->
+        <div class="module-card" id="mc-queue">
+            <div class="module-header">
+                <div class="module-icon" style="background:rgba(88,166,255,0.12);color:var(--accent);">&#x1F4CB;</div>
+                <h3>Queue</h3>
+                <span class="module-badge" id="mc-queue-badge" style="background:var(--bg3);color:var(--text2);">--</span>
+            </div>
+            <div class="module-body">
+                <div class="module-stats">
+                    <div class="module-stat">
+                        <div class="ms-val" style="color:var(--accent3);" id="mc-q-pending">-</div>
+                        <div class="ms-lbl">Pending</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="ms-val" style="color:var(--accent);" id="mc-q-processing">-</div>
+                        <div class="ms-lbl">Processing</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="ms-val" style="color:var(--accent2);" id="mc-q-completed">-</div>
+                        <div class="ms-lbl">Completed</div>
+                    </div>
+                </div>
+                <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.5rem;">
+                    Temps d'attente moyen: <strong style="color:var(--text);" id="mc-q-wait">-</strong>
+                </div>
+            </div>
+            <div class="module-footer">
+                <button class="module-action-btn" onclick="showTab('queue-tab')">Voir la queue</button>
+                <span class="module-result" id="mc-queue-result"></span>
+            </div>
+        </div>
+
+
+
+        <!-- ══ MODELES ══ -->
+        <div class="module-card" id="mc-models">
+            <div class="module-header">
+                <div class="module-icon" style="background:rgba(188,140,255,0.12);color:var(--purple);">&#x1F4E6;</div>
+                <h3>Modeles</h3>
+                <span class="module-badge" id="mc-models-badge" style="background:var(--bg3);color:var(--text2);">--</span>
+            </div>
+            <div class="module-body">
+                <div class="module-stats">
+                    <div class="module-stat">
+                        <div class="ms-val" style="color:var(--purple);" id="mc-m-family">-</div>
+                        <div class="ms-lbl">Famille</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="ms-val" style="color:var(--accent);" id="mc-m-tiers">-</div>
+                        <div class="ms-lbl">Paliers</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="ms-val" style="color:var(--accent2);" id="mc-m-active">-</div>
+                        <div class="ms-lbl">Actifs</div>
+                    </div>
+                </div>
+                <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.5rem;" id="mc-m-details">
+                    Distribution: -
+                </div>
+            </div>
+            <div class="module-footer">
+                <a href="/admin/models" target="_blank" class="module-action-btn" style="text-decoration:none;">Dashboard Modeles</a>
+                <button class="module-action-btn" onclick="showTab('pool')">Voir paliers</button>
+                <span class="module-result" id="mc-models-result"></span>
+            </div>
+        </div>
+
+        <!-- ══ CONVERSATIONS ══ -->
+        <div class="module-card" id="mc-conv">
+            <div class="module-header">
+                <div class="module-icon" style="background:rgba(240,136,62,0.12);color:var(--accent3);">&#x1F4AC;</div>
+                <h3>Conversations</h3>
+                <span class="module-badge" id="mc-conv-badge" style="background:var(--bg3);color:var(--text2);">--</span>
+            </div>
+            <div class="module-body">
+                <div class="module-stats">
+                    <div class="module-stat">
+                        <div class="ms-val" style="color:var(--accent3);" id="mc-c-active">-</div>
+                        <div class="ms-lbl">Actives (RAM)</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="ms-val" style="color:var(--accent);" id="mc-c-db">-</div>
+                        <div class="ms-lbl">En DB</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="ms-val" style="color:var(--accent2);" id="mc-c-tokens">-</div>
+                        <div class="ms-lbl">Tokens</div>
+                    </div>
+                </div>
+            </div>
+            <div class="module-footer">
+                <span class="module-result" id="mc-conv-result" style="color:var(--text2);">-</span>
+            </div>
+        </div>
+
+        <!-- ══ MEMOIRE ══ -->
+        <div class="module-card" id="mc-memory">
+            <div class="module-header">
+                <div class="module-icon" style="background:rgba(63,185,80,0.12);color:var(--accent2);">&#x1F9E0;</div>
+                <h3>Memoire</h3>
+                <span class="module-badge" id="mc-mem-badge" style="background:var(--bg3);color:var(--text2);">--</span>
+            </div>
+            <div class="module-body">
+                <div class="module-stats">
+                    <div class="module-stat">
+                        <div class="ms-val" style="color:var(--accent2);" id="mc-mem-l3">-</div>
+                        <div class="ms-lbl">Summaries L3</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="ms-val" style="color:var(--purple);" id="mc-mem-rag">-</div>
+                        <div class="ms-lbl">Faits RAG</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="ms-val" style="color:var(--accent);" id="mc-mem-users">-</div>
+                        <div class="ms-lbl">Users</div>
+                    </div>
+                </div>
+            </div>
+            <div class="module-footer">
+                <span class="module-result" id="mc-mem-result" style="color:var(--text2);">-</span>
+            </div>
+        </div>
+
+    </div><!-- end home-grid -->
+
+    <!-- Inference Test Expanded Result -->
+    <div id="inference-result-box" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:2rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+            <h3 style="font-size:0.95rem;">Resultat du test d'inference</h3>
+            <button onclick="document.getElementById('inference-result-box').style.display='none'" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:1.1rem;">&times;</button>
+        </div>
+        <div id="inference-result-content" style="font-family:monospace;font-size:0.85rem;color:var(--accent2);white-space:pre-wrap;max-height:200px;overflow-y:auto;"></div>
+        <div id="inference-result-meta" style="margin-top:0.75rem;font-size:0.8rem;color:var(--text2);"></div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- TAB: POOL                                  -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="tab-pool" class="tab-content" style="display:none;">
+
+    <!-- STATS -->
+    <div class="section">
+        <h2>Vue du <span>Pool</span></h2>
+        <div class="stats">
+            <div class="stat-card"><div class="value" id="s-workers">-</div><div class="label">Workers</div></div>
+            <div class="stat-card"><div class="value" id="s-busy">-</div><div class="label">Busy</div></div>
+            <div class="stat-card"><div class="value" id="s-jobs">-</div><div class="label">Total Jobs</div></div>
+            <div class="stat-card"><div class="value" id="s-tps">-</div><div class="label">Pool t/s</div></div>
+            <div class="stat-card"><div class="value" id="s-strategy">-</div><div class="label">Strategy</div></div>
+            <div class="stat-card"><div class="value" id="s-uptime">-</div><div class="label">Uptime</div></div>
+        </div>
+    </div>
+
+    <!-- MODELS -->
+    <div class="section">
+        <h2>Paliers <span>Modeles</span></h2>
+        <p style="color:var(--text2);margin-bottom:1rem;">
+            Les modeles se debloquent automatiquement quand le pool gagne en puissance.
+        </p>
+        <div class="models-grid" id="models-grid"></div>
+    </div>
+
+    <!-- WORKERS -->
+    <div class="section">
+        <h2>Workers <span>Connectes</span></h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Worker ID</th>
+                    <th>CPU</th>
+                    <th>RAM</th>
+                    <th>Model</th>
+                    <th>Jobs</th>
+                    <th>Bench t/s</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="workers-table"></tbody>
+        </table>
+    </div>
+
+    <!-- LOGS -->
+    <div class="section">
+        <h2>Activite <span>Recente</span></h2>
+        <div id="logs" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1rem;font-family:monospace;font-size:0.85rem;max-height:300px;overflow-y:auto;color:var(--accent2);"></div>
+    </div>
+
+</div><!-- end tab-pool -->
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- TAB: WORKERS                               -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="tab-workers-tab" class="tab-content" style="display:none;">
+    <h2>Gestion des <span>Workers</span></h2>
+
+    <!-- Worker selector -->
+    <div class="section">
+        <h3 style="margin-bottom:0.5rem;">Selectionner un worker</h3>
+        <select id="w-selector" onchange="onWorkerSelect()" style="width:100%;padding:0.6rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:0.9rem;margin-bottom:0.5rem;">
+            <option value="">-- Choisir un worker --</option>
+        </select>
+        <div id="w-info" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:0.75rem;font-size:0.85rem;display:none;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.3rem;">
+                <div>Modele : <span id="wi-model" style="color:var(--accent);"></span></div>
+                <div>Bench : <span id="wi-tps" style="color:var(--accent2);"></span> t/s</div>
+                <div>CPU : <span id="wi-cpu" style="color:var(--text2);"></span></div>
+                <div>RAM : <span id="wi-ram" style="color:var(--text2);"></span> GB</div>
+                <div>GPU : <span id="wi-gpu" style="color:var(--text2);"></span></div>
+                <div>Jobs : <span id="wi-jobs" style="color:var(--text2);"></span></div>
+                <div>Status : <span id="wi-status"></span></div>
+                <div>Version : <span id="wi-ver" style="color:var(--text2);"></span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions sur le worker selectionne -->
+    <div class="section">
+        <h3 style="margin-bottom:0.5rem;">Actions</h3>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem;">
+            <select id="w-assign-model" style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;flex:1;min-width:200px;">
+                <option value="">-- Modele a assigner --</option>
+            </select>
+            <button onclick="assignModel()" style="padding:0.5rem 1rem;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">Assigner</button>
+        </div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem;">
+            <select id="w-cmd-type" style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+                <option value="self_update">Self Update</option>
+                <option value="restart">Restart</option>
+            </select>
+            <button onclick="sendWorkerCmd()" style="padding:0.5rem 1rem;background:var(--accent3);color:#fff;border:none;border-radius:6px;cursor:pointer;">Envoyer commande</button>
+        </div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem;">
+            <select id="w-pm-val" style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+                <option value="true">pool_managed = true</option>
+                <option value="false">pool_managed = false</option>
+            </select>
+            <button onclick="setPoolManaged()" style="padding:0.5rem 1rem;background:var(--purple);color:#fff;border:none;border-radius:6px;cursor:pointer;">Appliquer</button>
+        </div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem;">
+            <button onclick="deleteWorker(_selectedWorker())" style="padding:0.5rem 1rem;background:#dc3545;color:#fff;border:none;border-radius:6px;cursor:pointer;">Supprimer du pool</button>
+            <button onclick="banWorker(_selectedWorker())" style="padding:0.5rem 1rem;background:#6f42c1;color:#fff;border:none;border-radius:6px;cursor:pointer;">Bannir</button>
+        </div>
+        <div id="w-action-result" style="color:var(--accent2);font-size:0.85rem;margin-top:0.3rem;"></div>
+    </div>
+
+    <div class="section">
+        <h3 style="margin-bottom:0.5rem;">Migration globale</h3>
+        <button onclick="migrateAll()" style="padding:0.5rem 1rem;background:var(--red);color:#fff;border:none;border-radius:6px;cursor:pointer;">Migrer tous vers la famille active</button>
+        <div id="w-migrate-result" style="color:var(--accent2);font-size:0.85rem;margin-top:0.5rem;"></div>
+</div>    <!-- Nettoyage DB -->    <div class="section">        <h3 style="margin-bottom:0.5rem;">Nettoyage DB</h3>        <div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.5rem;">            <label style="font-size:0.85rem;">Seuil min t/s :</label>            <input type="number" id="cleanup-min-tps" value="8" min="1" max="100" step="1" style="width:60px;padding:0.4rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">            <label style="font-size:0.85rem;margin-left:0.5rem;">Offline depuis (h) :</label>            <input type="number" id="cleanup-offline-h" value="72" min="1" max="720" step="1" style="width:60px;padding:0.4rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">            <button onclick="cleanupPreview()" style="padding:0.4rem 1rem;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">Scanner</button>        </div>        <div id="cleanup-preview" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:0.75rem;margin-bottom:0.5rem;max-height:300px;overflow-y:auto;">            <table style="width:100%;font-size:0.8rem;">                <thead><tr><th><input type="checkbox" id="cleanup-all" onchange="toggleCleanupAll()"></th><th>Worker</th><th>t/s</th><th>Jobs</th><th>Raisons</th></tr></thead>                <tbody id="cleanup-table"></tbody>            </table>        </div>        <div style="display:flex;gap:0.5rem;">            <button id="cleanup-btn" onclick="cleanupExecute()" style="display:none;padding:0.5rem 1rem;background:#dc3545;color:#fff;border:none;border-radius:6px;cursor:pointer;">Supprimer les selectionnes</button>            <span id="cleanup-result" style="color:var(--accent2);font-size:0.85rem;align-self:center;"></span>        </div>    </div>
+    </div>
+
+    <!-- Blacklist -->
+    <div class="section">
+        <h3 style="margin-bottom:0.5rem;">Blacklist (workers bannis)</h3>
+        <div id="blacklist-list" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:0.75rem;margin-bottom:0.5rem;font-size:0.85rem;">Chargement...</div>
+        <div style="display:flex;gap:0.5rem;align-items:center;">
+            <input type="text" id="ban-worker-id" placeholder="Worker ID a bannir" style="flex:1;padding:0.4rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+            <button onclick="banWorkerManual()" style="padding:0.4rem 1rem;background:#6f42c1;color:#fff;border:none;border-radius:6px;cursor:pointer;">Bannir</button>
+        </div>
+        <div id="ban-result" style="color:var(--accent2);font-size:0.85rem;margin-top:0.3rem;"></div>
+    </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- TAB: COMPTES                               -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="tab-accounts-tab" class="tab-content" style="display:none;">
+    <h2>Gestion des <span>Comptes</span></h2>
+
+    <div class="section">
+        <h3 style="margin-bottom:0.5rem;">Comptes enregistres (<span id="acc-count">-</span>)</h3>
+        <div style="overflow-x:auto;">
+            <table style="width:100%;font-size:0.8rem;border-collapse:collapse;">
+                <thead><tr style="border-bottom:2px solid var(--border);text-align:left;">
+                    <th style="padding:0.4rem;">Email</th>
+                    <th>Pseudo</th>
+                    <th>Credits</th>
+                    <th>Gagne</th>
+                    <th>Depense</th>
+                    <th>Token</th>
+                    <th>Actions</th>
+                </tr></thead>
+                <tbody id="acc-table"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3 style="margin-bottom:0.5rem;">Ajouter des credits</h3>
+        <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+            <select id="acc-select" style="flex:1;min-width:200px;padding:0.4rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+                <option value="">-- Choisir un compte --</option>
+            </select>
+            <input type="number" id="acc-credits-val" value="100" min="0" step="10" style="width:80px;padding:0.4rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+            <button onclick="addCredits()" style="padding:0.4rem 1rem;background:var(--accent2);color:#fff;border:none;border-radius:6px;cursor:pointer;">+Credits</button>
+            <button onclick="setCredits()" style="padding:0.4rem 1rem;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">Definir</button>
+        </div>
+        <div id="acc-result" style="color:var(--accent2);font-size:0.85rem;margin-top:0.3rem;"></div>
+    </div>
+</div>
+
+<!-- TAB: CONFIG                                -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="tab-config-tab" class="tab-content" style="display:none;">
+    <h2>Configuration du <span>Pool</span></h2>
+
+    <div class="section">
+        <h3 style="margin-bottom:0.5rem;">Famille active</h3>
+        <div style="display:flex;gap:0.5rem;margin-bottom:1rem;" id="family-selector"></div>
+        <div id="c-family-result" style="color:var(--accent2);font-size:0.85rem;"></div>
+    </div>
+
+    <div class="section">
+        <h3 style="margin-bottom:0.5rem;">Routing Tool-calls</h3>
+        <p style="font-size:0.8rem;color:var(--text2);margin-bottom:0.5rem;">Worker qui recevra les tool-calls (OpenCode, aider, Cursor...)</p>
+        <div style="display:flex;gap:0.5rem;align-items:center;">
+            <select id="cfg-tool-model" style="flex:1;max-width:400px;padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:0.85rem;">
+                <option value="">Chargement...</option>
+            </select>
+            <button onclick="saveToolModel()" style="padding:0.4rem 1rem;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">Appliquer</button>
+        </div>
+        <div id="cfg-tool-result" style="color:var(--accent2);font-size:0.85rem;margin-top:0.3rem;"></div>
+    </div>
+
+    <div class="section">
+        <h3 style="margin-bottom:0.5rem;">Configuration Pool (DB)</h3>
+        <div id="config-list" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1rem;font-family:monospace;font-size:0.85rem;max-height:300px;overflow-y:auto;"></div>
+    </div>
+
+    <div class="section">
+        <h3 style="margin-bottom:0.5rem;">Modifier une cle</h3>
+        <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
+            <input id="c-key" placeholder="Key" style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;width:200px;">
+            <input id="c-val" placeholder="Value" style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;width:300px;">
+            <button onclick="setConfig()" style="padding:0.5rem 1rem;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">Sauvegarder</button>
+        </div>
+        <div id="c-set-result" style="color:var(--accent2);font-size:0.85rem;"></div>
+    </div>
+
+    <div class="section" style="border-top:1px solid var(--border);padding-top:1.5rem;">
+        <h3 style="margin-bottom:0.5rem;">System Prompt</h3>
+        <p style="color:var(--text2);font-size:0.8rem;margin-bottom:0.75rem;">Le prompt systeme injecte dans chaque conversation. Changement pris en compte immediatement.</p>
+        <textarea id="system-prompt-textarea" rows="8" style="width:100%;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:10px;font-family:monospace;font-size:0.85rem;resize:vertical;box-sizing:border-box;"></textarea>
+        <div style="display:flex;gap:0.75rem;align-items:center;margin-top:0.5rem;">
+            <button onclick="saveSystemPrompt()" style="padding:0.5rem 1rem;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">Sauvegarder le prompt</button>
+            <span id="sysprompt-result" style="font-size:0.85rem;color:var(--green);"></span>
+        </div>
+    </div>
+
+    <div class="section" style="border-top:1px solid var(--border);padding-top:1.5rem;">
+        <h3 style="margin-bottom:0.75rem;">Configuration Email / SMTP</h3>
+        <p style="color:var(--text2);font-size:0.8rem;margin-bottom:1rem;">Parametres pour les alertes email (endpoint /admin/api/alert).</p>
+        <div style="display:grid;grid-template-columns:120px 1fr;gap:0.4rem 0.75rem;align-items:center;margin-bottom:1rem;">
+            <label style="font-size:0.85rem;color:var(--text2);">Serveur SMTP</label>
+            <input id="smtp-host" placeholder="smtp.gmail.com" style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+            <label style="font-size:0.85rem;color:var(--text2);">Port</label>
+            <input id="smtp-port" placeholder="587" type="number" style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;width:100px;">
+            <label style="font-size:0.85rem;color:var(--text2);">Login</label>
+            <input id="smtp-user" placeholder="contact@cellule.ai" style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+            <label style="font-size:0.85rem;color:var(--text2);">Mot de passe</label>
+            <input id="smtp-pass" type="password" placeholder="app password" style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+            <label style="font-size:0.85rem;color:var(--text2);">Expediteur</label>
+            <input id="smtp-from" placeholder="CELLULE.AI Pool <contact@cellule.ai>" style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+            <label style="font-size:0.85rem;color:var(--text2);">Destinataire</label>
+            <input id="smtp-to" placeholder="david.mourgues@gmail.com" style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+        </div>
+        <div style="display:flex;gap:0.5rem;">
+            <button onclick="saveSmtp()" style="padding:0.5rem 1rem;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">Sauvegarder SMTP</button>
+            <button onclick="testSmtp()" style="padding:0.5rem 1rem;background:var(--accent2);color:#000;border:none;border-radius:6px;cursor:pointer;">Envoyer un test</button>
+        </div>
+        <div id="smtp-result" style="color:var(--accent2);font-size:0.85rem;margin-top:0.5rem;"></div>
+    </div>
+</div>
+
+
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- TAB: CHECKER                               -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="tab-checker-tab" class="tab-content" style="display:none;">
+    <h2 style="color:#f0b429;">Checker Ladder</h2>
+    <p style="color:var(--text2);font-size:0.85rem;margin-bottom:1rem;">Validation synchrone des reponses par un LLM plus gros. Workers sous le seuil TPS sont verifies avant envoi au client.</p>
+
+    <!-- Config checker -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1rem;">
+        <h3 style="margin-bottom:0.75rem;font-size:0.95rem;">Configuration</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+            <label style="display:flex;align-items:center;gap:0.5rem;">
+                <input type="checkbox" id="chk-enabled" style="width:18px;height:18px;">
+                <span>Checker actif</span>
+            </label>
+            <div></div>
+            <label style="font-size:0.85rem;color:var(--text2);">Seuil TPS (workers sous ce seuil sont verifies)
+                <input type="number" id="chk-tps" step="0.5" style="width:100%;margin-top:0.25rem;padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+            </label>
+            <label style="font-size:0.85rem;color:var(--text2);">Timeout (secondes)
+                <input type="number" id="chk-timeout" style="width:100%;margin-top:0.25rem;padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+            </label>
+            <label style="font-size:0.85rem;color:var(--text2);">Echecs max avant retrogradation
+                <input type="number" id="chk-fail-max" style="width:100%;margin-top:0.25rem;padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+            </label>
+            <label style="font-size:0.85rem;color:var(--text2);">Score min (retrograde en dessous)
+                <input type="number" id="chk-min-score" step="0.05" style="width:100%;margin-top:0.25rem;padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+            </label>
+            <label style="font-size:0.85rem;color:var(--text2);">Penalite par echec
+                <input type="number" id="chk-decay" step="0.01" style="width:100%;margin-top:0.25rem;padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+            </label>
+            <label style="font-size:0.85rem;color:var(--text2);">Bonus par succes
+                <input type="number" id="chk-recovery" step="0.01" style="width:100%;margin-top:0.25rem;padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+            </label>
+            <label style="font-size:0.85rem;color:var(--text2);">Taux d'echantillonnage (%)
+                <input type="number" id="chk-sample" min="1" max="100" style="width:100%;margin-top:0.25rem;padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+            </label>
+            <div></div>
+        </div>
+        <div style="margin-top:1rem;display:flex;gap:0.75rem;align-items:center;">
+            <button onclick="saveCheckerConfig()" style="padding:0.5rem 1.5rem;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Sauvegarder</button>
+            <span id="chk-save-status" style="font-size:0.85rem;color:var(--green);"></span>
+        </div>
+    </div>
+
+    <!-- Scores workers -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1rem;">
+        <h3 style="margin-bottom:0.75rem;font-size:0.95rem;">Scores Workers</h3>
+        <div id="checker-workers" style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+                <thead>
+                    <tr style="border-bottom:1px solid var(--border);color:var(--text2);">
+                        <th style="text-align:left;padding:0.5rem;">Worker</th>
+                        <th>Modele</th>
+                        <th>TPS</th>
+                        <th>Verifie</th>
+                        <th>Score</th>
+                        <th>Echecs</th>
+                        <th>Total</th>
+                        <th>Reussi</th>
+                    </tr>
+                </thead>
+                <tbody id="checker-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- TAB: QUEUE                                 -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="tab-federation" class="tab-content" style="display:none;">
+    <div id="fed-root" style="padding:1rem;">(chargement…)</div>
+</div>
+
+<div id="tab-queue-tab" class="tab-content" style="display:none;">
+    <h2>File d'attente <span>(pending_jobs)</span></h2>
+    <div id="queue-stats" style="margin-bottom:1rem;"></div>
+    <table>
+        <thead>
+            <tr>
+                <th>Job ID</th>
+                <th>Status</th>
+                <th>Token</th>
+                <th>Model</th>
+                <th>Worker</th>
+                <th>Created</th>
+                <th>Wait</th>
+                <th>Error</th>
+            </tr>
+        </thead>
+        <tbody id="queue-table"></tbody>
+    </table>
+    <p style="color:var(--text2);font-size:0.8rem;">Auto-refresh toutes les 5s</p>
+</div>
+
+</div><!-- end container -->
+
+<!-- Refresh bar -->
+<div class="refresh-bar"><div class="refresh-progress" id="refresh-bar" style="width:0%;"></div></div>
+
+<!-- Notification toast -->
+<div id="notif-toast" class="notif"></div>
+
+<script>
+const API = window.location.origin;
+const logs = [];
+
+// ═══════════════════════════════════════════
+// UTILITY FUNCTIONS
+// ═══════════════════════════════════════════
+
+function addLog(msg) {
+    const time = new Date().toLocaleTimeString();
+    logs.unshift(`[${time}] ${msg}`);
+    if (logs.length > 50) logs.pop();
+    const el = document.getElementById('logs');
+    if (el) el.innerHTML = logs.map(l => `<div>${l}</div>`).join('');
+}
+
+function formatUptime(sec) {
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    return `${h}h${m.toString().padStart(2, '0')}m`;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function showNotif(msg, type) {
+    const el = document.getElementById('notif-toast');
+    el.textContent = msg;
+    el.className = 'notif ' + (type || 'info');
+    setTimeout(() => el.classList.add('show'), 10);
+    setTimeout(() => el.classList.remove('show'), 4000);
+}
+
+function shortNum(n) {
+    if (n === undefined || n === null) return '-';
+    if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+    if (n >= 1000) return (n/1000).toFixed(1) + 'K';
+    return String(n);
+}
+
+// ═══════════════════════════════════════════
+// HOME TAB — loadHomeStats
+// ═══════════════════════════════════════════
+
+async function loadHomeStats() {
+    try {
+        // Fetch all data in parallel
+        const [statusRes, powerRes, modelsRes, queueRes, statsRes] = await Promise.allSettled([
+            fetch(`${API}/v1/status`),
+            fetch(`${API}/v1/pool/power`),
+            fetch(`${API}/v1/admin/models`),
+            fetch(`${API}/admin/api/queue`),
+            fetch(`${API}/admin/api/stats`)
+        ]);
+
+        // Pool Live
+        if (statusRes.status === 'fulfilled' && statusRes.value.ok) {
+            const status = await statusRes.value.json();
+            const workers = status.workers || [];
+            const online = status.workers_online || workers.length || 0;
+            const busy = status.workers_busy || workers.filter(w => w.busy).length || 0;
+            const idle = online - busy;
+            const gpuCount = workers.filter(w => w.has_gpu).length;
+            const totalBench = workers.reduce((s, w) => s + (w.bench_tps || 0), 0);
+
+            document.getElementById('mc-pool-online').textContent = online;
+            document.getElementById('mc-pool-busy').textContent = busy;
+            document.getElementById('mc-pool-jobs').textContent = status.total_jobs || 0;
+            document.getElementById('mc-pool-uptime').textContent = formatUptime(status.uptime_sec || 0);
+
+            // Badge
+            const poolBadge = document.getElementById('mc-pool-badge');
+            if (online > 0) {
+                poolBadge.textContent = 'ONLINE';
+                poolBadge.style.background = 'var(--accent2)';
+                poolBadge.style.color = '#000';
+            } else {
+                poolBadge.textContent = 'DOWN';
+                poolBadge.style.background = 'var(--red)';
+                poolBadge.style.color = '#fff';
+            }
+
+            // Workers card
+            document.getElementById('mc-w-idle').textContent = idle;
+            document.getElementById('mc-w-busy').textContent = busy;
+            document.getElementById('mc-w-gpu').textContent = gpuCount;
+            document.getElementById('mc-w-bench').textContent = totalBench.toFixed(1);
+            const wBadge = document.getElementById('mc-workers-badge');
+            wBadge.textContent = online + ' online';
+            wBadge.style.background = 'var(--accent2)';
+            wBadge.style.color = '#000';
+
+            // Store for distribution analysis
+            window._homeWorkers = workers;
+        }
+
+        // Pool power
+        if (powerRes.status === 'fulfilled' && powerRes.value.ok) {
+            const power = await powerRes.value.json();
+            document.getElementById('mc-pool-tps').textContent = power.pool_capacity_tps || 0;
+            document.getElementById('mc-pool-strat').textContent = power.strategy || '-';
+        }
+
+        // Models
+        if (modelsRes.status === 'fulfilled' && modelsRes.value.ok) {
+            const models = await modelsRes.value.json();
+            const mList = models.models || [];
+            const activeModels = mList.filter(m => m.status === 'active');
+            const unlockedModels = mList.filter(m => m.status === 'unlocked');
+            document.getElementById('mc-m-family').textContent = models.family || '-';
+            document.getElementById('mc-m-tiers').textContent = mList.length;
+            document.getElementById('mc-m-active').textContent = activeModels.length;
+            document.getElementById('mc-m-details').textContent = `${activeModels.length} actifs, ${unlockedModels.length} debloques, ${mList.length - activeModels.length - unlockedModels.length} verrouilles`;
+            const mBadge = document.getElementById('mc-models-badge');
+            mBadge.textContent = (models.family || '?').toUpperCase();
+            mBadge.style.background = 'var(--purple)';
+            mBadge.style.color = '#fff';
+        }
+
+        // Queue
+        if (queueRes.status === 'fulfilled' && queueRes.value.ok) {
+            const qData = await queueRes.value.json();
+            const qs = qData.stats || {};
+            const pending = qs.pending || 0;
+            const processing = qs.processing || 0;
+            const completed = qs.completed || 0;
+            document.getElementById('mc-q-pending').textContent = pending;
+            document.getElementById('mc-q-processing').textContent = processing;
+            document.getElementById('mc-q-completed').textContent = shortNum(completed);
+            document.getElementById('mc-q-wait').textContent = (qs.avg_wait_sec || 0).toFixed(1) + 's';
+
+            const qBadge = document.getElementById('mc-queue-badge');
+            if (pending > 0) {
+                qBadge.textContent = pending + ' EN ATTENTE';
+                qBadge.style.background = 'var(--accent3)';
+                qBadge.style.color = '#000';
+            } else {
+                qBadge.textContent = 'VIDE';
+                qBadge.style.background = 'var(--accent2)';
+                qBadge.style.color = '#000';
+            }
+            document.getElementById('mc-queue-result').textContent = pending > 0 ? pending + ' jobs en attente' : 'Aucun job en attente';
+        }
+
+        // Stats (conversations, memory)
+        if (statsRes.status === 'fulfilled' && statsRes.value.ok) {
+            const stats = await statsRes.value.json();
+
+            // Conversations
+            const convActive = stats.conversations_active || stats.active_conversations || 0;
+            const convDb = stats.conversations_total || stats.total_conversations || 0;
+            const tokensGen = stats.tokens_generated || stats.total_tokens || 0;
+            document.getElementById('mc-c-active').textContent = convActive;
+            document.getElementById('mc-c-db').textContent = shortNum(convDb);
+            document.getElementById('mc-c-tokens').textContent = shortNum(tokensGen);
+            const convBadge = document.getElementById('mc-conv-badge');
+            convBadge.textContent = convActive + ' live';
+            convBadge.style.background = convActive > 0 ? 'var(--accent3)' : 'var(--bg3)';
+            convBadge.style.color = convActive > 0 ? '#000' : 'var(--text2)';
+            document.getElementById('mc-conv-result').textContent = tokensGen > 0 ? shortNum(tokensGen) + ' tokens generes au total' : '-';
+
+            // Memory
+            const l3 = stats.l3_summaries || stats.memory_summaries || 0;
+            const rag = stats.rag_facts || stats.memory_facts || 0;
+            const users = stats.total_users || stats.users || 0;
+            document.getElementById('mc-mem-l3').textContent = shortNum(l3);
+            document.getElementById('mc-mem-rag').textContent = shortNum(rag);
+            document.getElementById('mc-mem-users').textContent = users;
+            const memBadge = document.getElementById('mc-mem-badge');
+            memBadge.textContent = (l3 + rag) > 0 ? (l3 + rag) + ' items' : '--';
+            memBadge.style.background = (l3 + rag) > 0 ? 'var(--accent2)' : 'var(--bg3)';
+            memBadge.style.color = (l3 + rag) > 0 ? '#000' : 'var(--text2)';
+            document.getElementById('mc-mem-result').textContent = l3 > 0 ? l3 + ' summaries L3, ' + rag + ' faits RAG' : '-';
+        }
+
+        // Update timestamp
+        document.getElementById('home-last-update').textContent = 'Maj: ' + new Date().toLocaleTimeString();
+
+    } catch (e) {
+        console.error('loadHomeStats error:', e);
+    }
+}
+
+// ═══════════════════════════════════════════
+// HOME — Test Inference
+// ═══════════════════════════════════════════
+
+async function testInference() {
+    const resultEl = document.getElementById('mc-pool-result');
+    const box = document.getElementById('inference-result-box');
+    const content = document.getElementById('inference-result-content');
+    const meta = document.getElementById('inference-result-meta');
+
+    resultEl.innerHTML = '<span class="spinner"></span>Test en cours...';
+    resultEl.className = 'module-result';
+    box.style.display = 'none';
+
+    const t0 = performance.now();
+    try {
+        const r = await fetch(`${API}/v1/chat/completions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'auto',
+                messages: [
+                    { role: 'system', content: 'Reponds en une seule phrase, concise.' },
+                    { role: 'user', content: 'Bonjour, dis-moi quelque chose de positif en une phrase.' }
+                ],
+                max_tokens: 100,
+                temperature: 0.7
+            })
+        });
+
+        const elapsed = ((performance.now() - t0) / 1000).toFixed(1);
+        const data = await r.json();
+
+        if (data.error) {
+            resultEl.textContent = 'Erreur: ' + (data.error.message || data.error);
+            resultEl.className = 'module-result error';
+            return;
+        }
+
+        const choice = (data.choices || [])[0];
+        const text = choice ? (choice.message || {}).content || '' : '';
+        const usage = data.usage || {};
+        const completionTokens = usage.completion_tokens || 0;
+        const tps = completionTokens > 0 ? (completionTokens / parseFloat(elapsed)).toFixed(1) : '?';
+        const model = data.model || '?';
+
+        resultEl.innerHTML = '<span style="color:var(--accent2);">' + tps + ' t/s</span> en ' + elapsed + 's';
+        resultEl.className = 'module-result success';
+
+        // Show expanded result
+        content.textContent = text;
+        meta.innerHTML =
+            '<span>Modele: <strong style="color:var(--accent);">' + escapeHtml(model) + '</strong></span>' +
+            ' &middot; <span>Tokens: ' + completionTokens + '</span>' +
+            ' &middot; <span>Vitesse: <strong style="color:var(--accent2);">' + tps + ' t/s</strong></span>' +
+            ' &middot; <span>Duree: ' + elapsed + 's</span>';
+        box.style.display = 'block';
+
+    } catch (e) {
+        resultEl.textContent = 'Erreur: ' + e.message;
+        resultEl.className = 'module-result error';
+    }
+}
+
+// ═══════════════════════════════════════════
+// HOME — Analyze Distribution
+// ═══════════════════════════════════════════
+
+function analyzeDistribution() {
+    const resultEl = document.getElementById('mc-workers-result');
+    const workers = window._homeWorkers || [];
+    if (workers.length === 0) {
+        resultEl.textContent = 'Aucun worker charge';
+        resultEl.className = 'module-result';
+        return;
+    }
+
+    const gpuWorkers = workers.filter(w => w.has_gpu);
+    const cpuWorkers = workers.filter(w => !w.has_gpu);
+    const totalBench = workers.reduce((s, w) => s + (w.bench_tps || 0), 0);
+    const gpuBench = gpuWorkers.reduce((s, w) => s + (w.bench_tps || 0), 0);
+    const gpuPct = totalBench > 0 ? ((gpuBench / totalBench) * 100).toFixed(0) : 0;
+
+    resultEl.textContent = `${gpuWorkers.length} GPU (${gpuPct}%) / ${cpuWorkers.length} CPU (${100-gpuPct}%) — Total bench: ${totalBench.toFixed(0)} t/s`;
+    resultEl.className = 'module-result success';
+    showNotif(`Distribution: ${gpuWorkers.length} GPU + ${cpuWorkers.length} CPU = ${totalBench.toFixed(0)} t/s`, 'info');
+}
+
+// ═══════════════════════════════════════════
+// POOL TAB — refresh()
+// ═══════════════════════════════════════════
+
+async function refresh() {
+    try {
+        // Status
+        const statusRes = await fetch(`${API}/v1/status`);
+        const status = await statusRes.json();
+
+        document.getElementById('s-workers').textContent = status.workers_online || 0;
+        document.getElementById('s-busy').textContent = status.workers_busy || 0;
+        document.getElementById('s-jobs').textContent = status.total_jobs || 0;
+        document.getElementById('s-uptime').textContent = formatUptime(status.uptime_sec || 0);
+
+        // Workers table
+        const tbody = document.getElementById('workers-table');
+        tbody.innerHTML = (status.workers || []).map(w => `
+            <tr class="worker-row">
+                <td><span class="worker-status ${w.busy ? 'busy' : 'idle'}"></span>${w.id}</td>
+                <td>${w.cpu || '?'}</td>
+                <td>${w.ram_gb || '?'} GB</td>
+                <td style="font-size:0.8rem;">${(w.model || '?').split('/').pop()}</td>
+                <td>${w.jobs_done || 0}</td>
+                <td>${w.bench_tps ? w.bench_tps.toFixed(1) : '-'}</td>
+                <td style="color:${w.busy ? 'var(--accent3)' : 'var(--accent2)'};">${w.busy ? 'BUSY' : 'IDLE'}</td>
+            </tr>
+        `).join('');
+
+        // Pool power
+        const powerRes = await fetch(`${API}/v1/pool/power`);
+        const power = await powerRes.json();
+
+        document.getElementById('s-tps').textContent = `${power.pool_capacity_tps || 0}`;
+        document.getElementById('s-strategy').textContent = power.strategy || '-';
+
+        // Models
+        const modelsRes = await fetch(`${API}/v1/admin/models`);
+        const models = await modelsRes.json();
+
+        const grid = document.getElementById('models-grid');
+        grid.innerHTML = (models.models || []).map(m => {
+            const pct = m.status === 'locked'
+                ? Math.min(100, ((power.pool_capacity_tps || 0) / m.unlock_threshold_tps) * 100)
+                : 100;
+            const badgeClass = m.status === 'active' ? 'badge-active' : m.status === 'unlocked' ? 'badge-unlocked' : 'badge-locked';
+            const barClass = m.status === 'active' ? 'progress-green' : m.status === 'unlocked' ? 'progress-orange' : 'progress-gray';
+            const statusText = m.status === 'active' ? 'ACTIVE' : m.status === 'unlocked' ? 'UNLOCKED' : 'LOCKED';
+
+            return `
+                <div class="model-card ${m.status}">
+                    <span class="model-badge ${badgeClass}">${statusText}</span>
+                    <h3>${m.name}</h3>
+                    <span class="params">${m.params}</span>
+                    <div class="details">
+                        ${m.size_gb} GB download &middot; ${m.ram_required_gb} GB RAM required &middot; Q=${m.quality_score}/100
+                    </div>
+                    <div class="progress-bg">
+                        <div class="progress-bar ${barClass}" style="width:${pct}%"></div>
+                    </div>
+                    <div class="threshold">
+                        ${m.status === 'locked'
+                            ? `Needs ${m.unlock_threshold_tps} t/s pool power (${m.missing_tps.toFixed(0)} t/s more)`
+                            : m.status === 'unlocked'
+                            ? `Unlocked! Needs a worker with ${m.ram_required_gb}+ GB RAM`
+                            : `Ready to serve`
+                        }
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+    } catch (e) {
+        addLog(`Error: ${e.message}`);
+    }
+}
+
+// ═══════════════════════════════════════════
+// AUTO-REFRESH (10s cycle)
+// ═══════════════════════════════════════════
+
+let refreshInterval = 10000;
+function startRefreshCycle() {
+    refresh();
+    loadHomeStats();
+    addLog('Tableau de bord actualise');
+    const bar = document.getElementById('refresh-bar');
+    bar.style.transition = 'none';
+    bar.style.width = '0%';
+    setTimeout(() => {
+        bar.style.transition = `width ${refreshInterval}ms linear`;
+        bar.style.width = '100%';
+    }, 50);
+}
+
+startRefreshCycle();
+setInterval(startRefreshCycle, refreshInterval);
+
+// ═══════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════
+
+function showTab(id) {
+    document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    const tab = document.getElementById('tab-' + id);
+    if (tab) tab.style.display = 'block';
+    // Find and activate the correct button
+    const btns = document.querySelectorAll('.tab-btn');
+    const tabNames = ['home', 'pool', 'workers-tab', 'accounts-tab', 'config-tab', 'checker-tab', 'queue-tab', 'federation'];
+    const idx = tabNames.indexOf(id);
+    if (idx >= 0 && btns[idx]) btns[idx].classList.add('active');
+    if (id === 'home') loadHomeStats();
+    if (id === 'workers-tab') loadWorkerSelector();
+    if (id === 'config-tab') { loadConfig(); loadSmtp(); loadSystemPrompt(); }
+
+    if (id === 'checker-tab') { loadCheckerStatus(); }
+    if (id === 'queue-tab') { loadQueue(); }
+    if (id === 'federation') { if (window.loadFederation) loadFederation(); }
+}
+
+// ═══════════════════════════════════════════
+// WORKERS TAB
+// ═══════════════════════════════════════════
+
+let _workerList = [];
+
+async function loadWorkerSelector() {
+    try {
+        const r = await fetch('/v1/status');
+        const d = await r.json();
+        _workerList = d.workers || [];
+        const sel = document.getElementById('w-selector');
+        const current = sel.value;
+        sel.innerHTML = '<option value="">-- Choisir un worker --</option>';
+        _workerList.forEach(w => {
+            const model = (w.model||'').split('/').pop().replace('.gguf','');
+            const status = w.busy ? 'BUSY' : 'IDLE';
+            const tps = w.bench_tps ? w.bench_tps.toFixed(1)+'t/s' : '?';
+            sel.innerHTML += `<option value="${w.id}" ${w.id===current?'selected':''}>${w.id} — ${model} (${tps}, ${status})</option>`;
+        });
+        // Populate model selector
+        const msel = document.getElementById('w-assign-model');
+        if (msel.options.length <= 1) {
+            const mr = await fetch('/admin/api/families');
+            const md = await mr.json();
+            msel.innerHTML = '<option value="">-- Modele --</option>';
+            (md.models || []).forEach(m => {
+                msel.innerHTML += `<option value="${m.id}">${m.name} (${m.params})</option>`;
+            });
+        }
+        if (current) onWorkerSelect();
+    } catch(e) {}
+}
+
+function onWorkerSelect() {
+    const wid = document.getElementById('w-selector').value;
+    const info = document.getElementById('w-info');
+    if (!wid) { info.style.display = 'none'; return; }
+    const w = _workerList.find(x => x.id === wid);
+    if (!w) { info.style.display = 'none'; return; }
+    info.style.display = 'block';
+    document.getElementById('wi-model').textContent = (w.model||'').split('/').pop().replace('.gguf','');
+    document.getElementById('wi-tps').textContent = w.bench_tps ? w.bench_tps.toFixed(1) : '?';
+    document.getElementById('wi-cpu').textContent = w.cpu || '?';
+    document.getElementById('wi-ram').textContent = w.ram_gb || '?';
+    document.getElementById('wi-gpu').textContent = w.has_gpu ? (w.gpu||'GPU') : 'Non';
+    document.getElementById('wi-jobs').textContent = w.jobs_done || 0;
+    document.getElementById('wi-status').innerHTML = w.busy ? '<span style="color:var(--accent3);">BUSY</span>' : '<span style="color:var(--accent2);">IDLE</span>';
+    document.getElementById('wi-ver').textContent = w.version || '?';
+}
+
+function _selectedWorker() {
+    const wid = document.getElementById('w-selector').value;
+    if (!wid) { alert('Selectionnez un worker d\'abord'); return null; }
+    return wid;
+}
+
+async function assignModel() {
+    const wid = _selectedWorker(); if (!wid) return;
+    const mid = document.getElementById('w-assign-model').value;
+    if (!mid) { alert('Selectionnez un modele'); return; }
+    const r = await fetch('/admin/api/assign', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({worker_id:wid, model_id:mid})});
+    const d = await r.json();
+    document.getElementById('w-action-result').textContent = 'Assign: ' + JSON.stringify(d);
+}
+
+async function sendWorkerCmd() {
+    const wid = _selectedWorker(); if (!wid) return;
+    const cmd = document.getElementById('w-cmd-type').value;
+    const r = await fetch('/admin/api/worker-cmd', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({worker_id:wid, command:cmd})});
+    const d = await r.json();
+    document.getElementById('w-action-result').textContent = 'Cmd: ' + JSON.stringify(d);
+}
+
+async function setPoolManaged() {
+    const wid = _selectedWorker(); if (!wid) return;
+    const val = document.getElementById('w-pm-val').value === 'true';
+    const r = await fetch('/admin/api/pool-managed', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({worker_id:wid, pool_managed:val})});
+    const d = await r.json();
+    document.getElementById('w-action-result').textContent = 'pool_managed: ' + JSON.stringify(d);
+}
+
+async function migrateAll() {
+    if (!confirm('Migrer TOUS les workers vers la famille active ?')) return;
+    const r = await fetch('/admin/api/migrate-all', {method:'POST'});
+    const d = await r.json();
+    document.getElementById('w-migrate-result').textContent = JSON.stringify(d);
+}
+
+// ═══════════════════════════════════════════
+// SMTP / EMAIL
+// ═══════════════════════════════════════════
+
+const SMTP_KEYS = {smtp_host:'smtp-host', smtp_port:'smtp-port', smtp_user:'smtp-user', smtp_pass:'smtp-pass', smtp_from:'smtp-from', alert_email:'smtp-to'};
+
+async function loadSmtp() {
+    try {
+        const r = await fetch('/admin/api/config');
+        const d = await r.json();
+        const cfg = d.config || {};
+        Object.entries(SMTP_KEYS).forEach(([k, id]) => {
+            const el = document.getElementById(id);
+            if (el && cfg[k]) el.value = cfg[k];
+        });
+    } catch(e) {}
+}
+
+async function saveSmtp() {
+    const res = document.getElementById('smtp-result');
+    res.textContent = 'Sauvegarde...';
+    try {
+        const payload = {};
+        for (const [k, id] of Object.entries(SMTP_KEYS)) {
+            const val = document.getElementById(id).value.trim();
+            if (val) payload[k] = val;
+        }
+        if (Object.keys(payload).length === 0) { res.textContent = 'Rien a sauvegarder'; return; }
+        const r = await fetch('/admin/api/config', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+        const d = await r.json();
+        if (d.ok) {
+            res.style.color = 'var(--accent2)';
+            res.textContent = 'SMTP sauvegarde (' + (d.updated||[]).join(', ') + ')';
+        } else {
+            res.style.color = 'var(--red)';
+            res.textContent = 'Erreur: ' + (d.error || JSON.stringify(d));
+        }
+    } catch(e) {
+        res.style.color = 'var(--red)';
+        res.textContent = 'Erreur: ' + e.message;
+    }
+}
+
+async function testSmtp() {
+    const res = document.getElementById('smtp-result');
+    res.textContent = 'Envoi du test...';
+    try {
+        const r = await fetch('/admin/api/alert', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({subject:'Test SMTP CELLULE.AI', body:'Ceci est un test depuis le dashboard admin.', level:'info', source:'admin-dashboard'})});
+        const d = await r.json();
+        if (d.sent) {
+            res.style.color = 'var(--accent2)';
+            res.textContent = 'Email envoye a ' + (d.to || '?') + ' !';
+        } else {
+            res.style.color = 'var(--red)';
+            res.textContent = 'Erreur: ' + (d.error || d.note || JSON.stringify(d));
+        }
+    } catch(e) {
+        res.style.color = 'var(--red)';
+        res.textContent = 'Erreur: ' + e.message;
+    }
+}
+
+// ═══════════════════════════════════════════
+// CONFIG TAB
+// ═══════════════════════════════════════════
+
+async function loadConfig() {
+    try {
+        const r = await fetch('/admin/api/config');
+        const d = await r.json();
+        document.getElementById('config-list').innerHTML = Object.entries(d.config || {}).map(
+            ([k,v]) => `<div style="margin-bottom:0.3rem;"><span style="color:var(--accent);">${k}</span> = <span style="color:var(--accent2);">${v}</span></div>`
+        ).join('') || '<div style="color:var(--text2);">No config loaded</div>';
+
+        // Family selector
+        const fr = await fetch('/admin/api/families');
+        const fd = await fr.json();
+        const sel = document.getElementById('family-selector');
+        sel.innerHTML = (fd.families || []).map(f =>
+            `<button onclick="setFamily('${f}')" style="padding:0.5rem 1rem;background:${f===fd.active ? 'var(--accent2)' : 'var(--bg3)'};color:${f===fd.active ? '#000' : 'var(--text)'};border:1px solid var(--border);border-radius:6px;cursor:pointer;">${f}${f===fd.active ? ' (active)' : ''}</button>`
+        ).join('');
+    } catch(e) {
+        document.getElementById('config-list').textContent = 'Error: ' + e.message;
+    }
+}
+
+async function setFamily(f) {
+    const r = await fetch('/admin/api/set-family', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({family:f})});
+    const d = await r.json();
+    document.getElementById('c-family-result').textContent = JSON.stringify(d);
+    loadConfig();
+}
+
+async function setConfig() {
+    const key = document.getElementById('c-key').value;
+    const val = document.getElementById('c-val').value;
+    if (!key) return;
+    const payload = {}; payload[key] = val;
+    const r = await fetch('/admin/api/config', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+    const d = await r.json();
+    document.getElementById('c-set-result').textContent = JSON.stringify(d);
+    loadConfig();
+}
+
+
+// ═══════════════════════════════════════════
+// SYSTEM PROMPT
+// ═══════════════════════════════════════════
+
+async function loadSystemPrompt() {
+    try {
+        const r = await fetch('/admin/api/config');
+        const d = await r.json();
+        const ta = document.getElementById('system-prompt-textarea');
+        if (ta && d.config && d.config.system_prompt) {
+            ta.value = d.config.system_prompt;
+        }
+    } catch(e) {
+        console.error('loadSystemPrompt error:', e);
+    }
+}
+
+async function saveSystemPrompt() {
+    const ta = document.getElementById('system-prompt-textarea');
+    const val = ta ? ta.value : '';
+    const msg = document.getElementById('sysprompt-result');
+    try {
+        const r = await fetch('/admin/api/config', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({system_prompt: val})
+        });
+        const d = await r.json();
+        if (d.ok) {
+            msg.style.color = 'var(--green)';
+            msg.textContent = 'Prompt sauvegarde !';
+        } else {
+            msg.style.color = 'var(--red, #f44)';
+            msg.textContent = 'Erreur: ' + JSON.stringify(d);
+        }
+        loadConfig();
+        setTimeout(() => { msg.textContent = ''; }, 4000);
+    } catch(e) {
+        msg.style.color = 'var(--red, #f44)';
+        msg.textContent = 'Erreur: ' + e.message;
+    }
+}
+
+// ═══════════════════════════════════════════
+// DELETE WORKER
+// ═══════════════════════════════════════════
+
+async function deleteWorker(workerId) {
+    if (!workerId) return;
+    if (!confirm('Supprimer ' + workerId + ' du pool et de la DB ?\nIl devra se reinstaller pour revenir.')) return;
+    try {
+        const r = await fetch('/admin/api/worker/' + workerId, {method: 'DELETE'});
+        const d = await r.json();
+        if (d.ok) {
+            showNotif(workerId + ' supprime', 'success');
+            loadWorkerSelector();
+        } else {
+            showNotif(d.error || 'Erreur', 'error');
+        }
+    } catch(e) { showNotif(e.message, 'error'); }
+}
+
+// ═══════════════════════════════════════════
+// QUEUE TAB
+// ═══════════════════════════════════════════
+
+let _queueInterval = null;
+async function loadQueue() {
+    try {
+        const r = await fetch('/admin/api/queue');
+        const data = await r.json();
+        // Stats
+        const s = data.stats || {};
+        document.getElementById('queue-stats').innerHTML =
+            `<span style="font-size:1.2rem;font-weight:bold;">`+
+            `Pending: <span style="color:var(--accent)">${s.pending||0}</span> | `+
+            `Processing: ${s.processing||0} | `+
+            `Completed: ${s.completed||0} | `+
+            `Avg wait: ${(s.avg_wait_sec||0).toFixed(1)}s</span>`;
+        // Table
+        const tbody = document.getElementById('queue-table');
+        tbody.innerHTML = '';
+        (data.jobs || []).forEach(j => {
+            const age = j.created ? Math.round((Date.now() - new Date(j.created+'Z').getTime())/1000) : 0;
+            const wait = age > 3600 ? Math.round(age/60)+'m' : age+'s';
+            const statusColor = j.status === 'completed' ? 'var(--accent2)' :
+                                j.status === 'failed' ? 'var(--red)' :
+                                j.status === 'processing' ? 'var(--accent)' : 'var(--text)';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td style="font-family:monospace;font-size:0.75rem;">${j.job_id}</td>`+
+                `<td style="color:${statusColor};font-weight:bold;">${j.status}</td>`+
+                `<td style="font-size:0.75rem;">${j.token}</td>`+
+                `<td>${j.model}</td>`+
+                `<td>${j.worker_id || '-'}</td>`+
+                `<td style="font-size:0.75rem;">${j.created ? new Date(j.created+'Z').toLocaleTimeString() : '-'}</td>`+
+                `<td>${wait}</td>`+
+                `<td style="color:var(--red);font-size:0.75rem;">${j.error || ''}</td>`;
+            tbody.appendChild(tr);
+        });
+    } catch(e) {
+        document.getElementById('queue-stats').textContent = 'Erreur: ' + e;
+    }
+    // Auto-refresh toutes les 5s quand l'onglet est visible
+    clearInterval(_queueInterval);
+    _queueInterval = setInterval(() => {
+        const tab = document.getElementById('tab-queue-tab');
+        if (tab && tab.style.display !== 'none') loadQueue();
+        else clearInterval(_queueInterval);
+    }, 5000);
+}
+
+// === CLEANUP DB ===
+async function cleanupPreview() {
+    var minTps = document.getElementById("cleanup-min-tps").value;
+    var offlineH = document.getElementById("cleanup-offline-h").value;
+    var res = await fetch("/admin/api/cleanup/preview?min_tps=" + minTps + "&max_offline_hours=" + offlineH);
+    var data = await res.json();
+    if (data.error) { document.getElementById("cleanup-result").textContent = data.error; return; }
+    var tbody = document.getElementById("cleanup-table");
+    tbody.innerHTML = "";
+    if (!data.candidates.length) {
+        document.getElementById("cleanup-result").textContent = "Aucun worker a nettoyer.";
+        document.getElementById("cleanup-preview").style.display = "none";
+        document.getElementById("cleanup-btn").style.display = "none";
+        return;
+    }
+    data.candidates.forEach(function(c) {
+        var tr = document.createElement("tr");
+        tr.innerHTML = '<td><input type="checkbox" class="cleanup-cb" value="' + c.worker_id + '" checked></td>'
+            + '<td>' + c.worker_id + '<br><small style="color:var(--text2)">' + c.hostname + '</small></td>'
+            + '<td>' + c.effective_tps + '</td>'
+            + '<td>' + c.total_jobs + ' <small style="color:#dc3545">(' + c.jobs_failed + ' err)</small></td>'
+            + '<td style="font-size:0.75rem;color:var(--accent3)">' + c.reasons.join(", ") + '</td>';
+        tbody.appendChild(tr);
+    });
+    document.getElementById("cleanup-preview").style.display = "block";
+    document.getElementById("cleanup-btn").style.display = "inline-block";
+    document.getElementById("cleanup-btn").textContent = "Supprimer les selectionnes (" + data.candidates.length + ")";
+    document.getElementById("cleanup-all").checked = true;
+    document.getElementById("cleanup-result").textContent = "";
+}
+function toggleCleanupAll() {
+    var checked = document.getElementById("cleanup-all").checked;
+    document.querySelectorAll(".cleanup-cb").forEach(function(cb) { cb.checked = checked; });
+}
+async function cleanupExecute() {
+    var cbs = document.querySelectorAll(".cleanup-cb:checked");
+    var ids = [];
+    cbs.forEach(function(cb) { ids.push(cb.value); });
+    if (!ids.length) { document.getElementById("cleanup-result").textContent = "Rien selectionne."; return; }
+    if (!confirm("Supprimer " + ids.length + " worker(s) du pool et de la DB ?")) return;
+    var res = await fetch("/admin/api/cleanup", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({worker_ids: ids})
+    });
+    var data = await res.json();
+    if (data.ok) {
+        document.getElementById("cleanup-result").textContent = data.count + " worker(s) supprimes.";
+        document.getElementById("cleanup-result").style.color = "var(--accent2)";
+        cleanupPreview();
+        loadStats();
+    } else {
+        document.getElementById("cleanup-result").textContent = data.error || "Erreur";
+        document.getElementById("cleanup-result").style.color = "#dc3545";
+    }
+}
+
+// === BLACKLIST ===
+async function loadBlacklist(){
+    try{
+        var r=await fetch("/admin/api/blacklist");
+        var d=await r.json();
+        var el=document.getElementById("blacklist-list");
+        if(!el)return;
+        if(!d.blacklist||!d.blacklist.length){
+            el.innerHTML='<span style="color:var(--text2)">Aucun worker banni</span>';
+            return;
+        }
+        var html="";
+        for(var i=0;i<d.blacklist.length;i++){
+            var wid=d.blacklist[i];
+            html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:0.2rem 0;">';
+            html+='<span style="color:#dc3545;">'+wid+'</span>';
+            html+='<button data-wid="'+wid+'" onclick="unbanWorker(this.dataset.wid)" style="padding:0.2rem 0.5rem;background:var(--accent2);color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.75rem;">Debannir</button>';
+            html+='</div>';
+        }
+        el.innerHTML=html;
+    }catch(e){}
+}
+async function banWorker(wid){
+    if(!wid)return;
+    if(!confirm("Bannir "+wid+" ?"))return;
+    var r=await fetch("/admin/api/blacklist/add",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({worker_id:wid})});
+    var d=await r.json();
+    document.getElementById("w-action-result").textContent=d.ok?wid+" banni":(d.error||"Erreur");
+    loadBlacklist();loadStats();
+}
+async function banWorkerManual(){
+    var wid=document.getElementById("ban-worker-id").value.trim();
+    if(!wid)return;
+    var r=await fetch("/admin/api/blacklist/add",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({worker_id:wid})});
+    var d=await r.json();
+    document.getElementById("ban-result").textContent=d.ok?wid+" banni":(d.error||"Erreur");
+    document.getElementById("ban-worker-id").value="";
+    loadBlacklist();
+}
+async function unbanWorker(wid){
+    var r=await fetch("/admin/api/blacklist/remove",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({worker_id:wid})});
+    var d=await r.json();
+    document.getElementById("ban-result").textContent=d.ok?wid+" debanni":(d.error||"Erreur");
+    loadBlacklist();
+}
+setTimeout(loadBlacklist,2000);
+
+// Set admin_token for API auth (since we passed the admin check to see this page)
+// SECURITY: auto-login removed. Admin must login via /admin/login form.
+
+
+// === TOOL ROUTING CONFIG ===
+async function loadToolModel(){
+    try{
+        // Load current config
+        var cfgRes=await fetch("/admin/api/config");
+        var cfgData=await cfgRes.json();
+        var current=cfgData.config?cfgData.config.tool_routing_model||"":"";
+
+        // Load workers list
+        var statusRes=await fetch("/admin/api/stats");
+        var statusData=await statusRes.json();
+
+        var sel=document.getElementById("cfg-tool-model");
+        sel.innerHTML='<option value="">-- Aucun (pas de routing tool-call) --</option>';
+
+        if(statusData.workers){
+            statusData.workers.forEach(function(w){
+                var model=w.model||"";
+                var shortModel=model.replace("models/","").replace(".gguf","").replace("_"," ");
+                var opt=document.createElement("option");
+                // Extract a keyword from model path for matching
+                var keyword=model.replace("models/","").split("-")[0].split("_").pop().toLowerCase();
+                // Use worker ID as a more reliable match
+                opt.value=w.id;
+                opt.textContent=w.id+" — "+shortModel+" ("+w.real_tps.toFixed(0)+" t/s)";
+                if(current && (w.id.toLowerCase()===current.toLowerCase() || model.toLowerCase().indexOf(current.toLowerCase())>=0)){
+                    opt.selected=true;
+                }
+                sel.appendChild(opt);
+            });
+        }
+    }catch(e){}
+}
+async function saveToolModel(){
+    var sel=document.getElementById("cfg-tool-model");
+    var val=sel.value;
+    if(!val){
+        document.getElementById("cfg-tool-result").textContent="Aucun worker selectionne";
+        return;
+    }
+    var r=await fetch("/admin/api/config",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tool_routing_model:val})});
+    var d=await r.json();
+    var label=sel.options[sel.selectedIndex].textContent;
+    document.getElementById("cfg-tool-result").textContent=d.ok?"Sauve: "+label:(d.error||"Erreur");
+}
+setTimeout(loadToolModel,3000);
+
+// === ACCOUNTS ===
+async function loadAccounts(){
+    try{
+        var r=await fetch("/admin/api/accounts");
+        var d=await r.json();
+        if(d.error)return;
+        document.getElementById("acc-count").textContent=d.total;
+        var tbody=document.getElementById("acc-table");
+        var sel=document.getElementById("acc-select");
+        tbody.innerHTML="";
+        sel.innerHTML='<option value="">-- Choisir un compte --</option>';
+        d.accounts.forEach(function(a){
+            var tr=document.createElement("tr");
+            tr.style.borderBottom="1px solid var(--border)";
+            var delBtn='<button data-aid="'+a.account_id+'" onclick="deleteAccount(this.dataset.aid)" style="padding:0.2rem 0.4rem;background:#dc3545;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.7rem;">Suppr</button>';
+            tr.innerHTML='<td style="padding:0.4rem;color:var(--accent);">'+a.email+'</td>'
+                +'<td>'+a.pseudo+'</td>'
+                +'<td style="color:var(--accent2);">'+a.total_credits.toFixed(1)+'</td>'
+                +'<td>'+a.total_earned.toFixed(1)+'</td>'
+                +'<td>'+a.total_spent.toFixed(1)+'</td>'
+                +'<td style="font-size:0.7rem;color:var(--text2);">'+a.account_token+'</td>'
+                +'<td>'+delBtn+'</td>';
+            tbody.appendChild(tr);
+            var opt=document.createElement("option");
+            opt.value=a.account_id;
+            opt.textContent=a.email+" ("+a.total_credits.toFixed(0)+" cr)";
+            sel.appendChild(opt);
+        });
+    }catch(e){}
+}
+async function addCredits(){
+    var aid=document.getElementById("acc-select").value;
+    var val=parseFloat(document.getElementById("acc-credits-val").value);
+    if(!aid||!val)return;
+    var r=await fetch("/admin/api/accounts/credits",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({account_id:aid,credits:val,action:"add"})});
+    var d=await r.json();
+    document.getElementById("acc-result").textContent=d.ok?"Credits: "+d.credits:(d.error||"Erreur");
+    loadAccounts();
+}
+async function setCredits(){
+    var aid=document.getElementById("acc-select").value;
+    var val=parseFloat(document.getElementById("acc-credits-val").value);
+    if(!aid)return;
+    var r=await fetch("/admin/api/accounts/credits",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({account_id:aid,credits:val,action:"set"})});
+    var d=await r.json();
+    document.getElementById("acc-result").textContent=d.ok?"Credits: "+d.credits:(d.error||"Erreur");
+    loadAccounts();
+}
+async function deleteAccount(aid){
+    if(!confirm("Supprimer ce compte ?"))return;
+    var r=await fetch("/admin/api/accounts/"+aid,{method:"DELETE"});
+    var d=await r.json();
+    document.getElementById("acc-result").textContent=d.ok?"Supprime: "+d.deleted:(d.error||"Erreur");
+    loadAccounts();
+}
+setTimeout(loadAccounts,2500);
+
+
+    // ═══════════ CHECKER TAB ═══════════
+    async function loadCheckerStatus() {
+        try {
+            const r = await fetch(`${API}/admin/api/checker`);
+            const d = await r.json();
+            if (d.config) {
+                document.getElementById('chk-enabled').checked = d.config.checker_enabled;
+                document.getElementById('chk-tps').value = d.config.checker_tps_threshold;
+                document.getElementById('chk-timeout').value = d.config.checker_timeout;
+                document.getElementById('chk-fail-max').value = d.config.checker_fail_max;
+                document.getElementById('chk-min-score').value = d.config.checker_min_score;
+                document.getElementById('chk-decay').value = d.config.checker_score_decay;
+                document.getElementById('chk-recovery').value = d.config.checker_score_recovery;
+                document.getElementById('chk-sample').value = d.config.checker_sample_rate;
+            }
+            const tbody = document.getElementById('checker-tbody');
+            tbody.innerHTML = (d.workers || []).map(w => {
+                const scoreColor = w.checker_score >= 0.7 ? 'var(--green)' : w.checker_score >= 0.4 ? '#f0b429' : 'var(--red, #f85149)';
+                const pct = w.checker_total > 0 ? Math.round(w.checker_passed / w.checker_total * 100) : '-';
+                const model = (w.model_path || '').split('/').pop() || '-';
+                return `<tr style="border-bottom:1px solid var(--border);">
+                    <td style="padding:0.4rem 0.5rem;font-weight:600;">${w.worker_id}</td>
+                    <td style="text-align:center;font-size:0.8rem;color:var(--text2);">${model}</td>
+                    <td style="text-align:center;">${w.bench_tps}</td>
+                    <td style="text-align:center;">${w.checked ? '<span style="color:#f0b429;">OUI</span>' : '<span style="color:var(--text2);">non</span>'}</td>
+                    <td style="text-align:center;font-weight:700;color:${scoreColor};">${w.checker_score.toFixed(3)}</td>
+                    <td style="text-align:center;color:${w.checker_fails > 0 ? 'var(--red, #f85149)' : 'var(--text2)'};">${w.checker_fails}</td>
+                    <td style="text-align:center;">${w.checker_total}</td>
+                    <td style="text-align:center;">${pct}${pct !== '-' ? '%' : ''}</td>
+                </tr>`;
+            }).join('');
+        } catch(e) { console.error('Checker load error:', e); }
+    }
+
+    async function saveCheckerConfig() {
+        const payload = {
+            checker_enabled: document.getElementById('chk-enabled').checked,
+            checker_tps_threshold: parseFloat(document.getElementById('chk-tps').value),
+            checker_timeout: parseInt(document.getElementById('chk-timeout').value),
+            checker_fail_max: parseInt(document.getElementById('chk-fail-max').value),
+            checker_min_score: parseFloat(document.getElementById('chk-min-score').value),
+            checker_score_decay: parseFloat(document.getElementById('chk-decay').value),
+            checker_score_recovery: parseFloat(document.getElementById('chk-recovery').value),
+            checker_sample_rate: parseInt(document.getElementById('chk-sample').value),
+        };
+        try {
+            const r = await fetch(`${API}/admin/api/checker`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+            const d = await r.json();
+            const st = document.getElementById('chk-save-status');
+            if (d.ok) { st.textContent = 'Sauvegarde OK'; st.style.color = 'var(--green)'; }
+            else { st.textContent = d.error || 'Erreur'; st.style.color = 'var(--red, #f85149)'; }
+            setTimeout(() => st.textContent = '', 3000);
+        } catch(e) { document.getElementById('chk-save-status').textContent = e.message; }
+    }
+
+</script>
+<script src="/static/admin_federation.js"></script>
+</body>
+</html>
