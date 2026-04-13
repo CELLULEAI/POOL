@@ -11,10 +11,10 @@
     <style>
         :root {
             --bg: #0a0a0a; --bg2: #111111; --bg3: #1a1a1a;
-            --accent: #00d4ff; --accent2: #00ff88; --accent3: #ff8844;
+            --accent: #00d4ff; --accent2: #00ff88; --accent3: #ff6b00;
             --text: #f0f0f0; --text2: #888888; --border: #222222;
             --neon-blue: #00d4ff; --neon-green: #00ff88;
-            --red: #f85149; --purple: var(--neon-blue);
+            --red: #ff4444; --purple: #8b5cf6;
         }
 
         /* ── Cellule.ai buttons & forms ───────────────────────────── */
@@ -2005,7 +2005,7 @@ setTimeout(loadAccounts,2500);
             }
             const tbody = document.getElementById('checker-tbody');
             tbody.innerHTML = (d.workers || []).map(w => {
-                const scoreColor = w.checker_score >= 0.7 ? 'var(--green)' : w.checker_score >= 0.4 ? 'var(--neon-green)' : 'var(--red, #f85149)';
+                const scoreColor = w.checker_score >= 0.7 ? 'var(--green)' : w.checker_score >= 0.4 ? 'var(--neon-green)' : 'var(--red, #ff4444)';
                 const pct = w.checker_total > 0 ? Math.round(w.checker_passed / w.checker_total * 100) : '-';
                 const model = (w.model_path || '').split('/').pop() || '-';
                 return `<tr style="border-bottom:1px solid var(--border);">
@@ -2014,7 +2014,7 @@ setTimeout(loadAccounts,2500);
                     <td style="text-align:center;">${w.bench_tps}</td>
                     <td style="text-align:center;">${w.checked ? '<span style="color:var(--neon-green);">OUI</span>' : '<span style="color:var(--text2);">non</span>'}</td>
                     <td style="text-align:center;font-weight:700;color:${scoreColor};">${w.checker_score.toFixed(3)}</td>
-                    <td style="text-align:center;color:${w.checker_fails > 0 ? 'var(--red, #f85149)' : 'var(--text2)'};">${w.checker_fails}</td>
+                    <td style="text-align:center;color:${w.checker_fails > 0 ? 'var(--red, #ff4444)' : 'var(--text2)'};">${w.checker_fails}</td>
                     <td style="text-align:center;">${w.checker_total}</td>
                     <td style="text-align:center;">${pct}${pct !== '-' ? '%' : ''}</td>
                 </tr>`;
@@ -2038,7 +2038,7 @@ setTimeout(loadAccounts,2500);
             const d = await r.json();
             const st = document.getElementById('chk-save-status');
             if (d.ok) { st.textContent = 'Sauvegarde OK'; st.style.color = 'var(--green)'; }
-            else { st.textContent = d.error || 'Erreur'; st.style.color = 'var(--red, #f85149)'; }
+            else { st.textContent = d.error || 'Erreur'; st.style.color = 'var(--red, #ff4444)'; }
             setTimeout(() => st.textContent = '', 3000);
         } catch(e) { document.getElementById('chk-save-status').textContent = e.message; }
     }
