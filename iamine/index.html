@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IAMINE.ORG — Distributed AI for Everyone</title>
+    <script>if(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)&&!location.hash)location.href='/m';</script>
     <style>
         :root {
             --bg: #0d1117; --bg2: #161b22; --bg3: #21262d;
@@ -19,8 +20,9 @@
         nav { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 2rem; border-bottom: 1px solid var(--border); background: var(--bg2); flex-shrink: 0; }
         .logo { font-size: 1.4rem; font-weight: 700; color: var(--accent); text-decoration: none; letter-spacing: 2px; }
         .logo span { color: var(--accent3); }
-        .nav-tabs { list-style: none; display: flex; gap: 0; }
-        .nav-tab { padding: 0.6rem 1.2rem; color: var(--text2); text-decoration: none; font-size: 0.85rem; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .nav-tabs { list-style: none; display: flex; gap: 0; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
+        .nav-tabs::-webkit-scrollbar { display: none; }
+        .nav-tab { padding: 0.6rem 1.2rem; color: var(--text2); text-decoration: none; font-size: 0.85rem; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
         .nav-tab:hover { color: var(--text); }
         .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
         .lang-switch { display: flex; gap: 0.4rem; }
@@ -157,8 +159,11 @@
             .home-pillars { gap: 1rem; }
             .home-stats { gap: 1.5rem; flex-wrap: wrap; }
             .bench-grid { grid-template-columns: 1fr; }
-            nav { padding: 0.5rem 1rem; }
-            .nav-tab { padding: 0.5rem 0.7rem; font-size: 0.8rem; }
+            nav { padding: 0.5rem 0.5rem; flex-wrap: wrap; gap: 0.3rem; }
+            .nav-tab { padding: 0.4rem 0.5rem; font-size: 0.7rem; }
+            .home-oneliner { padding: 0.6rem 0.8rem; }
+            .home-oneliner code { font-size: 0.7rem; }
+            .token-cards { grid-template-columns: 1fr 1fr; }
         }
     </style>
 </head>
@@ -169,6 +174,7 @@
     <ul class="nav-tabs">
         <li class="nav-tab active" data-page="home" data-i18n="nav_home">Home</li>
         <li class="nav-tab" data-page="pool" data-i18n="nav_pool">Pool</li>
+        <li class="nav-tab" data-page="dashboard" data-i18n="nav_dashboard">Dashboard</li>
         <li class="nav-tab" data-page="levels" data-i18n="nav_levels">Levels</li>
         <li class="nav-tab" data-page="demo" data-i18n="nav_demo">Demo</li>
         <li class="nav-tab" data-page="bench" data-i18n="nav_bench">Benchmark</li>
@@ -177,6 +183,7 @@
         <li class="nav-tab" data-page="token" data-i18n="nav_token">$IAMINE</li>
         <li class="nav-tab" data-page="tuto" data-i18n="nav_tuto">Tuto</li>
         <li class="nav-tab" data-page="contact" data-i18n="nav_contact">Contact</li>
+        <li class="nav-tab" data-page="mobile" data-i18n="nav_mobile">Mobile</li>
         <li class="nav-tab" data-page="whitepaper" data-i18n="nav_wp">Whitepaper</li>
     </ul>
     <div style="display:flex;align-items:center;gap:0.75rem;">
@@ -201,7 +208,7 @@
             <div style="display:flex;flex-direction:column;gap:1.2rem;">
                 <div style="display:flex;gap:0.75rem;align-items:flex-start;">
                     <div style="min-width:32px;height:32px;border-radius:50%;background:var(--accent2);color:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;">1</div>
-                    <div><div style="font-weight:600;font-size:0.9rem;" data-i18n="c1t">You share your PC's power</div><div style="color:var(--text2);font-size:0.8rem;" data-i18n="c1d">Your idle CPU runs a lightweight AI model. No GPU needed. Works on any PC with 4 GB+ RAM.</div></div>
+                    <div><div style="font-weight:600;font-size:0.9rem;" data-i18n="c1t">You share your PC's power</div><div style="color:var(--text2);font-size:0.8rem;" data-i18n="c1d">Your CPU or GPU runs an AI model with maximum context memory. Small model + large context = fast and smart. GPU auto-detected.</div></div>
                 </div>
 
                 <div style="display:flex;gap:0.75rem;align-items:flex-start;">
@@ -223,6 +230,11 @@
                     <div style="min-width:32px;height:32px;border-radius:50%;background:var(--purple);color:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;">5</div>
                     <div><div style="font-weight:600;font-size:0.9rem;" data-i18n="c5t">Export to your wallet</div><div style="color:var(--text2);font-size:0.8rem;" data-i18n="c5d">$IAMINE tokens will be tradeable on DEX. Export to MetaMask or Rabby and trade your compute power.</div></div>
                 </div>
+
+                <div style="display:flex;gap:0.75rem;align-items:flex-start;">
+                    <div style="min-width:32px;height:32px;border-radius:50%;background:var(--red);color:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;">6</div>
+                    <div><div style="font-weight:600;font-size:0.9rem;" data-i18n="c6t">Infinite encrypted memory</div><div style="color:var(--text2);font-size:0.8rem;" data-i18n="c6d">With an account, your conversations have unlimited context. 3-level compaction + AES encryption — talk for hours, zero data leaks.</div></div>
+                </div>
             </div>
 
             <button class="btn btn-secondary" style="margin-top:1.5rem;font-size:0.85rem;" onclick="go('whitepaper')" data-i18n="concept_wp">Read the Whitepaper</button>
@@ -232,11 +244,25 @@
         <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;">
             <h1 class="home-title">IAMINE.ORG</h1>
             <div class="home-subtitle" data-i18n="home_sub">Simplicity. Efficiency. AI for Everyone.</div>
-            <p class="home-desc" data-i18n="home_desc">Your PC has unused power. We turn it into AI. Join the network in 60 seconds with a single command. No cloud, no GPU, no hassle.</p>
+            <p class="home-desc" data-i18n="home_desc">Your PC has unused power. We turn it into AI. Join the network in 60 seconds with a single command. CPU or GPU, no cloud, no hassle.</p>
 
-            <div class="home-oneliner">
-                <code id="install-cmd">pip install iamine-ai -i https://iamine.org/pypi && python -m iamine worker --auto</code>
-                <button class="copy-btn" onclick="copyInstall(this)">Copy</button>
+            <div style="max-width:600px;width:100%;margin-top:1.5rem;">
+                <div class="home-oneliner" style="margin:0 0 0.5rem 0;">
+                    <span style="color:var(--text2);font-size:0.7rem;min-width:50px;">Linux</span>
+                    <code id="install-cmd" style="flex:1;font-size:0.85rem;">curl -sL https://iamine.org/install.sh | bash</code>
+                    <button class="copy-btn" onclick="copyInstall(this)">Copy</button>
+                </div>
+                <div class="home-oneliner" style="margin:0 0 0.5rem 0;">
+                    <span style="color:var(--text2);font-size:0.7rem;min-width:50px;">Windows</span>
+                    <code id="install-cmd-win" style="flex:1;font-size:0.85rem;">irm https://iamine.org/install.ps1 | iex</code>
+                    <button class="copy-btn" onclick="copyInstall(this,'install-cmd-win')">Copy</button>
+                </div>
+                <div class="home-oneliner" style="margin:0;">
+                    <span style="color:var(--text2);font-size:0.7rem;min-width:50px;">macOS</span>
+                    <code id="install-cmd-mac" style="flex:1;font-size:0.8rem;">pip install iamine-ai -i https://iamine.org/pypi --extra-index-url https://pypi.org/simple && python -m iamine worker --auto</code>
+                    <button class="copy-btn" onclick="copyInstall(this,'install-cmd-mac')">Copy</button>
+                </div>
+                <div style="text-align:center;margin-top:0.4rem;font-size:0.72rem;color:var(--text2);" data-i18n="home_gpu_note">GPU auto-detected. For NVIDIA GPU: <code style="font-size:0.7rem;color:var(--accent2);">pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu124</code></div>
             </div>
 
             <div class="home-cta" style="margin-top:1.5rem;">
@@ -274,7 +300,49 @@
         <canvas id="pool-canvas" style="flex:1;width:100%;max-width:800px;min-height:400px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;"></canvas>
 
         <!-- Worker list -->
-        <div id="pool-list" style="width:100%;max-width:800px;margin-top:1rem;"></div>
+        <div id="pool-tasks" style="width:100%;max-width:800px;margin-top:0.75rem;display:flex;flex-wrap:wrap;gap:0.5rem;"></div>
+        <div id="pool-list" style="width:100%;max-width:800px;margin-top:0.75rem;"></div>
+    </div>
+</div>
+
+<!-- ============ DASHBOARD ============ -->
+<div class="page" id="page-dashboard">
+    <div class="page-content" style="max-width:900px;margin:0 auto;">
+        <h2 style="text-align:center;">Network Dashboard</h2>
+        <p style="color:var(--text2);text-align:center;margin-bottom:1.5rem;">Job distribution, credits and performance across all workers.</p>
+
+        <!-- Stats summary -->
+        <div style="display:flex;gap:1.5rem;justify-content:center;margin-bottom:1.5rem;flex-wrap:wrap;">
+            <div style="text-align:center;"><div style="font-size:1.6rem;font-weight:700;color:var(--accent2);" id="dash-workers">0</div><div style="font-size:0.7rem;color:var(--text2);text-transform:uppercase;">Routable</div></div>
+            <div style="text-align:center;"><div style="font-size:1.6rem;font-weight:700;color:var(--accent);" id="dash-total-jobs">0</div><div style="font-size:0.7rem;color:var(--text2);text-transform:uppercase;">Total Jobs</div></div>
+            <div style="text-align:center;"><div style="font-size:1.6rem;font-weight:700;color:var(--gold);" id="dash-total-credits">0</div><div style="font-size:0.7rem;color:var(--text2);text-transform:uppercase;">$IAMINE Earned</div></div>
+        </div>
+
+        <!-- Job share chart (horizontal bars) -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1rem;">
+            <div style="font-weight:600;margin-bottom:0.75rem;font-size:0.9rem;">Job Distribution</div>
+            <div id="dash-bars"></div>
+        </div>
+
+        <!-- Worker table -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1rem;overflow-x:auto;">
+            <div style="font-weight:600;margin-bottom:0.75rem;font-size:0.9rem;">Worker Leaderboard</div>
+            <table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
+                <thead>
+                    <tr style="border-bottom:1px solid var(--border);color:var(--text2);">
+                        <th style="text-align:left;padding:0.4rem;">Worker</th>
+                        <th style="text-align:right;padding:0.4rem;">Model</th>
+                        <th style="text-align:right;padding:0.4rem;">t/s</th>
+                        <th style="text-align:right;padding:0.4rem;">Jobs</th>
+                        <th style="text-align:right;padding:0.4rem;">Share</th>
+                        <th style="text-align:right;padding:0.4rem;">$IAMINE</th>
+                    </tr>
+                </thead>
+                <tbody id="dash-table"></tbody>
+            </table>
+        </div>
+
+        <div style="text-align:center;margin-top:0.75rem;font-size:0.75rem;color:var(--text2);">Auto-refresh every 10s</div>
     </div>
 </div>
 
@@ -358,8 +426,14 @@
             <p id="b-rec" style="color:var(--text2);font-size:0.95rem;"></p>
             <p style="color:var(--text2);font-size:0.9rem;margin:0.5rem 0;" data-i18n="bj_desc">Join the IAMINE network now with a single command:</p>
             <div class="install-box">
-                <code id="b-install-cmd">pip install iamine-ai -i https://iamine.org/pypi && python -m iamine worker --auto</code>
+                <code id="b-install-cmd">pip install iamine-ai -i https://iamine.org/pypi --extra-index-url https://pypi.org/simple && python -m iamine worker --auto</code>
                 <button class="copy-btn" onclick="copyInstall(this,'b-install-cmd')">Copy</button>
+            </div>
+            <div style="font-size:0.75rem;color:var(--text2);margin-top:0.5rem;line-height:1.8;">
+                <span data-i18n="bj_works">Works on all platforms:</span><br>
+                <span style="color:var(--accent2);">Linux</span>: <code style="font-size:0.75rem;color:var(--accent2);">curl -sL https://iamine.org/install.sh | bash</code><br>
+                <span style="color:var(--accent2);">Windows</span>: <code style="font-size:0.75rem;color:var(--accent2);">irm https://iamine.org/install.ps1 | iex</code><br>
+                <span style="color:var(--accent2);">macOS</span>: <code style="font-size:0.75rem;color:var(--accent2);">pip install iamine-ai -i https://iamine.org/pypi --extra-index-url https://pypi.org/simple</code>
             </div>
             <p style="color:var(--text2);font-size:0.8rem;margin-top:0.5rem;" data-i18n="bj_note">This will install IAMINE, download the optimal model for your machine, and connect to the pool automatically.</p>
         </div>
@@ -407,12 +481,6 @@
             <div class="tcard"><div class="ico" style="color:var(--accent);">~</div><h4 data-i18n="tk_t">Trade</h4><p data-i18n="tk_td">Tradeable on DEX. Your compute power has real value.</p></div>
             <div class="tcard"><div class="ico" style="color:var(--accent3);">*</div><h4 data-i18n="tk_u">Use</h4><p data-i18n="tk_ud">Spend $IAMINE for premium models and priority inference.</p></div>
             <div class="tcard"><div class="ico" style="color:var(--purple);">%</div><h4 data-i18n="tk_g">Govern</h4><p data-i18n="tk_gd">Holders vote on models, fees, and network upgrades.</p></div>
-        </div>
-        <div style="text-align:center;margin-top:1rem;">
-            <div class="install-box" style="max-width:500px;margin:0 auto;">
-                <code>pip install iamine-ai -i https://iamine.org/pypi && python -m iamine worker --auto</code>
-                <button class="copy-btn" onclick="copyInstall(this)">Copy</button>
-            </div>
         </div>
 
         <!-- EXPORT WALLET -->
@@ -542,19 +610,21 @@
 
             <div style="background:var(--bg);border-radius:8px;padding:1rem;margin-bottom:0.75rem;">
                 <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.25rem;">curl</div>
-                <code style="font-size:0.85rem;color:var(--accent2);display:block;white-space:pre-wrap;">curl https://iamine.org/v1/api/chat \
+                <code id="api-curl" style="font-size:0.85rem;color:var(--accent2);display:block;white-space:pre-wrap;">curl https://iamine.org/v1/api/chat \
   -H "Content-Type: application/json" \
   -d '{"api_token":"iam_xxx","messages":[{"role":"user","content":"Hello"}]}'</code>
+                <button class="copy-btn" onclick="copyEl('api-curl')" style="font-size:0.7rem;padding:0.15rem 0.5rem;margin-top:0.4rem;">Copy</button>
             </div>
 
             <div style="background:var(--bg);border-radius:8px;padding:1rem;">
                 <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.25rem;">Python</div>
-                <code style="font-size:0.85rem;color:var(--accent2);display:block;white-space:pre-wrap;">import requests
+                <code id="api-python" style="font-size:0.85rem;color:var(--accent2);display:block;white-space:pre-wrap;">import requests
 r = requests.post("https://iamine.org/v1/api/chat", json={
     "api_token": "iam_xxx",
     "messages": [{"role": "user", "content": "Hello"}]
 })
 print(r.json()["choices"][0]["message"]["content"])</code>
+                <button class="copy-btn" onclick="copyEl('api-python')" style="font-size:0.7rem;padding:0.15rem 0.5rem;margin-top:0.4rem;">Copy</button>
             </div>
         </div>
 
@@ -566,15 +636,15 @@ print(r.json()["choices"][0]["message"]["content"])</code>
             <div style="background:var(--bg);border-radius:8px;padding:1rem;margin-bottom:0.75rem;">
                 <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.5rem;">Open WebUI Settings > Connections > OpenAI API</div>
                 <table style="width:100%;font-size:0.85rem;">
-                    <tr><td style="color:var(--text2);padding:0.3rem 0;width:140px;">API Base URL</td><td><div class="install-box" style="margin:0;padding:0.4rem 0.6rem;"><code id="owui-url" style="font-size:0.85rem;">http://localhost:8080/v1</code><button class="copy-btn" onclick="copyEl('owui-url')" style="font-size:0.7rem;padding:0.15rem 0.5rem;">Copy</button></div></td></tr>
-                    <tr><td style="color:var(--text2);padding:0.3rem 0;">API Key</td><td><div class="install-box" style="margin:0;padding:0.4rem 0.6rem;"><code id="owui-key" style="font-size:0.85rem;">-</code><button class="copy-btn" onclick="copyEl('owui-key')" style="font-size:0.7rem;padding:0.15rem 0.5rem;">Copy</button></div></td></tr>
+                    <tr><td style="color:var(--text2);padding:0.3rem 0;width:140px;">API Base URL</td><td><div class="install-box" style="margin:0;padding:0.4rem 0.6rem;"><code id="owui-url" style="font-size:0.85rem;">https://iamine.org/v1</code><button class="copy-btn" onclick="copyEl('owui-url')" style="font-size:0.7rem;padding:0.15rem 0.5rem;">Copy</button></div></td></tr>
+                    <tr><td style="color:var(--text2);padding:0.3rem 0;">API Key</td><td><div class="install-box" style="margin:0;padding:0.4rem 0.6rem;"><code id="owui-key" style="font-size:0.85rem;">iam_YOUR_TOKEN</code><button class="copy-btn" onclick="copyEl('owui-key')" style="font-size:0.7rem;padding:0.15rem 0.5rem;">Copy</button></div></td></tr>
                 </table>
             </div>
 
             <div style="background:var(--bg);border-radius:8px;padding:1rem;">
                 <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.25rem;">docker-compose.yml</div>
                 <div class="install-box" style="margin:0;"><code id="owui-docker" style="font-size:0.8rem;white-space:pre-wrap;">docker run -d -p 3000:8080 \
-  -e OPENAI_API_BASE_URL=http://host.docker.internal:8080/v1 \
+  -e OPENAI_API_BASE_URL=https://iamine.org/v1 \
   -e OPENAI_API_KEY=iam_YOUR_TOKEN_HERE \
   --name open-webui \
   ghcr.io/open-webui/open-webui:main</code><button class="copy-btn" onclick="copyEl('owui-docker')" style="font-size:0.7rem;padding:0.15rem 0.5rem;">Copy</button></div>
@@ -586,7 +656,8 @@ print(r.json()["choices"][0]["message"]["content"])</code>
             <h3 style="margin-bottom:0.5rem;" data-i18n="api_ref_title">Full API Reference</h3>
             <table style="width:100%;font-size:0.85rem;border-collapse:collapse;">
                 <tr style="border-bottom:1px solid var(--border);"><th style="text-align:left;padding:0.5rem;color:var(--text2);">Endpoint</th><th style="text-align:left;padding:0.5rem;color:var(--text2);">Method</th><th style="text-align:left;padding:0.5rem;color:var(--text2);">Description</th><th style="text-align:left;padding:0.5rem;color:var(--text2);">Auth</th></tr>
-                <tr style="border-bottom:1px solid var(--border);"><td style="padding:0.5rem;color:var(--accent);">/v1/chat/completions</td><td>POST</td><td data-i18n="api_r1">Chat (free, demo)</td><td>-</td></tr>
+                <tr style="border-bottom:1px solid var(--border);"><td style="padding:0.5rem;color:var(--accent);">/v1/chat/completions</td><td>POST</td><td>OpenAI-compatible chat (auto conv_id)</td><td>Bearer token</td></tr>
+                <tr style="border-bottom:1px solid var(--border);"><td style="padding:0.5rem;color:var(--accent);">/v1/messages</td><td>POST</td><td>Anthropic-compatible (Claude Code)</td><td>x-api-key</td></tr>
                 <tr style="border-bottom:1px solid var(--border);"><td style="padding:0.5rem;color:var(--accent);">/v1/api/chat</td><td>POST</td><td data-i18n="api_r2">Chat (1 credit/request)</td><td>api_token</td></tr>
                 <tr style="border-bottom:1px solid var(--border);"><td style="padding:0.5rem;color:var(--accent);">/v1/status</td><td>GET</td><td data-i18n="api_r3">Pool status</td><td>-</td></tr>
                 <tr style="border-bottom:1px solid var(--border);"><td style="padding:0.5rem;color:var(--accent);">/v1/pool/power</td><td>GET</td><td data-i18n="api_r4">Pool power analysis</td><td>-</td></tr>
@@ -631,9 +702,10 @@ print(r.json()["choices"][0]["message"]["content"])</code>
             <h2><span data-i18n="mw_no_title">No worker detected</span></h2>
             <p style="color:var(--text2);margin:1rem 0;" data-i18n="mw_no_desc">Start a worker on this machine to see it here, or log in to manage multiple workers.</p>
             <div class="install-box" style="max-width:500px;margin:1rem auto;">
-                <code>pip install iamine-ai -i https://iamine.org/pypi && python -m iamine worker --auto</code>
+                <code>curl -sL https://iamine.org/install.sh | bash</code>
                 <button class="copy-btn" onclick="copyInstall(this)">Copy</button>
             </div>
+            <div style="text-align:center;font-size:0.75rem;color:var(--text2);">Windows: <code style="font-size:0.75rem;color:var(--accent2);">irm https://iamine.org/install.ps1 | iex</code></div>
             <p style="color:var(--text2);margin-top:1.5rem;" data-i18n="mw_or">— or —</p>
             <button class="btn btn-secondary" style="margin-top:0.5rem;" onclick="document.getElementById('mw-register').style.display='block';document.getElementById('mw-none').style.display='none';" data-i18n="mw_login_btn">Log in / Register</button>
         </div>
@@ -667,8 +739,9 @@ print(r.json()["choices"][0]["message"]["content"])</code>
                 <div style="flex:1;height:1px;background:var(--border);"></div>
             </div>
 
+            <input type="text" id="mw-pseudo" placeholder="pseudo" data-i18n-placeholder="mw_pseudo" style="width:100%;padding:0.6rem;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);margin-bottom:0.5rem;">
             <input type="email" id="mw-email" placeholder="email" style="width:100%;padding:0.6rem;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);margin-bottom:0.5rem;">
-            <input type="password" id="mw-pass" placeholder="password (min 8)" style="width:100%;padding:0.6rem;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);margin-bottom:0.5rem;">
+            <input type="password" id="mw-pass" placeholder="password (min 8)" data-i18n-placeholder="mw_pass" style="width:100%;padding:0.6rem;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);margin-bottom:0.5rem;">
             <div style="display:flex;gap:0.5rem;">
                 <button class="btn btn-primary" style="flex:1;" id="mw-do-register" data-i18n="mw_do_register">Register</button>
                 <button class="btn btn-secondary" style="flex:1;" id="mw-do-login" data-i18n="mw_do_login">Log in</button>
@@ -719,15 +792,22 @@ print(r.json()["choices"][0]["message"]["content"])</code>
         <!-- Claude via IAMINE -->
         <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;">
             <h3 style="margin-bottom:0.5rem;">Claude Code + IAMINE</h3>
-            <p style="color:var(--text2);font-size:0.9rem;margin-bottom:1rem;" data-i18n="tuto_claude_desc">Use Claude Code with IAMINE as a backend. The quality depends on the pool's available models — the more workers join, the more powerful models become available.</p>
+            <p style="color:var(--text2);font-size:0.9rem;margin-bottom:1rem;" data-i18n="tuto_claude_desc">Use Claude Code with IAMINE as a backend via the Anthropic-compatible API. The quality depends on the pool's available models.</p>
             <div style="background:var(--bg);border-radius:8px;padding:1rem;margin-bottom:0.75rem;">
-                <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.25rem;">Configuration</div>
-                <code style="font-size:0.85rem;color:var(--accent2);display:block;white-space:pre-wrap;">export OPENAI_API_BASE=https://iamine.org/v1
-export OPENAI_API_KEY=iam_YOUR_TOKEN_HERE
-
+                <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.25rem;">Linux / macOS</div>
+                <code id="tuto-claude" style="font-size:0.85rem;color:var(--accent2);display:block;white-space:pre-wrap;">export ANTHROPIC_BASE_URL=https://iamine.org
+export ANTHROPIC_API_KEY=iam_YOUR_TOKEN
 claude --model iamine</code>
+                <button class="copy-btn" onclick="copyEl('tuto-claude')" style="font-size:0.7rem;padding:0.15rem 0.5rem;margin-top:0.4rem;">Copy</button>
             </div>
-            <div class="info" style="background:rgba(88,166,255,0.1);border-left:3px solid var(--accent);padding:0.75rem;border-radius:0 6px 6px 0;font-size:0.85rem;color:var(--text2);" data-i18n="tuto_claude_note">Note: The AI capability depends on the pool's power. With more workers, larger models (7B, 14B...) become available and responses improve.</div>
+            <div style="background:var(--bg);border-radius:8px;padding:1rem;margin-bottom:0.75rem;">
+                <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.25rem;">Windows (PowerShell)</div>
+                <code id="tuto-claude-ps" style="font-size:0.85rem;color:var(--accent2);display:block;white-space:pre-wrap;">$env:ANTHROPIC_BASE_URL = "https://iamine.org"
+$env:ANTHROPIC_API_KEY  = "iam_YOUR_TOKEN"
+claude --model iamine</code>
+                <button class="copy-btn" onclick="copyEl('tuto-claude-ps')" style="font-size:0.7rem;padding:0.15rem 0.5rem;margin-top:0.4rem;">Copy</button>
+            </div>
+            <div class="info" style="background:rgba(88,166,255,0.1);border-left:3px solid var(--accent);padding:0.75rem;border-radius:0 6px 6px 0;font-size:0.85rem;color:var(--text2);" data-i18n="tuto_claude_note">Note: IAMINE exposes a /v1/messages endpoint compatible with the Anthropic API. The AI quality depends on the pool's power — more workers = larger models available.</div>
         </div>
 
         <!-- Open WebUI -->
@@ -735,11 +815,136 @@ claude --model iamine</code>
             <h3 style="margin-bottom:0.5rem;">Open WebUI</h3>
             <p style="color:var(--text2);font-size:0.9rem;margin-bottom:1rem;" data-i18n="tuto_owui_desc">Connect Open WebUI to the IAMINE network for a ChatGPT-like interface.</p>
             <div style="background:var(--bg);border-radius:8px;padding:1rem;margin-bottom:0.75rem;">
-                <code style="font-size:0.85rem;color:var(--accent2);display:block;white-space:pre-wrap;">docker run -d -p 3000:8080 \
+                <code id="tuto-owui" style="font-size:0.85rem;color:var(--accent2);display:block;white-space:pre-wrap;">docker run -d -p 3000:8080 \
   -e OPENAI_API_BASE_URL=https://iamine.org/v1 \
   -e OPENAI_API_KEY=iam_YOUR_TOKEN \
   --name open-webui \
   ghcr.io/open-webui/open-webui:main</code>
+                <button class="copy-btn" onclick="copyEl('tuto-owui')" style="font-size:0.7rem;padding:0.15rem 0.5rem;margin-top:0.4rem;">Copy</button>
+            </div>
+        </div>
+
+        <!-- Infinite Context banner -->
+        <div style="background:linear-gradient(135deg, rgba(88,166,255,0.15), rgba(63,185,80,0.15));border:1px solid var(--accent);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;">
+            <h3 style="margin-bottom:0.5rem;color:var(--accent);">Infinite Context Memory</h3>
+            <p style="color:var(--text);font-size:0.9rem;margin-bottom:0.5rem;">All tools below benefit from IAMINE's <strong>L1/L2/L3 compaction</strong> — your conversations are never lost, even across sessions. The pool manages memory server-side via PostgreSQL.</p>
+            <p style="color:var(--text2);font-size:0.85rem;">No configuration needed. Just connect any OpenAI-compatible client and get unlimited context automatically.</p>
+        </div>
+
+        <!-- OpenCode -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;">
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
+                <h3 style="margin:0;">OpenCode</h3>
+                <span style="background:var(--accent2);color:var(--bg);font-size:0.65rem;padding:0.15rem 0.5rem;border-radius:4px;font-weight:600;">TESTED</span>
+            </div>
+            <p style="color:var(--text2);font-size:0.9rem;margin-bottom:1rem;">Use <a href="https://opencode.ai" target="_blank" style="color:var(--accent);">OpenCode</a> as an AI coding agent in your terminal, powered by the IAMINE network. Reads files, writes code, runs commands — all via the distributed pool.</p>
+            <div style="background:var(--bg);border-radius:8px;padding:1rem;margin-bottom:0.75rem;">
+                <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.25rem;">0. Install OpenCode</div>
+                <code style="font-size:0.85rem;color:var(--accent2);display:block;white-space:pre-wrap;">npm install -g opencode-ai@latest</code>
+            </div>
+            <div style="background:var(--bg);border-radius:8px;padding:1rem;margin-bottom:0.75rem;">
+                <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.25rem;">1. Create opencode.json in your project</div>
+                <code id="tuto-opencode-json" style="font-size:0.82rem;color:var(--accent2);display:block;white-space:pre-wrap;">{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "iamine": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "IAMINE Pool",
+      "options": {
+        "baseURL": "https://iamine.org/v1",
+        "apiKey": "{env:IAMINE_API_KEY}"
+      },
+      "models": {
+        "iamine": {
+          "name": "IAMINE Smart Pool",
+          "limit": { "context": 131072, "output": 4096 }
+        }
+      }
+    }
+  }
+}</code>
+                <button class="copy-btn" onclick="copyEl('tuto-opencode-json')" style="font-size:0.7rem;padding:0.15rem 0.5rem;margin-top:0.4rem;">Copy</button>
+            </div>
+            <div style="background:var(--bg);border-radius:8px;padding:1rem;margin-bottom:0.75rem;">
+                <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.25rem;">2. Set your token and launch</div>
+                <code id="tuto-opencode-run" style="font-size:0.85rem;color:var(--accent2);display:block;white-space:pre-wrap;">export IAMINE_API_KEY=iam_YOUR_TOKEN
+opencode</code>
+                <button class="copy-btn" onclick="copyEl('tuto-opencode-run')" style="font-size:0.7rem;padding:0.15rem 0.5rem;margin-top:0.4rem;">Copy</button>
+            </div>
+            <div style="background:var(--bg);border-radius:8px;padding:1rem;">
+                <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.25rem;">Windows (PowerShell)</div>
+                <code id="tuto-opencode-ps" style="font-size:0.85rem;color:var(--accent2);display:block;white-space:pre-wrap;">$env:IAMINE_API_KEY = "iam_YOUR_TOKEN"
+opencode</code>
+                <button class="copy-btn" onclick="copyEl('tuto-opencode-ps')" style="font-size:0.7rem;padding:0.15rem 0.5rem;margin-top:0.4rem;">Copy</button>
+            </div>
+            <div style="background:var(--bg);border-radius:8px;padding:1rem;margin-bottom:0.75rem;">
+                <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.25rem;">3. Optional: create OPENCODE.md for project context</div>
+                <code id="tuto-opencode-md" style="font-size:0.82rem;color:var(--accent2);display:block;white-space:pre-wrap;"># My Project
+
+## Backend
+Tu tournes sur le pool distribue IAMINE.
+Tu as un contexte illimite (L1/L2/L3).
+
+## Regles
+- Ecris du Python propre avec type hints
+- Utilise write pour creer des fichiers
+- Reponds en francais</code>
+                <button class="copy-btn" onclick="copyEl('tuto-opencode-md')" style="font-size:0.7rem;padding:0.15rem 0.5rem;margin-top:0.4rem;">Copy</button>
+            </div>
+            <div class="info" style="background:rgba(63,185,80,0.1);border-left:3px solid var(--accent2);padding:0.75rem;border-radius:0 6px 6px 0;font-size:0.85rem;color:var(--text2);">Validated: OpenCode reads files, writes code, and uses tool-calling via the IAMINE pool. The pool auto-routes to the best model (Coder 30B for tool-calls, 9B for chat).</div>
+        </div>
+
+        <!-- Cursor -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;">
+            <h3 style="margin-bottom:0.5rem;">Cursor</h3>
+            <p style="color:var(--text2);font-size:0.9rem;margin-bottom:1rem;">Use <a href="https://cursor.com" target="_blank" style="color:var(--accent);">Cursor</a> IDE with IAMINE as the AI backend.</p>
+            <div style="background:var(--bg);border-radius:8px;padding:1rem;margin-bottom:0.75rem;">
+                <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.25rem;">Settings > Models > OpenAI API Key</div>
+                <table style="width:100%;font-size:0.85rem;">
+                    <tr><td style="color:var(--text2);padding:0.3rem 0;width:140px;">API Key</td><td><code id="tuto-cursor-key" style="color:var(--accent2);">iam_YOUR_TOKEN</code> <button class="copy-btn" onclick="copyEl('tuto-cursor-key')" style="font-size:0.7rem;padding:0.15rem 0.5rem;">Copy</button></td></tr>
+                    <tr><td style="color:var(--text2);padding:0.3rem 0;">Override URL</td><td><code id="tuto-cursor-url" style="color:var(--accent2);">https://iamine.org/v1</code> <button class="copy-btn" onclick="copyEl('tuto-cursor-url')" style="font-size:0.7rem;padding:0.15rem 0.5rem;">Copy</button></td></tr>
+                    <tr><td style="color:var(--text2);padding:0.3rem 0;">Model</td><td><code style="color:var(--accent2);">iamine</code></td></tr>
+                </table>
+            </div>
+            <div class="info" style="background:rgba(88,166,255,0.1);border-left:3px solid var(--accent);padding:0.75rem;border-radius:0 6px 6px 0;font-size:0.85rem;color:var(--text2);">Enable "Override OpenAI Base URL" in Cursor settings, paste the URL above, and select model "iamine". The pool handles smart-routing automatically.</div>
+        </div>
+
+        <!-- aider -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;">
+            <h3 style="margin-bottom:0.5rem;">aider</h3>
+            <p style="color:var(--text2);font-size:0.9rem;margin-bottom:1rem;">Use <a href="https://aider.chat" target="_blank" style="color:var(--accent);">aider</a> for AI pair programming with IAMINE.</p>
+            <div style="background:var(--bg);border-radius:8px;padding:1rem;margin-bottom:0.75rem;">
+                <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.25rem;">Linux / macOS</div>
+                <code id="tuto-aider" style="font-size:0.85rem;color:var(--accent2);display:block;white-space:pre-wrap;">export OPENAI_API_BASE=https://iamine.org/v1
+export OPENAI_API_KEY=iam_YOUR_TOKEN
+aider --model openai/iamine</code>
+                <button class="copy-btn" onclick="copyEl('tuto-aider')" style="font-size:0.7rem;padding:0.15rem 0.5rem;margin-top:0.4rem;">Copy</button>
+            </div>
+            <div style="background:var(--bg);border-radius:8px;padding:1rem;">
+                <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.25rem;">Windows (PowerShell)</div>
+                <code id="tuto-aider-ps" style="font-size:0.85rem;color:var(--accent2);display:block;white-space:pre-wrap;">$env:OPENAI_API_BASE = "https://iamine.org/v1"
+$env:OPENAI_API_KEY  = "iam_YOUR_TOKEN"
+aider --model openai/iamine</code>
+                <button class="copy-btn" onclick="copyEl('tuto-aider-ps')" style="font-size:0.7rem;padding:0.15rem 0.5rem;margin-top:0.4rem;">Copy</button>
+            </div>
+        </div>
+
+        <!-- Continue.dev -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;">
+            <h3 style="margin-bottom:0.5rem;">Continue.dev (VS Code / JetBrains)</h3>
+            <p style="color:var(--text2);font-size:0.9rem;margin-bottom:1rem;">Add IAMINE as a provider in <a href="https://continue.dev" target="_blank" style="color:var(--accent);">Continue</a>.</p>
+            <div style="background:var(--bg);border-radius:8px;padding:1rem;">
+                <div style="font-size:0.8rem;color:var(--text2);margin-bottom:0.25rem;">~/.continue/config.json</div>
+                <code id="tuto-continue" style="font-size:0.82rem;color:var(--accent2);display:block;white-space:pre-wrap;">{
+  "models": [{
+    "title": "IAMINE Pool",
+    "provider": "openai",
+    "model": "iamine",
+    "apiBase": "https://iamine.org/v1",
+    "apiKey": "iam_YOUR_TOKEN"
+  }]
+}</code>
+                <button class="copy-btn" onclick="copyEl('tuto-continue')" style="font-size:0.7rem;padding:0.15rem 0.5rem;margin-top:0.4rem;">Copy</button>
             </div>
         </div>
 
@@ -747,7 +952,7 @@ claude --model iamine</code>
         <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;">
             <h3 style="margin-bottom:0.5rem;">Python (OpenAI SDK)</h3>
             <div style="background:var(--bg);border-radius:8px;padding:1rem;">
-                <code style="font-size:0.85rem;color:var(--accent2);display:block;white-space:pre-wrap;">from openai import OpenAI
+                <code id="tuto-python" style="font-size:0.85rem;color:var(--accent2);display:block;white-space:pre-wrap;">from openai import OpenAI
 
 client = OpenAI(
     base_url="https://iamine.org/v1",
@@ -755,10 +960,11 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="auto",
+    model="iamine",
     messages=[{"role": "user", "content": "Hello!"}]
 )
 print(response.choices[0].message.content)</code>
+                <button class="copy-btn" onclick="copyEl('tuto-python')" style="font-size:0.7rem;padding:0.15rem 0.5rem;margin-top:0.4rem;">Copy</button>
             </div>
         </div>
 
@@ -766,12 +972,13 @@ print(response.choices[0].message.content)</code>
         <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;">
             <h3 style="margin-bottom:0.5rem;">curl</h3>
             <div style="background:var(--bg);border-radius:8px;padding:1rem;">
-                <code style="font-size:0.85rem;color:var(--accent2);display:block;white-space:pre-wrap;">curl https://iamine.org/v1/api/chat \
+                <code id="tuto-curl" style="font-size:0.85rem;color:var(--accent2);display:block;white-space:pre-wrap;">curl https://iamine.org/v1/api/chat \
   -H "Content-Type: application/json" \
   -d '{
     "api_token": "iam_YOUR_TOKEN",
     "messages": [{"role": "user", "content": "Hello!"}]
   }'</code>
+                <button class="copy-btn" onclick="copyEl('tuto-curl')" style="font-size:0.7rem;padding:0.15rem 0.5rem;margin-top:0.4rem;">Copy</button>
             </div>
         </div>
 
@@ -799,6 +1006,7 @@ python -m iamine recommend</code>
         <div class="founders">
             <div class="founder"><div class="founder-av">DM</div><div class="founder-name">David M.</div><div class="founder-role" data-i18n="f1">Co-founder & Architecture</div></div>
             <div class="founder"><div class="founder-av">RP</div><div class="founder-name">Regis P.</div><div class="founder-role" data-i18n="f2">Co-founder & Strategy</div></div>
+            <div class="founder"><div class="founder-av">WA</div><div class="founder-name">WASA</div><div class="founder-role" data-i18n="f3">Co-founder & Token</div></div>
         </div>
         <div class="contact-form">
             <input type="text" id="ct-name" data-i18n-placeholder="ct_n" placeholder="Your name">
@@ -806,6 +1014,75 @@ python -m iamine recommend</code>
             <textarea id="ct-msg" data-i18n-placeholder="ct_m" placeholder="Your message"></textarea>
             <button class="btn btn-primary" style="width:100%;" id="ct-send" data-i18n="ct_btn">Send</button>
             <p id="ct-ok" style="text-align:center;margin-top:0.5rem;color:var(--accent2);display:none;" data-i18n="ct_ok">Sent!</p>
+        </div>
+    </div>
+</div>
+
+<!-- ============ MOBILE ============ -->
+<div class="page" id="page-mobile">
+    <div class="page-content" style="max-width:600px;text-align:center;">
+        <h2 data-i18n="mob_title">Add Mobile Worker</h2>
+        <p style="color:var(--text2);font-size:0.9rem;margin-bottom:1.5rem;" data-i18n="mob_sub">Turn your smartphone into an AI worker. Scan the QR code to pair your phone with your IAMINE account.</p>
+
+        <!-- Not logged in -->
+        <div id="mob-login-required" style="display:none;">
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:2rem;">
+                <p style="color:var(--text2);margin-bottom:1rem;" data-i18n="mob_login">Log in first to generate a pairing QR code.</p>
+                <button class="btn" onclick="go('workers')" data-i18n="nav_login">Log in</button>
+            </div>
+        </div>
+
+        <!-- QR code section -->
+        <div id="mob-qr-section" style="display:none;">
+
+            <!-- Step 1 — Download -->
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1rem;text-align:left;">
+                <div style="display:flex;gap:0.75rem;align-items:center;margin-bottom:1rem;">
+                    <div style="min-width:36px;height:36px;border-radius:50%;background:var(--accent2);color:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;">1</div>
+                    <div>
+                        <div style="font-weight:700;font-size:1rem;color:var(--text1);" data-i18n="mob_step1_title">Download the app</div>
+                        <div style="font-size:0.8rem;color:var(--text2);" data-i18n="mob_step1_sub">Install the IAMINE worker on your Mac, PC or Linux machine</div>
+                    </div>
+                </div>
+                <a href="/v1/mobile/download" download="iamine-worker.apk" id="apk-download-btn" class="btn btn-primary" style="display:block;text-align:center;font-size:0.95rem;text-decoration:none;padding:0.75rem;" data-i18n="mob_apk">Download APK</a>
+                <script>fetch('/v1/mobile/apk-info').then(r=>r.json()).then(d=>{if(d.available){document.getElementById('apk-download-btn').textContent='Download APK ('+d.size_mb+' MB)'}}).catch(()=>{})</script>
+                <details style="margin-top:0.75rem;">
+                    <summary style="cursor:pointer;color:var(--accent);font-size:0.8rem;font-weight:600;" data-i18n="mob_install_t">How to install the APK</summary>
+                    <div style="color:var(--text2);font-size:0.78rem;line-height:1.6;margin-top:0.5rem;">
+                        <div style="margin-bottom:0.4rem;" data-i18n="mob_install_2">Your phone will warn you: "Install from unknown sources". You need to allow it.</div>
+                        <div style="margin-bottom:0.4rem;" data-i18n="mob_install_3">Go to <strong>Settings</strong> and search for <strong>"Install unknown apps"</strong> or <strong>"Unknown sources"</strong>.</div>
+                        <div style="margin-bottom:0.4rem;" data-i18n="mob_install_4">Allow your browser (Chrome, Firefox...) to install apps.</div>
+                        <div style="margin-bottom:0.4rem;" data-i18n="mob_install_5">Open the downloaded APK and tap <strong>Install</strong>.</div>
+                        <div style="background:rgba(240,136,62,0.1);border-left:3px solid var(--accent3);padding:0.5rem;border-radius:0 6px 6px 0;margin-top:0.4rem;" data-i18n="mob_install_tip">The exact steps vary by phone brand. Search: <strong>"install APK [your phone brand]"</strong> (Samsung, Xiaomi, Pixel, OnePlus...).</div>
+                    </div>
+                </details>
+            </div>
+
+            <!-- Step 2 — QR Code -->
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1rem;">
+                <div style="display:flex;gap:0.75rem;align-items:center;margin-bottom:1rem;text-align:left;">
+                    <div style="min-width:36px;height:36px;border-radius:50%;background:var(--accent);color:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;">2</div>
+                    <div>
+                        <div style="font-weight:700;font-size:1rem;color:var(--text1);" data-i18n="mob_step2_title">Scan this QR code</div>
+                        <div style="font-size:0.8rem;color:var(--text2);" data-i18n="mob_step2_sub">Open the IAMINE app and point your camera at this code</div>
+                    </div>
+                </div>
+                <div id="mob-qr-img" style="margin:0 auto 1rem;width:240px;height:240px;background:var(--bg);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--text2);">Loading...</div>
+                <p style="color:var(--accent);font-size:0.8rem;" id="mob-expires"></p>
+                <button class="btn btn-secondary" onclick="generateQR()" style="margin-top:0.75rem;font-size:0.85rem;" data-i18n="mob_refresh">Generate new QR</button>
+            </div>
+
+            <!-- Step 3 — Info -->
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;text-align:left;">
+                <div style="display:flex;gap:0.75rem;align-items:center;margin-bottom:0.75rem;">
+                    <div style="min-width:36px;height:36px;border-radius:50%;background:var(--accent3);color:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;">3</div>
+                    <div>
+                        <div style="font-weight:700;font-size:1rem;color:var(--text1);" data-i18n="mob_step3_title">Done!</div>
+                        <div style="font-size:0.8rem;color:var(--text2);" data-i18n="mob_s3">The app downloads a 500 MB AI model (once). Then your phone joins the pool and earns $IAMINE.</div>
+                    </div>
+                </div>
+                <div style="background:rgba(88,166,255,0.1);border-left:3px solid var(--accent);padding:0.75rem;border-radius:0 6px 6px 0;font-size:0.8rem;color:var(--text2);" data-i18n="mob_note">Your phone runs a lightweight 0.5B model on WiFi only, while charging. Battery-safe by default.</div>
+            </div>
         </div>
     </div>
 </div>
@@ -830,7 +1107,7 @@ python -m iamine recommend</code>
         <h3 style="color:var(--accent);margin-bottom:0.5rem;" data-i18n="wp_2t">2. The IAMINE Solution</h3>
         <p style="color:var(--text2);font-size:0.9rem;margin-bottom:0.75rem;" data-i18n="wp_2">IAMINE inverts the model: anyone with a PC becomes an AI provider. The network consists of three components:</p>
         <ul style="color:var(--text2);font-size:0.9rem;margin-bottom:1.5rem;padding-left:1.5rem;">
-            <li style="margin-bottom:0.5rem;" data-i18n="wp_2a"><strong style="color:var(--text);">Workers</strong> — Lightweight software that runs on any PC (Windows, Linux, Android). Each worker loads an open-source AI model (GGUF format) optimized for its hardware and connects to the pool.</li>
+            <li style="margin-bottom:0.5rem;" data-i18n="wp_2a"><strong style="color:var(--text);">Workers</strong> — Lightweight software that runs on any PC (Windows, Linux, macOS). Each worker loads an open-source AI model (GGUF format) optimized for its hardware and connects to the pool.</li>
             <li style="margin-bottom:0.5rem;" data-i18n="wp_2b"><strong style="color:var(--text);">Pool</strong> — Central orchestrator that receives AI requests and routes them to the best available worker using smart routing algorithms. Provides an OpenAI-compatible API.</li>
             <li style="margin-bottom:0.5rem;" data-i18n="wp_2c"><strong style="color:var(--text);">$IAMINE Token</strong> — The network's native currency. Workers earn tokens for compute contributed, and spend them to access more powerful AI. Exportable to EVM wallets.</li>
         </ul>
@@ -845,8 +1122,22 @@ python -m iamine recommend</code>
             <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:0.75rem;"><div style="font-weight:600;font-size:0.85rem;" data-i18n="wp_3d">Performance Scoring</div><div style="color:var(--text2);font-size:0.8rem;" data-i18n="wp_3d2">Workers are scored by benchmark results, RAM, context capacity. The fastest capable worker wins.</div></div>
         </div>
 
-        <!-- 4. Tokenomics -->
-        <h3 style="color:var(--gold);margin-bottom:0.5rem;" data-i18n="wp_4t">4. $IAMINE Tokenomics</h3>
+        <!-- 4. Infinite Context -->
+        <h3 style="color:var(--purple);margin-bottom:0.5rem;" data-i18n="wp_4ict">4. Infinite Context Memory</h3>
+        <p style="color:var(--text2);font-size:0.9rem;margin-bottom:0.75rem;" data-i18n="wp_4ic">IAMINE simulates infinite conversation memory through a 3-level compaction system. Account holders get encrypted persistent memory — no conversation limit, zero data leaks.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;margin-bottom:1rem;">
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:0.75rem;text-align:center;"><div style="font-weight:700;font-size:1.2rem;color:var(--accent2);">L1</div><div style="font-weight:600;font-size:0.85rem;" data-i18n="wp_ic_l1t">Live Messages</div><div style="color:var(--text2);font-size:0.8rem;" data-i18n="wp_ic_l1d">Recent messages in RAM. Fast access, always fresh.</div></div>
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:0.75rem;text-align:center;"><div style="font-weight:700;font-size:1.2rem;color:var(--accent);">L2</div><div style="font-weight:600;font-size:0.85rem;" data-i18n="wp_ic_l2t">Smart Summary</div><div style="color:var(--text2);font-size:0.8rem;" data-i18n="wp_ic_l2d">LLM-generated summary of older messages. Auto-condensed when too large.</div></div>
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:0.75rem;text-align:center;"><div style="font-weight:700;font-size:1.2rem;color:var(--purple);">L3</div><div style="font-weight:600;font-size:0.85rem;" data-i18n="wp_ic_l3t">Encrypted Archive</div><div style="color:var(--text2);font-size:0.8rem;" data-i18n="wp_ic_l3d">Full history encrypted with your account token. Only you can read it.</div></div>
+        </div>
+        <p style="color:var(--text2);font-size:0.85rem;margin-bottom:0.75rem;" data-i18n="wp_4ic2">When context fills up, old messages are summarized and archived. The summary is re-summarized when it grows (meta-compaction). Archived data is AES-encrypted with a key derived from your account token — even database administrators cannot read your conversations. Everything is deleted when the session expires. The result: talk for hours without losing context, with end-to-end privacy.</p>
+        <div style="background:rgba(88,166,255,0.1);border:1px solid var(--accent);border-radius:8px;padding:1rem;margin-bottom:1.5rem;">
+            <div style="font-weight:700;color:var(--accent);margin-bottom:0.3rem;" data-i18n="wp_4ic_dist_t">Distributed Compaction</div>
+            <p style="color:var(--text2);font-size:0.85rem;margin-bottom:0;" data-i18n="wp_4ic_dist">Workers cooperate through the pool. When a conversation needs compaction, the pool delegates the summarization to an idle worker — freeing the main worker to keep serving the user. The pool acts as a trust broker: it knows every worker, their capabilities, and their state. Workers don't need to trust each other directly — they trust the pool.</p>
+        </div>
+
+        <!-- 5. Tokenomics -->
+        <h3 style="color:var(--gold);margin-bottom:0.5rem;" data-i18n="wp_5t">5. $IAMINE Tokenomics</h3>
         <p style="color:var(--text2);font-size:0.9rem;margin-bottom:0.75rem;" data-i18n="wp_4">The $IAMINE token creates a self-sustaining economy:</p>
         <table style="width:100%;border-collapse:collapse;font-size:0.85rem;margin-bottom:0.75rem;">
             <tr style="border-bottom:1px solid var(--border);"><th style="text-align:left;padding:0.5rem;color:var(--text2);" data-i18n="wp_4_model">Model</th><th style="text-align:right;padding:0.5rem;color:var(--accent2);" data-i18n="wp_4_earn">Earn (serve 100 tokens)</th><th style="text-align:right;padding:0.5rem;color:var(--accent);" data-i18n="wp_4_cost">Cost (use per request)</th></tr>
@@ -858,31 +1149,36 @@ python -m iamine recommend</code>
             <tr style="border-bottom:1px solid var(--border);"><td style="padding:0.4rem 0.5rem;">Qwen 32B</td><td style="text-align:right;padding:0.4rem;color:var(--accent2);">+15.0</td><td style="text-align:right;padding:0.4rem;color:var(--accent);">30</td></tr>
             <tr><td style="padding:0.4rem 0.5rem;">Qwen 72B</td><td style="text-align:right;padding:0.4rem;color:var(--accent2);">+25.0</td><td style="text-align:right;padding:0.4rem;color:var(--accent);">50</td></tr>
         </table>
-        <p style="color:var(--text2);font-size:0.85rem;margin-bottom:1.5rem;" data-i18n="wp_4note">Larger models cost more to use but earn more for workers who serve them. This incentivizes participants to upgrade their hardware, strengthening the network.</p>
+        <p style="color:var(--text2);font-size:0.85rem;margin-bottom:0.75rem;" data-i18n="wp_4note">Larger models cost more to use but earn more for workers who serve them. This incentivizes participants to upgrade their hardware, strengthening the network.</p>
+        <div style="background:rgba(63,185,80,0.1);border:1px solid var(--accent2);border-radius:8px;padding:1rem;margin-bottom:1.5rem;">
+            <div style="font-weight:700;color:var(--accent2);margin-bottom:0.3rem;" data-i18n="wp_5bonus_t">Loyalty Rewards</div>
+            <p style="color:var(--text2);font-size:0.85rem;margin-bottom:0;" data-i18n="wp_5bonus">Every 30 seconds, the pool randomly rewards an online worker with 0.5 to 3 $IAMINE. Rare bonus drops (5-15) and jackpots (20-50) keep the excitement alive. The longer you stay online, the more chances you get. New workers receive a 500 $IAMINE welcome bonus on first connection.</p>
+        </div>
 
-        <!-- 5. Level Progression -->
-        <h3 style="color:var(--accent);margin-bottom:0.5rem;" data-i18n="wp_5t">5. Level Progression</h3>
-        <p style="color:var(--text2);font-size:0.9rem;margin-bottom:1.5rem;" data-i18n="wp_5">As the network grows, larger models become available — but they require workers with sufficient resources (RAM, compute) to run them. The pool tracks total power and worker capabilities to determine which models can be served. This creates a virtuous cycle: powerful workers unlock premium models and earn more tokens.</p>
+        <!-- 6. Level Progression -->
+        <h3 style="color:var(--accent);margin-bottom:0.5rem;" data-i18n="wp_6t">6. Level Progression</h3>
+        <p style="color:var(--text2);font-size:0.9rem;margin-bottom:1.5rem;" data-i18n="wp_6">As the network grows, larger models become available — but they require workers with sufficient resources (RAM, compute) to run them. The pool tracks total power and worker capabilities to determine which models can be served. This creates a virtuous cycle: powerful workers unlock premium models and earn more tokens.</p>
 
-        <!-- 6. Privacy -->
-        <h3 style="color:var(--accent);margin-bottom:0.5rem;" data-i18n="wp_6t">6. Privacy & Security</h3>
-        <p style="color:var(--text2);font-size:0.9rem;margin-bottom:1.5rem;" data-i18n="wp_6">IAMINE stores zero conversation data. Conversations exist only in temporary memory during the active session and are automatically purged after 1 hour of inactivity. No logs, no history, no training on user data. The smart router tracks only token counts for routing decisions, not message content. Workers process requests in real-time and do not persist any data.</p>
+        <!-- 7. Privacy -->
+        <h3 style="color:var(--accent);margin-bottom:0.5rem;" data-i18n="wp_7t">7. Privacy & Security</h3>
+        <p style="color:var(--text2);font-size:0.9rem;margin-bottom:1.5rem;" data-i18n="wp_7">IAMINE takes privacy seriously. Free demo users get ephemeral conversations in RAM only — zero persistence. Account holders benefit from L3 encrypted archives: conversation history is AES-encrypted with a key derived from your personal account token. Even server administrators cannot read your data. All conversation data (L1, L2, L3) is automatically purged after 1 hour of inactivity. No logs, no training on user data. Workers process requests in real-time and do not persist any content.</p>
 
-        <!-- 7. Architecture -->
-        <h3 style="color:var(--accent);margin-bottom:0.5rem;" data-i18n="wp_7t">7. Technical Architecture</h3>
+        <!-- 8. Architecture -->
+        <h3 style="color:var(--accent);margin-bottom:0.5rem;" data-i18n="wp_8t">8. Technical Architecture</h3>
         <ul style="color:var(--text2);font-size:0.9rem;margin-bottom:1.5rem;padding-left:1.5rem;">
-            <li style="margin-bottom:0.3rem;"><strong style="color:var(--text);">Worker:</strong> Python + llama.cpp (GGUF models). Runs on Windows, Linux, Android (future).</li>
+            <li style="margin-bottom:0.3rem;"><strong style="color:var(--text);">Worker:</strong> Python + llama.cpp (GGUF models). Runs on Windows, Linux, macOS (Apple Metal).</li>
             <li style="margin-bottom:0.3rem;"><strong style="color:var(--text);">Pool:</strong> FastAPI + WebSocket. Smart routing, OpenAI-compatible API, model serving.</li>
-            <li style="margin-bottom:0.3rem;"><strong style="color:var(--text);">Database:</strong> PostgreSQL for accounts, tokens, jobs. Conversations in temporary memory only.</li>
+            <li style="margin-bottom:0.3rem;"><strong style="color:var(--text);">Context:</strong> 3-level compaction (L1 RAM, L2 Summary, L3 Encrypted PostgreSQL). Infinite conversation memory.</li>
+            <li style="margin-bottom:0.3rem;"><strong style="color:var(--text);">Database:</strong> PostgreSQL for accounts, tokens, jobs. Conversations encrypted per-user.</li>
             <li style="margin-bottom:0.3rem;"><strong style="color:var(--text);">Auth:</strong> Hybrid Web2 (email/password) + Web3 (ETH wallet export).</li>
             <li style="margin-bottom:0.3rem;"><strong style="color:var(--text);">Models:</strong> Served directly from the pool. Workers download automatically via <code>--auto</code>.</li>
         </ul>
 
-        <!-- 8. Roadmap -->
-        <h3 style="color:var(--accent);margin-bottom:0.5rem;" data-i18n="wp_8t">8. Roadmap</h3>
+        <!-- 9. Roadmap -->
+        <h3 style="color:var(--accent);margin-bottom:0.5rem;" data-i18n="wp_9t">9. Roadmap</h3>
         <div style="display:flex;flex-direction:column;gap:0.75rem;margin-bottom:1.5rem;">
             <div style="display:flex;gap:0.75rem;align-items:flex-start;"><div style="min-width:80px;font-weight:700;color:var(--accent2);">Q1 2026</div><div style="color:var(--text2);font-size:0.9rem;" data-i18n="wp_r1">MVP launch. Pool + Worker + Website. Models 0.5B to 3B. Token system (off-chain).</div></div>
-            <div style="display:flex;gap:0.75rem;align-items:flex-start;"><div style="min-width:80px;font-weight:700;color:var(--accent);">Q2 2026</div><div style="color:var(--text2);font-size:0.9rem;" data-i18n="wp_r2">Linux + Android workers. Models up to 14B. Smart routing v2. Multi-worker accounts.</div></div>
+            <div style="display:flex;gap:0.75rem;align-items:flex-start;"><div style="min-width:80px;font-weight:700;color:var(--accent);">Q2 2026</div><div style="color:var(--text2);font-size:0.9rem;" data-i18n="wp_r2">Linux + macOS (Apple Metal) workers. Models up to 14B. Smart routing v2. Multi-worker accounts.</div></div>
             <div style="display:flex;gap:0.75rem;align-items:flex-start;"><div style="min-width:80px;font-weight:700;color:var(--accent3);">Q3 2026</div><div style="color:var(--text2);font-size:0.9rem;" data-i18n="wp_r3">$IAMINE token on-chain (ERC-20). DEX listing. Wallet export (MetaMask, Rabby). Governance votes.</div></div>
             <div style="display:flex;gap:0.75rem;align-items:flex-start;"><div style="min-width:80px;font-weight:700;color:var(--gold);">Q4 2026</div><div style="color:var(--text2);font-size:0.9rem;" data-i18n="wp_r4">Pipeline parallelism (split large models across workers). Models up to 72B. Enterprise API. SDK for developers.</div></div>
         </div>
@@ -902,12 +1198,14 @@ python -m iamine recommend</code>
     </div>
 </div>
 
+
 <div class="foot">IAMINE.ORG &mdash; Open Source &mdash; <a href="mailto:contact@iamine.org">contact@iamine.org</a></div>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 const API = window.location.origin;
-const INSTALL_CMD = 'pip install iamine-ai -i https://iamine.org/pypi && python -m iamine worker --auto';
+const INSTALL_CMD_LINUX = 'curl -sL https://iamine.org/install.sh | bash';
+const INSTALL_CMD_WIN = 'irm https://iamine.org/install.ps1 | iex';
 
 // ====== NAVIGATION ======
 function go(page) {
@@ -920,7 +1218,7 @@ document.querySelectorAll('.nav-tab').forEach(t => t.addEventListener('click', (
 
 // ====== COPY ======
 function copyInstall(btn, id) {
-    const cmd = id ? document.getElementById(id).textContent : INSTALL_CMD;
+    const cmd = id ? document.getElementById(id).textContent : document.getElementById('install-cmd').textContent;
     navigator.clipboard.writeText(cmd);
     btn.textContent = 'Copied!'; btn.classList.add('copied');
     setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
@@ -929,13 +1227,16 @@ function copyInstall(btn, id) {
 // ====== I18N ======
 const L = {
 en: {
-    nav_home:"Home",nav_levels:"Levels",nav_demo:"Demo",nav_bench:"Benchmark",nav_token:"$IAMINE",nav_contact:"Contact",
+    nav_home:"Home",nav_levels:"Levels",nav_demo:"Demo",nav_bench:"Benchmark",nav_token:"$IAMINE",nav_contact:"Contact",nav_mobile:"Mobile",
+    mob_title:"Add Mobile Worker",mob_sub:"Turn your smartphone into an AI worker. Scan the QR code to pair your phone with your IAMINE account.",mob_login:"Log in first to generate a pairing QR code.",mob_scan:"Open the IAMINE app on your phone and scan this QR code.",mob_refresh:"Generate new QR",mob_step1_title:"Download the app",mob_step1_sub:"Install the IAMINE worker on your Mac, PC or Linux machine",mob_step2_title:"Scan this QR code",mob_step2_sub:"Open the IAMINE app and point your camera at this code",mob_step3_title:"Done!",mob_s3:"The app downloads a 500 MB AI model (once). Then your phone joins the pool and earns $IAMINE.",mob_note:"Your phone runs a lightweight 0.5B model on WiFi only, while charging. Battery-safe by default.",mob_apk:"Download APK (74 MB)",mob_install_t:"How to install the APK",mob_install_2:"<strong>2.</strong> Your phone will warn you: \"Install from unknown sources\". You need to allow it.",mob_install_3:"<strong>3.</strong> Go to <strong>Settings</strong> and search for <strong>\"Install unknown apps\"</strong> or <strong>\"Unknown sources\"</strong>.",mob_install_4:"<strong>4.</strong> Allow your browser (Chrome, Firefox...) to install apps.",mob_install_5:"<strong>5.</strong> Open the downloaded APK and tap <strong>Install</strong>.",mob_install_tip:"The exact steps vary by phone brand. Search: <strong>\"install APK [your phone brand]\"</strong> (Samsung, Xiaomi, Pixel, OnePlus...).",
     home_sub:"Simplicity. Efficiency. AI for Everyone.",
-    home_desc:"Your PC has unused power. We turn it into AI. Join the network in 60 seconds with a single command. No cloud, no GPU, no hassle.",
+    home_desc:"Your PC has unused power. We turn it into AI. Join the network in 60 seconds — Windows, Linux or macOS. CPU, GPU or Apple Metal.",home_gpu_note:"GPU auto-detected (NVIDIA CUDA, AMD ROCm, Apple Metal). For NVIDIA GPU: pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu124",
     home_cta1:"Test your machine",home_cta2:"Try the AI",home_cta3:"Earn $IAMINE",
     p1t:"Copy",p1d:"Copy the install command above.",p2t:"Paste",p2d:"Paste it in your terminal. That's it.",p3t:"Earn",p3d:"Your PC serves AI and earns $IAMINE tokens.",
-    nav_pool:"Pool",nav_api:"API",nav_login:"Log in",nav_logout:"Logout",nav_workers:"My Workers",nav_tuto:"Tutorials",nav_wp:"Whitepaper",
-    concept_title:"How IAMINE works",c1t:"You share your PC's power",c1d:"Your idle CPU runs a lightweight AI model. No GPU needed. Works on any PC with 4 GB+ RAM.",c2t:"The pool combines everyone's power",c2d:"Smart routing sends each request to the best available worker. Larger models require workers with enough RAM and compute power to run them.",c3t:"You earn $IAMINE tokens",c3d:"Every AI token your machine generates earns you $IAMINE. More context = more tokens = more rewards.",c4t:"Spend tokens on powerful AI",c4d:"Use your $IAMINE to access models your PC could never run: 7B, 14B, even 32B — powered by the pool's combined compute.",c5t:"Export to your wallet",c5d:"$IAMINE tokens will be tradeable on DEX. Export to MetaMask or Rabby and trade your compute power.",concept_wp:"Read the Whitepaper",
+    nav_pool:"Pool",nav_dashboard:"Dashboard",nav_api:"API",nav_login:"Log in",nav_logout:"Logout",nav_workers:"My Workers",nav_tuto:"Tutorials",nav_wp:"Whitepaper",
+    concept_title:"How IAMINE works",c1t:"You share your PC's power",c1d:"Your CPU or GPU runs an AI model with maximum context memory. Small model + large context = fast and smart. GPU auto-detected.",c2t:"The pool combines everyone's power",c2d:"Smart routing sends each request to the best available worker. Larger models require workers with enough RAM and compute power to run them.",c3t:"You earn $IAMINE tokens",c3d:"Every AI token your machine generates earns you $IAMINE. More context = more tokens = more rewards.",c4t:"Spend tokens on powerful AI",c4d:"Use your $IAMINE to access models your PC could never run: 7B, 14B, even 32B — powered by the pool's combined compute.",c5t:"Export to your wallet",c5d:"$IAMINE tokens will be tradeable on DEX. Export to MetaMask or Rabby and trade your compute power.",c6t:"Infinite encrypted memory",c6d:"With an account, your conversations have unlimited context. 3-level compaction + AES encryption — talk for hours, zero data leaks.",concept_wp:"Read the Whitepaper",
+    wp_4ict:"4. Infinite Context Memory",wp_4ic:"IAMINE simulates infinite conversation memory through a 3-level compaction system. Account holders get encrypted persistent memory — no conversation limit, zero data leaks.",wp_ic_l1t:"Live Messages",wp_ic_l1d:"Recent messages in RAM. Fast access, always fresh.",wp_ic_l2t:"Smart Summary",wp_ic_l2d:"LLM-generated summary of older messages. Auto-condensed when too large.",wp_ic_l3t:"Encrypted Archive",wp_ic_l3d:"Full history encrypted with your account token. Only you can read it.",wp_4ic2:"When context fills up, old messages are summarized and archived. The summary is re-summarized when it grows (meta-compaction). Archived data is AES-encrypted with a key derived from your account token — even database administrators cannot read your conversations. Everything is deleted when the session expires. The result: talk for hours without losing context, with end-to-end privacy.",
+    wp_4ic_dist_t:"Distributed Compaction",wp_4ic_dist:"Workers cooperate through the pool. When a conversation needs compaction, the pool delegates the summarization to an idle worker — freeing the main worker to keep serving the user. The pool acts as a trust broker: it knows every worker, their capabilities, and their state.",wp_5bonus_t:"Loyalty Rewards",wp_5bonus:"Every 30 seconds, the pool randomly rewards an online worker with 0.5 to 3 $IAMINE. Rare bonus drops (5-15) and jackpots (20-50) keep the excitement alive. The longer you stay online, the more chances you get. New workers receive a 500 $IAMINE welcome bonus on first connection.",wp_5t:"5. $IAMINE Tokenomics",wp_6t:"6. Level Progression",wp_7t:"7. Privacy & Security",wp_7:"IAMINE takes privacy seriously. Free demo users get ephemeral conversations in RAM only — zero persistence. Account holders benefit from L3 encrypted archives: conversation history is AES-encrypted with a key derived from your personal account token. Even server administrators cannot read your data. All conversation data (L1, L2, L3) is automatically purged after 1 hour of inactivity. No logs, no training on user data.",wp_8t:"8. Technical Architecture",wp_9t:"9. Roadmap",
     wb_title:"Your worker is running!",wb_earned:"Earned",wb_jobs:"Jobs",wb_your_token:"Your API token:",
     s_workers:"Workers",s_jobs:"Jobs",s_tps:"Network t/s",s_power:"Pool Power",s_best:"Best Model",
     lvl_serve:"Serve",lvl_serve_desc:"Run a model on your PC, earn $IAMINE for every token generated",lvl_use:"Use",lvl_use_desc:"Spend $IAMINE to use bigger models you can't run locally",
@@ -948,26 +1249,27 @@ en: {
     lvl_title:"Network Progression",lvl_sub:"Every worker that joins unlocks more powerful AI. Level up together.",
     demo_title:"Live AI Chat",c_off:"Offline",c_welcome:"Welcome! Ask anything to test the distributed AI network.",c_ph:"Type your message...",c_send:"Send",c_on:"online",c_clear:"Clear",c_nohistory:"No conversation history stored",
     b_title:"Benchmark your machine",b_sub:"See what your PC can do. We find the best AI model for you.",b_rounds:"Rounds",b_tokens:"Tokens/round",b_go:"Run Benchmark",b_lat:"Latency",b_stab:"Stability",
-    bj_title:"Your machine is ready!",bj_desc:"Join the IAMINE network now with a single command:",bj_note:"Installs IAMINE, downloads the optimal model, and connects to the pool automatically.",
+    bj_title:"Your machine is ready!",bj_desc:"Join the IAMINE network now with a single command:",bj_works:"Works on all platforms:",bj_note:"Installs IAMINE, downloads the optimal model, and connects to the pool automatically.",
     b_run:"Running...",b_rd:"Round",b_again:"Run Again",
     b_hi:"Excellent! ({tps} t/s) — Your machine can serve multiple requests.",b_mid:"Good ({tps} t/s) — Default config is optimal.",b_lo:"Ready ({tps} t/s) — Every contribution counts!",
     tk_sub:"Contribute compute. Earn tokens. Simple.",tk_e:"Earn",tk_ed:"Every AI request processed generates $IAMINE proportional to your compute.",tk_t:"Trade",tk_td:"Tradeable on DEX. Your compute power has real value.",tk_u:"Use",tk_ud:"Spend $IAMINE for premium models and priority inference.",tk_g:"Govern",tk_gd:"Holders vote on models, fees, and network upgrades.",
     tk_export_title:"Export to your wallet",tk_export_desc:"When the $IAMINE token is deployed on-chain, you will be able to export your earned tokens to any EVM-compatible wallet.",tk_rabby_desc:"Multi-chain wallet. Add IAMINE token with one click.",tk_meta_desc:"The most popular Web3 wallet. Export and trade freely.",tk_export_soon:"Coming soon",tk_export_preview:"How it will work:",tk_exp_s1:"Connect your wallet (Rabby, MetaMask, or any EVM wallet)",tk_exp_s2:"Enter your API token (iam_xxx) to verify your balance",tk_exp_s3:"Choose amount to export and confirm the transaction",tk_exp_s4:"$IAMINE tokens appear in your wallet — trade on any DEX",tk_contract_info:"Token contract will be published here after deployment.",
-    ct_title:"Get in touch",f1:"Co-founder & Architecture",f2:"Co-founder & Strategy",ct_n:"Your name",ct_e:"Your email",ct_m:"Your message",ct_btn:"Send",ct_ok:"Sent!",
+    ct_title:"Get in touch",f1:"Co-founder & Architecture",f2:"Co-founder & Strategy",f3:"Architecture & Token",ct_n:"Your name",ct_e:"Your email",ct_m:"Your message",ct_btn:"Send",ct_ok:"Sent!",
     mw_title:"My Worker",mw_or_email:"or with email",mw_earned:"Earned",mw_multi_hint:"Want to manage multiple workers? Create an account to link them all and consolidate your $IAMINE.",mw_register_btn:"Create Account (optional)",mw_no_title:"No worker detected",mw_no_desc:"Start a worker on this machine to see it here, or log in to manage multiple workers.",mw_or:"— or —",mw_login_btn:"Log in / Register",mw_auth_title:"Account",mw_do_register:"Register",mw_do_login:"Log in",mw_dash_title:"My Workers",mw_link_title:"Link a new worker",mw_link_desc:"Enter the API token of a worker to add it to your account.",mw_link_btn:"Link",
     api_owui_title:"Connect to Open WebUI",api_owui_desc:"Use IAMINE as a backend for Open WebUI. Copy these settings:",api_ref_title:"Full API Reference",api_r1:"Chat (free demo, 3 msg limit)",api_r2:"Chat (token-based)",api_r3:"Pool status",api_r4:"Pool power analysis",api_r5:"Check balance",api_r6:"List server models",api_r7:"List worker models",api_r8:"Model tiers + unlock status",
     tuto_title:"Tutorials",tuto_sub:"Use IAMINE with your favorite tools. The API is OpenAI-compatible.",tuto_claude_desc:"Use Claude Code with IAMINE as a backend. The quality depends on the pool's available models.",tuto_claude_note:"Note: The AI capability depends on the pool's power. With more workers, larger models become available.",tuto_owui_desc:"Connect Open WebUI to the IAMINE network for a ChatGPT-like interface.",
     uninstall_title:"Uninstall IAMINE",uninstall_warn:"Warning: This will delete your local wallet (wallet.json). Back it up first!",uninstall_backup:"Backup command: copy wallet.json wallet.json.backup",uninstall_step1:"Step 1: Uninstall the package",uninstall_step2:"Step 2: Delete data (optional)",uninstall_note:"Your earned $IAMINE credits on the pool are preserved even after uninstall.",
-    wp_subtitle:"Whitepaper — Distributed AI Inference Network",wp_abstract_t:"Abstract",wp_abstract:"IAMINE is a decentralized AI inference network that transforms idle computing power into a shared artificial intelligence resource. By contributing CPU cycles, participants earn $IAMINE tokens proportional to their compute contribution.",wp_1t:"1. The Problem",wp_1:"Access to powerful AI is concentrated in the hands of a few corporations. Running a high-quality language model requires expensive hardware that most people don't have. Meanwhile, billions of PCs sit idle with unused CPU cycles.",wp_2t:"2. The IAMINE Solution",wp_2:"IAMINE inverts the model: anyone with a PC becomes an AI provider.",wp_2a:"Workers — Lightweight software that runs on any PC. Each worker loads an open-source AI model optimized for its hardware.",wp_2b:"Pool — Central orchestrator that receives AI requests and routes them to the best available worker using smart routing.",wp_2c:"$IAMINE Token — The network's native currency. Workers earn tokens for compute contributed, and spend them to access more powerful AI.",wp_3t:"3. Smart Routing",wp_3:"The core innovation of IAMINE is its intelligent request routing:",wp_3a:"Context Awareness",wp_3a2:"Tracks accumulated conversation tokens. Routes long conversations to workers with larger context windows — proactively.",wp_3b:"Model Matching",wp_3b2:"Users can request specific models. The router finds a worker that has it loaded.",wp_3c:"Worker Affinity",wp_3c2:"Within a conversation, the router prefers the same worker for consistency.",wp_3d:"Performance Scoring",wp_3d2:"Workers are scored by benchmark results, RAM, context capacity.",wp_4t:"4. $IAMINE Tokenomics",wp_4:"The $IAMINE token creates a self-sustaining economy:",wp_4_model:"Model",wp_4_earn:"Earn (serve 100 tok)",wp_4_cost:"Cost (use/request)",wp_4note:"Larger models cost more to use but earn more for workers who serve them.",wp_5t:"5. Level Progression",wp_5:"As the network grows, larger models are automatically unlocked. This gamification drives organic growth.",wp_6t:"6. Privacy & Security",wp_6:"IAMINE stores zero conversation data. Conversations exist only in temporary memory and are purged after 1 hour of inactivity.",wp_7t:"7. Technical Architecture",wp_8t:"8. Roadmap",wp_r1:"MVP launch. Pool + Worker + Website. Models 0.5B to 3B. Token system.",wp_r2:"Linux + Android workers. Models up to 14B. Smart routing v2.",wp_r3:"$IAMINE token on-chain (ERC-20). DEX listing. Wallet export.",wp_r4:"Pipeline parallelism. Models up to 72B. Enterprise API.",wp_9t:"9. Team",wp_9a:"Co-founder. Architecture & Engineering. Designed the smart routing engine.",wp_9b:"Co-founder. Strategy & Business. Drives tokenomics and go-to-market.",
+    wp_subtitle:"Whitepaper — Distributed AI Inference Network",wp_abstract_t:"Abstract",wp_abstract:"IAMINE is a decentralized AI inference network that transforms idle computing power into a shared artificial intelligence resource. By contributing CPU cycles, participants earn $IAMINE tokens proportional to their compute contribution.",wp_1t:"1. The Problem",wp_1:"Access to powerful AI is concentrated in the hands of a few corporations. Running a high-quality language model requires expensive hardware that most people don't have. Meanwhile, billions of PCs sit idle with unused CPU cycles.",wp_2t:"2. The IAMINE Solution",wp_2:"IAMINE inverts the model: anyone with a PC becomes an AI provider.",wp_2a:"Workers — Lightweight software that runs on any PC (Windows, Linux, macOS with Apple Metal). Each worker loads an open-source AI model optimized for its hardware.",wp_2b:"Pool — Central orchestrator that receives AI requests and routes them to the best available worker using smart routing.",wp_2c:"$IAMINE Token — The network's native currency. Workers earn tokens for compute contributed, and spend them to access more powerful AI.",wp_3t:"3. Smart Routing",wp_3:"The core innovation of IAMINE is its intelligent request routing:",wp_3a:"Context Awareness",wp_3a2:"Tracks accumulated conversation tokens. Routes long conversations to workers with larger context windows — proactively.",wp_3b:"Model Matching",wp_3b2:"Users can request specific models. The router finds a worker that has it loaded.",wp_3c:"Worker Affinity",wp_3c2:"Within a conversation, the router prefers the same worker for consistency.",wp_3d:"Performance Scoring",wp_3d2:"Workers are scored by benchmark results, RAM, context capacity.",wp_4t:"4. $IAMINE Tokenomics",wp_4:"The $IAMINE token creates a self-sustaining economy:",wp_4_model:"Model",wp_4_earn:"Earn (serve 100 tok)",wp_4_cost:"Cost (use/request)",wp_4note:"Larger models cost more to use but earn more for workers who serve them.",wp_5t:"5. Level Progression",wp_5:"As the network grows, larger models are automatically unlocked. This gamification drives organic growth.",wp_6t:"6. Privacy & Security",wp_6:"IAMINE stores zero conversation data. Conversations exist only in temporary memory and are purged after 1 hour of inactivity.",wp_7t:"7. Technical Architecture",wp_8t:"8. Roadmap",wp_r1:"MVP launch. Pool + Worker + Website. Models 0.5B to 3B. Token system.",wp_r2:"Linux + macOS (Apple Metal) workers. Models up to 14B. Smart routing v2.",wp_r3:"$IAMINE token on-chain (ERC-20). DEX listing. Wallet export.",wp_r4:"Pipeline parallelism. Models up to 72B. Enterprise API.",wp_9t:"9. Team",wp_9a:"Co-founder. Architecture & Engineering. Designed the smart routing engine.",wp_9b:"Co-founder. Strategy & Business. Drives tokenomics and go-to-market.",
 },
 fr: {
-    nav_home:"Accueil",nav_pool:"Pool",nav_levels:"Niveaux",nav_demo:"Demo",nav_bench:"Benchmark",nav_workers:"Mes Workers",nav_api:"API",nav_token:"$IAMINE",nav_tuto:"Tuto",nav_contact:"Contact",nav_wp:"Livre blanc",nav_login:"Se connecter",nav_logout:"Deconnexion",
-    concept_title:"Comment fonctionne IAMINE",c1t:"Vous partagez la puissance de votre PC",c1d:"Votre CPU inutilise fait tourner un modele IA leger. Pas de GPU requis. Fonctionne sur tout PC avec 4 Go+ de RAM.",c2t:"Le pool combine la puissance de tous",c2d:"Le routage intelligent envoie chaque requete au meilleur worker disponible. Les modeles plus gros necessitent des workers avec assez de RAM et de puissance pour les faire tourner.",c3t:"Vous gagnez des tokens $IAMINE",c3d:"Chaque token IA genere par votre machine vous rapporte des $IAMINE. Plus de contexte = plus de tokens = plus de recompenses.",c4t:"Depensez pour une IA puissante",c4d:"Utilisez vos $IAMINE pour acceder a des modeles que votre PC ne pourrait jamais faire tourner : 7B, 14B, meme 32B — alimente par la puissance combinee du pool.",c5t:"Exportez vers votre wallet",c5d:"Les tokens $IAMINE seront echangeables sur les DEX. Exportez vers MetaMask ou Rabby et echangez votre puissance de calcul.",concept_wp:"Lire le livre blanc",
+    nav_home:"Accueil",nav_pool:"Pool",nav_dashboard:"Tableau de bord",nav_levels:"Niveaux",nav_demo:"Demo",nav_bench:"Benchmark",nav_workers:"Mes Workers",nav_api:"API",nav_token:"$IAMINE",nav_tuto:"Tuto",nav_contact:"Contact",nav_mobile:"Mobile",nav_wp:"Livre blanc",nav_login:"Se connecter",nav_logout:"Deconnexion",
+    mob_title:"Ajouter un worker mobile",mob_sub:"Transformez votre smartphone en worker IA. Scannez le QR code pour lier votre telephone a votre compte IAMINE.",mob_login:"Connectez-vous d'abord pour generer un QR code de pairing.",mob_scan:"Ouvrez l'app IAMINE sur votre telephone et scannez ce QR code.",mob_refresh:"Nouveau QR",mob_step1_title:"Telecharger l'app",mob_step1_sub:"Installez l'app IAMINE sur votre telephone Android",mob_step2_title:"Scannez ce QR code",mob_step2_sub:"Ouvrez l'app IAMINE et pointez la camera vers ce code",mob_step3_title:"C'est fait !",mob_s3:"L'app telecharge un modele IA de 500 Mo (une seule fois). Votre telephone rejoint le pool et gagne des $IAMINE.",mob_note:"Votre telephone fait tourner un modele leger 0.5B en WiFi uniquement, en charge. Mode economie de batterie par defaut.",mob_apk:"Telecharger l'APK (74 Mo)",mob_install_t:"Comment installer l'APK",mob_install_2:"<strong>2.</strong> Votre telephone affichera un avertissement : \"Installer depuis des sources inconnues\". Vous devez l'autoriser.",mob_install_3:"<strong>3.</strong> Allez dans <strong>Parametres</strong> et cherchez <strong>\"Installer des applis inconnues\"</strong> ou <strong>\"Sources inconnues\"</strong>.",mob_install_4:"<strong>4.</strong> Autorisez votre navigateur (Chrome, Firefox...) a installer des applications.",mob_install_5:"<strong>5.</strong> Ouvrez l'APK telecharge et appuyez sur <strong>Installer</strong>.",mob_install_tip:"Les etapes exactes varient selon la marque. Cherchez : <strong>\"installer APK [marque de votre telephone]\"</strong> (Samsung, Xiaomi, Pixel, OnePlus...).",
+    concept_title:"Comment fonctionne IAMINE",c1t:"Vous partagez la puissance de votre PC",c1d:"Votre CPU ou GPU fait tourner un modele IA avec un contexte maximum. Petit modele + grand contexte = rapide et intelligent. GPU auto-detecte.",c2t:"Le pool combine la puissance de tous",c2d:"Le routage intelligent envoie chaque requete au meilleur worker disponible. Les modeles plus gros necessitent des workers avec assez de RAM et de puissance pour les faire tourner.",c3t:"Vous gagnez des tokens $IAMINE",c3d:"Chaque token IA genere par votre machine vous rapporte des $IAMINE. Plus de contexte = plus de tokens = plus de recompenses.",c4t:"Depensez pour une IA puissante",c4d:"Utilisez vos $IAMINE pour acceder a des modeles que votre PC ne pourrait jamais faire tourner : 7B, 14B, meme 32B — alimente par la puissance combinee du pool.",c5t:"Exportez vers votre wallet",c5d:"Les tokens $IAMINE seront echangeables sur les DEX. Exportez vers MetaMask ou Rabby et echangez votre puissance de calcul.",c6t:"Memoire infinie chiffree",c6d:"Avec un compte, vos conversations ont un contexte illimite. Compactage 3 niveaux + chiffrement AES — discutez des heures, zero fuite de donnees.",concept_wp:"Lire le livre blanc",
     lvl_serve:"Servir",lvl_serve_desc:"Faites tourner un modele sur votre PC, gagnez des $IAMINE pour chaque token genere",lvl_use:"Utiliser",lvl_use_desc:"Depensez des $IAMINE pour utiliser des modeles plus gros que votre PC ne peut faire tourner",
     lvl_example:"Exemple : Votre PC 8 Go sert un modele 0.5B → gagne des $IAMINE → vous les depensez pour utiliser un modele 14B sur une machine 32 Go du pool. Accedez a une IA que vous ne pourriez jamais faire tourner localement.",
     pool_title:"Pool IAMINE — Reseau en direct",pool_sub:"Vue en temps reel du reseau IA distribue. Chaque noeud est un worker qui contribue de la puissance de calcul.",pool_best:"Meilleur modele",
     home_sub:"Simplicite. Efficacite. L'IA pour tous.",
-    home_desc:"Votre PC a de la puissance inutilisee. On la transforme en IA. Rejoignez le reseau en 60 secondes avec une seule commande. Pas de cloud, pas de GPU.",
+    home_desc:"Votre PC a de la puissance inutilisee. On la transforme en IA. Rejoignez le reseau en 60 secondes — Windows, Linux ou macOS. CPU, GPU ou Apple Metal.",home_gpu_note:"GPU auto-detecte (NVIDIA CUDA, AMD ROCm, Apple Metal). Pour GPU NVIDIA : pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu124",
     home_cta1:"Testez votre machine",home_cta2:"Essayez l'IA",home_cta3:"Gagnez des $IAMINE",
     p1t:"Copier",p1d:"Copiez la commande ci-dessus.",p2t:"Coller",p2d:"Collez-la dans votre terminal. C'est tout.",p3t:"Gagner",p3d:"Votre PC sert de l'IA et gagne des tokens $IAMINE.",
     nav_api:"API",
@@ -979,27 +1281,28 @@ fr: {
     lvl_title:"Progression du Reseau",lvl_sub:"Chaque worker qui rejoint debloque une IA plus puissante. Progressez ensemble.",
     demo_title:"Chat IA en direct",c_off:"Hors ligne",c_welcome:"Bienvenue ! Posez une question pour tester le reseau IA distribue.",c_ph:"Ecrivez votre message...",c_send:"Envoyer",c_on:"en ligne",c_clear:"Effacer",c_nohistory:"Aucun historique de conversation conserve",
     b_title:"Benchmarkez votre machine",b_sub:"Voyez ce que votre PC peut faire. On trouve le meilleur modele IA pour vous.",b_rounds:"Rounds",b_tokens:"Tokens/round",b_go:"Lancer",b_lat:"Latence",b_stab:"Stabilite",
-    bj_title:"Votre machine est prete !",bj_desc:"Rejoignez le reseau IAMINE maintenant avec une seule commande :",bj_note:"Installe IAMINE, telecharge le modele optimal et se connecte au pool automatiquement.",
+    bj_title:"Votre machine est prete !",bj_desc:"Rejoignez le reseau IAMINE maintenant avec une seule commande :",bj_works:"Fonctionne sur toutes les plateformes :",bj_note:"Installe IAMINE, telecharge le modele optimal et se connecte au pool automatiquement.",
     b_run:"En cours...",b_rd:"Round",b_again:"Relancer",
     b_hi:"Excellent ! ({tps} t/s) — Votre machine peut servir plusieurs requetes.",b_mid:"Bien ({tps} t/s) — La config par defaut est optimale.",b_lo:"Pret ({tps} t/s) — Chaque contribution compte !",
     tk_sub:"Contribuez du calcul. Gagnez des tokens. Simple.",tk_e:"Gagner",tk_ed:"Chaque requete IA traitee genere des $IAMINE proportionnels a votre contribution.",tk_t:"Echanger",tk_td:"Echangeable sur DEX. Votre puissance de calcul a une vraie valeur.",tk_u:"Utiliser",tk_ud:"Depensez des $IAMINE pour des modeles premium et l'inference prioritaire.",tk_g:"Gouverner",tk_gd:"Les detenteurs votent sur les modeles, frais et mises a jour.",
     tk_export_title:"Exporter vers votre wallet",tk_export_desc:"Quand le jeton $IAMINE sera deploye on-chain, vous pourrez exporter vos tokens gagnes vers n'importe quel wallet compatible EVM.",tk_rabby_desc:"Wallet multi-chain. Ajoutez le token IAMINE en un clic.",tk_meta_desc:"Le wallet Web3 le plus populaire. Exportez et echangez librement.",tk_export_soon:"Bientot disponible",tk_export_preview:"Comment ca marchera :",tk_exp_s1:"Connectez votre wallet (Rabby, MetaMask ou tout wallet EVM)",tk_exp_s2:"Entrez votre token API (iam_xxx) pour verifier votre solde",tk_exp_s3:"Choisissez le montant a exporter et confirmez la transaction",tk_exp_s4:"Les tokens $IAMINE apparaissent dans votre wallet — echangez sur n'importe quel DEX",tk_contract_info:"L'adresse du contrat sera publiee ici apres le deploiement.",
-    ct_title:"Nous contacter",f1:"Co-fondateur & Architecture",f2:"Co-fondateur & Strategie",ct_n:"Votre nom",ct_e:"Votre email",ct_m:"Votre message",ct_btn:"Envoyer",ct_ok:"Envoye !",
+    ct_title:"Nous contacter",f1:"Co-fondateur & Architecture",f2:"Co-fondateur & Strategie",f3:"Architecture & Token",ct_n:"Votre nom",ct_e:"Votre email",ct_m:"Votre message",ct_btn:"Envoyer",ct_ok:"Envoye !",
     wb_title:"Votre worker tourne !",wb_earned:"Gagne",wb_jobs:"Jobs",wb_your_token:"Votre token API :",
     mw_title:"Mon Worker",mw_or_email:"ou par email",mw_earned:"Gagne",mw_multi_hint:"Vous voulez gerer plusieurs workers ? Creez un compte pour les lier et consolider vos $IAMINE.",mw_register_btn:"Creer un compte (optionnel)",mw_no_title:"Aucun worker detecte",mw_no_desc:"Lancez un worker sur cette machine pour le voir ici, ou connectez-vous pour gerer plusieurs workers.",mw_or:"— ou —",mw_login_btn:"Se connecter / S'inscrire",mw_auth_title:"Compte",mw_do_register:"S'inscrire",mw_do_login:"Se connecter",mw_dash_title:"Mes Workers",mw_link_title:"Lier un nouveau worker",mw_link_desc:"Entrez le token API d'un worker pour l'ajouter a votre compte.",mw_link_btn:"Lier",
     api_owui_title:"Connecter a Open WebUI",api_owui_desc:"Utilisez IAMINE comme backend pour Open WebUI. Copiez ces parametres :",api_ref_title:"Reference API complete",api_r1:"Chat (demo gratuite, limite 3 msg)",api_r2:"Chat (base tokens)",api_r3:"Status du pool",api_r4:"Analyse puissance du pool",api_r5:"Verifier le solde",api_r6:"Lister les modeles serveur",api_r7:"Lister les modeles workers",api_r8:"Tiers de modeles + statut deblocage",
     tuto_title:"Tutoriels",tuto_sub:"Utilisez IAMINE avec vos outils preferes. L'API est compatible OpenAI.",tuto_claude_desc:"Utilisez Claude Code avec IAMINE comme backend. La qualite depend des modeles disponibles dans le pool.",tuto_claude_note:"Note : La capacite IA depend de la puissance du pool. Plus il y a de workers, plus les modeles disponibles sont puissants.",tuto_owui_desc:"Connectez Open WebUI au reseau IAMINE pour une interface type ChatGPT.",
     uninstall_title:"Desinstaller IAMINE",uninstall_warn:"Attention : cela supprimera votre wallet local (wallet.json). Faites une sauvegarde avant !",uninstall_backup:"Commande de sauvegarde : copy wallet.json wallet.json.backup",uninstall_step1:"Etape 1 : Desinstaller le package",uninstall_step2:"Etape 2 : Supprimer les donnees (optionnel)",uninstall_note:"Vos credits $IAMINE gagnes sur le pool sont preserves meme apres desinstallation.",
-    wp_subtitle:"Livre blanc — Reseau d'inference IA distribue",wp_abstract_t:"Resume",wp_abstract:"IAMINE est un reseau decentralise d'inference IA qui transforme la puissance de calcul inutilisee en une ressource d'intelligence artificielle partagee. En contribuant des cycles CPU, les participants gagnent des tokens $IAMINE proportionnels a leur contribution.",wp_1t:"1. Le probleme",wp_1:"L'acces a une IA puissante est concentre entre les mains de quelques entreprises. Faire tourner un modele de langage de qualite necessite du materiel couteux que la plupart des gens n'ont pas. Pendant ce temps, des milliards de PC restent inactifs.",wp_2t:"2. La solution IAMINE",wp_2:"IAMINE inverse le modele : n'importe qui avec un PC devient un fournisseur d'IA.",wp_2a:"Workers — Logiciel leger qui tourne sur n'importe quel PC. Chaque worker charge un modele IA open-source optimise pour son materiel.",wp_2b:"Pool — Orchestrateur central qui recoit les requetes IA et les route vers le meilleur worker disponible via le routage intelligent.",wp_2c:"Token $IAMINE — La monnaie native du reseau. Les workers gagnent des tokens pour le calcul contribue et les depensent pour acceder a une IA plus puissante.",wp_3t:"3. Routage intelligent",wp_3:"L'innovation cle de IAMINE est son routage intelligent des requetes :",wp_3a:"Gestion du contexte",wp_3a2:"Suit les tokens de conversation accumules. Route les longues conversations vers des workers avec de plus grandes fenetres de contexte — de maniere proactive.",wp_3b:"Correspondance de modele",wp_3b2:"Les utilisateurs peuvent demander un modele specifique. Le routeur trouve un worker qui l'a charge.",wp_3c:"Affinite worker",wp_3c2:"Au sein d'une conversation, le routeur prefere le meme worker pour la coherence.",wp_3d:"Scoring de performance",wp_3d2:"Les workers sont notes par benchmark, RAM et capacite de contexte.",wp_4t:"4. Tokenomics $IAMINE",wp_4:"Le token $IAMINE cree une economie auto-suffisante :",wp_4_model:"Modele",wp_4_earn:"Gagner (servir 100 tok)",wp_4_cost:"Cout (utiliser/requete)",wp_4note:"Les plus gros modeles coutent plus cher mais rapportent plus aux workers qui les servent.",wp_5t:"5. Progression par niveaux",wp_5:"A mesure que le reseau grandit, des modeles plus puissants sont automatiquement debloques. Cette gamification stimule la croissance organique.",wp_6t:"6. Vie privee & Securite",wp_6:"IAMINE ne stocke aucune donnee de conversation. Les conversations n'existent qu'en memoire temporaire et sont purgees apres 1h d'inactivite.",wp_7t:"7. Architecture technique",wp_8t:"8. Feuille de route",wp_r1:"Lancement MVP. Pool + Worker + Site. Modeles 0.5B a 3B. Systeme de tokens.",wp_r2:"Workers Linux + Android. Modeles jusqu'a 14B. Routage intelligent v2.",wp_r3:"Token $IAMINE on-chain (ERC-20). Listing DEX. Export wallet.",wp_r4:"Parallelisme pipeline. Modeles jusqu'a 72B. API entreprise.",wp_9t:"9. Equipe",wp_9a:"Co-fondateur. Architecture & Ingenierie. Concepteur du moteur de routage intelligent.",wp_9b:"Co-fondateur. Strategie & Business. Pilote les tokenomics et la mise sur le marche.",
+    wp_subtitle:"Livre blanc — Reseau d'inference IA distribue",wp_abstract_t:"Resume",wp_abstract:"IAMINE est un reseau decentralise d'inference IA qui transforme la puissance de calcul inutilisee en une ressource d'intelligence artificielle partagee. En contribuant des cycles CPU, les participants gagnent des tokens $IAMINE proportionnels a leur contribution.",wp_1t:"1. Le probleme",wp_1:"L'acces a une IA puissante est concentre entre les mains de quelques entreprises. Faire tourner un modele de langage de qualite necessite du materiel couteux que la plupart des gens n'ont pas. Pendant ce temps, des milliards de PC restent inactifs.",wp_2t:"2. La solution IAMINE",wp_2:"IAMINE inverse le modele : n'importe qui avec un PC devient un fournisseur d'IA.",wp_2a:"Workers — Logiciel leger qui tourne sur n'importe quel PC (Windows, Linux, macOS avec Apple Metal). Chaque worker charge un modele IA open-source optimise pour son materiel.",wp_2b:"Pool — Orchestrateur central qui recoit les requetes IA et les route vers le meilleur worker disponible via le routage intelligent.",wp_2c:"Token $IAMINE — La monnaie native du reseau. Les workers gagnent des tokens pour le calcul contribue et les depensent pour acceder a une IA plus puissante.",wp_3t:"3. Routage intelligent",wp_3:"L'innovation cle de IAMINE est son routage intelligent des requetes :",wp_3a:"Gestion du contexte",wp_3a2:"Suit les tokens de conversation accumules. Route les longues conversations vers des workers avec de plus grandes fenetres de contexte — de maniere proactive.",wp_3b:"Correspondance de modele",wp_3b2:"Les utilisateurs peuvent demander un modele specifique. Le routeur trouve un worker qui l'a charge.",wp_3c:"Affinite worker",wp_3c2:"Au sein d'une conversation, le routeur prefere le meme worker pour la coherence.",wp_3d:"Scoring de performance",wp_3d2:"Les workers sont notes par benchmark, RAM et capacite de contexte.",wp_4ict:"4. Memoire de contexte infini",wp_4ic:"IAMINE simule une memoire de conversation infinie grace a un systeme de compactage a 3 niveaux. Les detenteurs de compte beneficient d'une memoire persistante chiffree — aucune limite de conversation, zero fuite de donnees.",wp_ic_l1t:"Messages en direct",wp_ic_l1d:"Messages recents en RAM. Acces rapide, toujours frais.",wp_ic_l2t:"Resume intelligent",wp_ic_l2d:"Resume genere par le LLM des anciens messages. Auto-condense quand il grossit.",wp_ic_l3t:"Archive chiffree",wp_ic_l3d:"Historique complet chiffre avec votre token de compte. Vous seul pouvez le lire.",wp_4ic2:"Quand le contexte se remplit, les anciens messages sont resumes et archives. Le resume est re-resume quand il grossit (meta-compactage). Les donnees archivees sont chiffrees en AES avec une cle derivee de votre token de compte — meme les administrateurs ne peuvent pas lire vos conversations. Tout est supprime a l'expiration de la session. Resultat : discutez des heures sans perdre le contexte, avec une confidentialite de bout en bout.",wp_4ic_dist_t:"Compactage distribue",wp_4ic_dist:"Les workers cooperent via le pool. Quand une conversation doit etre compactee, le pool delegue le resume a un worker inactif — liberant le worker principal pour continuer a servir l'utilisateur. Le pool est le broker de confiance : il connait chaque worker, ses capacites et son etat.",wp_5bonus_t:"Recompenses de fidelite",wp_5bonus:"Toutes les 30 secondes, le pool recompense aleatoirement un worker en ligne avec 0.5 a 3 $IAMINE. Des bonus rares (5-15) et des jackpots (20-50) maintiennent l'excitation. Plus vous restez en ligne, plus vous avez de chances. Les nouveaux workers recoivent un bonus de bienvenue de 500 $IAMINE.",wp_5t:"5. Tokenomics $IAMINE",wp_4:"Le token $IAMINE cree une economie auto-suffisante :",wp_4_model:"Modele",wp_4_earn:"Gagner (servir 100 tok)",wp_4_cost:"Cout (utiliser/requete)",wp_4note:"Les plus gros modeles coutent plus cher mais rapportent plus aux workers qui les servent.",wp_6t:"6. Progression par niveaux",wp_6:"A mesure que le reseau grandit, des modeles plus puissants sont automatiquement debloques. Cette gamification stimule la croissance organique.",wp_7t:"7. Vie privee & Securite",wp_7:"IAMINE prend la vie privee au serieux. Les utilisateurs demo ont des conversations ephemeres en RAM uniquement — zero persistence. Les detenteurs de compte beneficient d'archives L3 chiffrees : l'historique de conversation est chiffre en AES avec une cle derivee de votre token personnel. Meme les administrateurs du serveur ne peuvent pas lire vos donnees. Toutes les donnees (L1, L2, L3) sont automatiquement purgees apres 1h d'inactivite. Aucun log, aucun entrainement sur vos donnees.",wp_8t:"8. Architecture technique",wp_9t:"9. Feuille de route",wp_r1:"Lancement MVP. Pool + Worker + Site. Modeles 0.5B a 3B. Systeme de tokens.",wp_r2:"Workers Linux + macOS (Apple Metal). Modeles jusqu'a 14B. Routage intelligent v2.",wp_r3:"Token $IAMINE on-chain (ERC-20). Listing DEX. Export wallet.",wp_r4:"Parallelisme pipeline. Modeles jusqu'a 72B. API entreprise.",wp_9t:"9. Equipe",wp_9a:"Co-fondateur. Architecture & Ingenierie. Concepteur du moteur de routage intelligent.",wp_9b:"Co-fondateur. Strategie & Business. Pilote les tokenomics et la mise sur le marche.",
 },
 es: {
-    nav_home:"Inicio",nav_pool:"Pool",nav_levels:"Niveles",nav_demo:"Demo",nav_bench:"Benchmark",nav_workers:"Mis Workers",nav_api:"API",nav_token:"$IAMINE",nav_tuto:"Tuto",nav_contact:"Contacto",nav_wp:"Whitepaper",nav_login:"Conectarse",nav_logout:"Salir",
-    concept_title:"Como funciona IAMINE",c1t:"Comparta la potencia de su PC",c1d:"Su CPU inactiva ejecuta un modelo IA ligero. Sin GPU. Funciona en cualquier PC con 4 GB+ de RAM.",c2t:"El pool combina la potencia de todos",c2d:"El enrutamiento inteligente envia cada solicitud al mejor worker disponible. Los modelos mas grandes requieren workers con suficiente RAM y potencia para ejecutarlos.",c3t:"Gane tokens $IAMINE",c3d:"Cada token IA generado por su maquina le genera $IAMINE. Mas contexto = mas tokens = mas recompensas.",c4t:"Gaste en IA potente",c4d:"Use sus $IAMINE para acceder a modelos que su PC nunca podria ejecutar: 7B, 14B, hasta 32B — impulsado por la potencia combinada del pool.",c5t:"Exporte a su wallet",c5d:"Los tokens $IAMINE seran intercambiables en DEX. Exporte a MetaMask o Rabby e intercambie su potencia de calculo.",concept_wp:"Leer el whitepaper",
+    nav_home:"Inicio",nav_pool:"Pool",nav_dashboard:"Dashboard",nav_levels:"Niveles",nav_demo:"Demo",nav_bench:"Benchmark",nav_workers:"Mis Workers",nav_api:"API",nav_token:"$IAMINE",nav_tuto:"Tuto",nav_contact:"Contacto",nav_mobile:"Movil",nav_wp:"Whitepaper",nav_login:"Conectarse",nav_logout:"Salir",
+    mob_title:"Agregar worker movil",mob_sub:"Convierta su smartphone en un worker IA. Escanee el codigo QR para vincular su telefono a su cuenta IAMINE.",mob_login:"Inicie sesion primero para generar un codigo QR de emparejamiento.",mob_scan:"Abra la app IAMINE en su telefono y escanee este codigo QR.",mob_refresh:"Nuevo QR",mob_step1_title:"Descargar la app",mob_step1_sub:"Instale la app IAMINE en su telefono Android",mob_step2_title:"Escanee este codigo QR",mob_step2_sub:"Abra la app IAMINE y apunte la camara a este codigo",mob_step3_title:"Listo!",mob_s3:"La app descarga un modelo IA de 500 MB (una sola vez). Su telefono se une al pool y gana $IAMINE.",mob_note:"Su telefono ejecuta un modelo ligero 0.5B solo en WiFi, mientras carga. Modo ahorro de bateria por defecto.",mob_apk:"Descargar APK (74 MB)",mob_install_t:"Como instalar el APK",mob_install_2:"<strong>2.</strong> Su telefono mostrara una advertencia: \"Instalar desde fuentes desconocidas\". Debe permitirlo.",mob_install_3:"<strong>3.</strong> Vaya a <strong>Configuracion</strong> y busque <strong>\"Instalar apps desconocidas\"</strong> o <strong>\"Fuentes desconocidas\"</strong>.",mob_install_4:"<strong>4.</strong> Permita que su navegador (Chrome, Firefox...) instale aplicaciones.",mob_install_5:"<strong>5.</strong> Abra el APK descargado y presione <strong>Instalar</strong>.",mob_install_tip:"Los pasos exactos varian segun la marca. Busque: <strong>\"instalar APK [marca de su telefono]\"</strong> (Samsung, Xiaomi, Pixel, OnePlus...).",
+    concept_title:"Como funciona IAMINE",c1t:"Comparta la potencia de su PC",c1d:"Su CPU inactiva ejecuta un modelo IA ligero con contexto maximo. Modelo pequeno + contexto grande = rapido e inteligente. Sin GPU.",c2t:"El pool combina la potencia de todos",c2d:"El enrutamiento inteligente envia cada solicitud al mejor worker disponible. Los modelos mas grandes requieren workers con suficiente RAM y potencia para ejecutarlos.",c3t:"Gane tokens $IAMINE",c3d:"Cada token IA generado por su maquina le genera $IAMINE. Mas contexto = mas tokens = mas recompensas.",c4t:"Gaste en IA potente",c4d:"Use sus $IAMINE para acceder a modelos que su PC nunca podria ejecutar: 7B, 14B, hasta 32B — impulsado por la potencia combinada del pool.",c5t:"Exporte a su wallet",c5d:"Los tokens $IAMINE seran intercambiables en DEX. Exporte a MetaMask o Rabby e intercambie su potencia de calculo.",c6t:"Memoria infinita cifrada",c6d:"Con una cuenta, sus conversaciones tienen contexto ilimitado. Compactacion de 3 niveles + cifrado AES — converse por horas, cero fugas de datos.",concept_wp:"Leer el whitepaper",
     lvl_serve:"Servir",lvl_serve_desc:"Ejecute un modelo en su PC, gane $IAMINE por cada token generado",lvl_use:"Usar",lvl_use_desc:"Gaste $IAMINE para usar modelos mas grandes que su PC no puede ejecutar",
     lvl_example:"Ejemplo: Su PC de 8 GB sirve un modelo 0.5B → gana $IAMINE → los gasta para usar un modelo 14B en una maquina de 32 GB del pool. Acceda a IA que nunca podria ejecutar localmente.",
     pool_title:"Pool IAMINE — Red en vivo",pool_sub:"Vista en tiempo real de la red de IA distribuida. Cada nodo es un worker que contribuye potencia de calculo.",pool_best:"Mejor modelo",
     home_sub:"Simplicidad. Eficiencia. IA para todos.",
-    home_desc:"Su PC tiene potencia sin usar. La convertimos en IA. Unase a la red en 60 segundos con un solo comando. Sin cloud, sin GPU.",
+    home_desc:"Su PC tiene potencia sin usar. La convertimos en IA. Unase a la red en 60 segundos con un solo comando. CPU o GPU, sin cloud.",
     home_cta1:"Pruebe su maquina",home_cta2:"Pruebe la IA",home_cta3:"Gane $IAMINE",
     p1t:"Copiar",p1d:"Copie el comando de arriba.",p2t:"Pegar",p2d:"Peguelo en su terminal. Eso es todo.",p3t:"Ganar",p3d:"Su PC sirve IA y gana tokens $IAMINE.",
     nav_api:"API",
@@ -1011,18 +1314,18 @@ es: {
     lvl_title:"Progresion de la Red",lvl_sub:"Cada worker que se une desbloquea IA mas potente. Progresen juntos.",
     demo_title:"Chat IA en vivo",c_off:"Desconectado",c_welcome:"Bienvenido! Pregunte algo para probar la red de IA distribuida.",c_ph:"Escriba su mensaje...",c_send:"Enviar",c_on:"en linea",c_clear:"Borrar",c_nohistory:"No se guarda historial de conversacion",
     b_title:"Benchmark de su maquina",b_sub:"Vea lo que su PC puede hacer. Encontramos el mejor modelo IA para usted.",b_rounds:"Rondas",b_tokens:"Tokens/ronda",b_go:"Ejecutar",b_lat:"Latencia",b_stab:"Estabilidad",
-    bj_title:"Su maquina esta lista!",bj_desc:"Unase a la red IAMINE ahora con un solo comando:",bj_note:"Instala IAMINE, descarga el modelo optimo y se conecta al pool automaticamente.",
+    bj_title:"Su maquina esta lista!",bj_desc:"Unase a la red IAMINE ahora con un solo comando:",bj_works:"Funciona en todas las plataformas:",bj_note:"Instala IAMINE, descarga el modelo optimo y se conecta al pool automaticamente.",
     b_run:"En curso...",b_rd:"Ronda",b_again:"Reiniciar",
     b_hi:"Excelente! ({tps} t/s) — Su maquina puede servir varias solicitudes.",b_mid:"Bien ({tps} t/s) — La config por defecto es optima.",b_lo:"Listo ({tps} t/s) — Cada contribucion cuenta!",
     tk_sub:"Contribuya calculo. Gane tokens. Simple.",tk_e:"Ganar",tk_ed:"Cada solicitud de IA genera $IAMINE proporcionales a su contribucion.",tk_t:"Intercambiar",tk_td:"Intercambiable en DEX. Su potencia tiene valor real.",tk_u:"Usar",tk_ud:"Gaste $IAMINE para modelos premium e inferencia prioritaria.",tk_g:"Gobernar",tk_gd:"Los poseedores votan sobre modelos, tarifas y actualizaciones.",
     tk_export_title:"Exportar a su wallet",tk_export_desc:"Cuando el token $IAMINE se despliegue on-chain, podra exportar sus tokens ganados a cualquier wallet compatible EVM.",tk_rabby_desc:"Wallet multi-chain. Agregue el token IAMINE con un clic.",tk_meta_desc:"El wallet Web3 mas popular. Exporte e intercambie libremente.",tk_export_soon:"Proximamente",tk_export_preview:"Como funcionara:",tk_exp_s1:"Conecte su wallet (Rabby, MetaMask o cualquier wallet EVM)",tk_exp_s2:"Ingrese su token API (iam_xxx) para verificar su saldo",tk_exp_s3:"Elija el monto a exportar y confirme la transaccion",tk_exp_s4:"Los tokens $IAMINE aparecen en su wallet — intercambie en cualquier DEX",tk_contract_info:"La direccion del contrato se publicara aqui despues del despliegue.",
-    ct_title:"Contactenos",f1:"Co-fundador & Arquitectura",f2:"Co-fundador & Estrategia",ct_n:"Su nombre",ct_e:"Su email",ct_m:"Su mensaje",ct_btn:"Enviar",ct_ok:"Enviado!",
+    ct_title:"Contactenos",f1:"Co-fundador & Arquitectura",f2:"Co-fundador & Estrategia",f3:"Arquitectura & Token",ct_n:"Su nombre",ct_e:"Su email",ct_m:"Su mensaje",ct_btn:"Enviar",ct_ok:"Enviado!",
     wb_title:"Su worker esta activo!",wb_earned:"Ganado",wb_jobs:"Jobs",wb_your_token:"Su token API:",
     mw_title:"Mi Worker",mw_or_email:"o con email",mw_earned:"Ganado",mw_multi_hint:"Quiere gestionar varios workers? Cree una cuenta para vincularlos y consolidar sus $IAMINE.",mw_register_btn:"Crear cuenta (opcional)",mw_no_title:"Ningun worker detectado",mw_no_desc:"Inicie un worker en esta maquina para verlo aqui, o inicie sesion para gestionar varios workers.",mw_or:"— o —",mw_login_btn:"Iniciar sesion / Registrarse",mw_auth_title:"Cuenta",mw_do_register:"Registrarse",mw_do_login:"Iniciar sesion",mw_dash_title:"Mis Workers",mw_link_title:"Vincular un nuevo worker",mw_link_desc:"Ingrese el token API de un worker para agregarlo a su cuenta.",mw_link_btn:"Vincular",
     api_owui_title:"Conectar a Open WebUI",api_owui_desc:"Use IAMINE como backend para Open WebUI. Copie estos ajustes:",api_ref_title:"Referencia API completa",api_r1:"Chat (demo gratis, limite 3 msg)",api_r2:"Chat (basado en tokens)",api_r3:"Estado del pool",api_r4:"Analisis potencia del pool",api_r5:"Verificar saldo",api_r6:"Listar modelos del servidor",api_r7:"Listar modelos de workers",api_r8:"Tiers de modelos + estado desbloqueo",
     tuto_title:"Tutoriales",tuto_sub:"Use IAMINE con sus herramientas favoritas. La API es compatible con OpenAI.",tuto_claude_desc:"Use Claude Code con IAMINE como backend. La calidad depende de los modelos disponibles en el pool.",tuto_claude_note:"Nota: La capacidad IA depende de la potencia del pool. Con mas workers, modelos mas grandes estan disponibles.",tuto_owui_desc:"Conecte Open WebUI a la red IAMINE para una interfaz tipo ChatGPT.",
     uninstall_title:"Desinstalar IAMINE",uninstall_warn:"Atencion: esto eliminara su wallet local (wallet.json). Haga una copia de seguridad primero!",uninstall_backup:"Comando de respaldo: copy wallet.json wallet.json.backup",uninstall_step1:"Paso 1: Desinstalar el paquete",uninstall_step2:"Paso 2: Eliminar datos (opcional)",uninstall_note:"Sus creditos $IAMINE ganados en el pool se conservan incluso despues de desinstalar.",
-    wp_subtitle:"Whitepaper — Red de inferencia IA distribuida",wp_abstract_t:"Resumen",wp_abstract:"IAMINE es una red descentralizada de inferencia IA que transforma la potencia de calculo inactiva en un recurso de inteligencia artificial compartido. Al contribuir ciclos de CPU, los participantes ganan tokens $IAMINE proporcionales a su contribucion.",wp_1t:"1. El problema",wp_1:"El acceso a IA potente esta concentrado en manos de pocas corporaciones. Ejecutar un modelo de lenguaje de calidad requiere hardware costoso que la mayoria no tiene. Mientras tanto, miles de millones de PCs permanecen inactivos.",wp_2t:"2. La solucion IAMINE",wp_2:"IAMINE invierte el modelo: cualquiera con un PC se convierte en proveedor de IA.",wp_2a:"Workers — Software ligero que funciona en cualquier PC. Cada worker carga un modelo IA de codigo abierto optimizado para su hardware.",wp_2b:"Pool — Orquestador central que recibe solicitudes de IA y las enruta al mejor worker disponible mediante enrutamiento inteligente.",wp_2c:"Token $IAMINE — La moneda nativa de la red. Los workers ganan tokens por el calculo contribuido y los gastan para acceder a IA mas potente.",wp_3t:"3. Enrutamiento inteligente",wp_3:"La innovacion central de IAMINE es su enrutamiento inteligente de solicitudes:",wp_3a:"Gestion de contexto",wp_3a2:"Rastrea los tokens de conversacion acumulados. Enruta conversaciones largas a workers con ventanas de contexto mas grandes — proactivamente.",wp_3b:"Correspondencia de modelo",wp_3b2:"Los usuarios pueden solicitar modelos especificos. El router encuentra un worker que lo tenga cargado.",wp_3c:"Afinidad de worker",wp_3c2:"Dentro de una conversacion, el router prefiere el mismo worker para consistencia.",wp_3d:"Puntuacion de rendimiento",wp_3d2:"Los workers se puntuan por benchmark, RAM y capacidad de contexto.",wp_4t:"4. Tokenomics $IAMINE",wp_4:"El token $IAMINE crea una economia autosuficiente:",wp_4_model:"Modelo",wp_4_earn:"Ganar (servir 100 tok)",wp_4_cost:"Costo (usar/solicitud)",wp_4note:"Los modelos mas grandes cuestan mas pero generan mas para los workers que los sirven.",wp_5t:"5. Progresion por niveles",wp_5:"A medida que la red crece, modelos mas potentes se desbloquean automaticamente. Esta gamificacion impulsa el crecimiento organico.",wp_6t:"6. Privacidad y Seguridad",wp_6:"IAMINE no almacena datos de conversacion. Las conversaciones solo existen en memoria temporal y se purgan tras 1h de inactividad.",wp_7t:"7. Arquitectura tecnica",wp_8t:"8. Hoja de ruta",wp_r1:"Lanzamiento MVP. Pool + Worker + Sitio. Modelos 0.5B a 3B. Sistema de tokens.",wp_r2:"Workers Linux + Android. Modelos hasta 14B. Enrutamiento inteligente v2.",wp_r3:"Token $IAMINE on-chain (ERC-20). Listing DEX. Exportacion wallet.",wp_r4:"Paralelismo pipeline. Modelos hasta 72B. API empresarial.",wp_9t:"9. Equipo",wp_9a:"Co-fundador. Arquitectura e Ingenieria. Disenador del motor de enrutamiento inteligente.",wp_9b:"Co-fundador. Estrategia y Negocios. Impulsa tokenomics y salida al mercado.",
+    wp_subtitle:"Whitepaper — Red de inferencia IA distribuida",wp_abstract_t:"Resumen",wp_abstract:"IAMINE es una red descentralizada de inferencia IA que transforma la potencia de calculo inactiva en un recurso de inteligencia artificial compartido. Al contribuir ciclos de CPU, los participantes ganan tokens $IAMINE proporcionales a su contribucion.",wp_1t:"1. El problema",wp_1:"El acceso a IA potente esta concentrado en manos de pocas corporaciones. Ejecutar un modelo de lenguaje de calidad requiere hardware costoso que la mayoria no tiene. Mientras tanto, miles de millones de PCs permanecen inactivos.",wp_2t:"2. La solucion IAMINE",wp_2:"IAMINE invierte el modelo: cualquiera con un PC se convierte en proveedor de IA.",wp_2a:"Workers — Software ligero que funciona en cualquier PC. Cada worker carga un modelo IA de codigo abierto optimizado para su hardware.",wp_2b:"Pool — Orquestador central que recibe solicitudes de IA y las enruta al mejor worker disponible mediante enrutamiento inteligente.",wp_2c:"Token $IAMINE — La moneda nativa de la red. Los workers ganan tokens por el calculo contribuido y los gastan para acceder a IA mas potente.",wp_3t:"3. Enrutamiento inteligente",wp_3:"La innovacion central de IAMINE es su enrutamiento inteligente de solicitudes:",wp_3a:"Gestion de contexto",wp_3a2:"Rastrea los tokens de conversacion acumulados. Enruta conversaciones largas a workers con ventanas de contexto mas grandes — proactivamente.",wp_3b:"Correspondencia de modelo",wp_3b2:"Los usuarios pueden solicitar modelos especificos. El router encuentra un worker que lo tenga cargado.",wp_3c:"Afinidad de worker",wp_3c2:"Dentro de una conversacion, el router prefiere el mismo worker para consistencia.",wp_3d:"Puntuacion de rendimiento",wp_3d2:"Los workers se puntuan por benchmark, RAM y capacidad de contexto.",wp_4ict:"4. Memoria de contexto infinito",wp_4ic:"IAMINE simula memoria de conversacion infinita mediante un sistema de compactacion de 3 niveles. Los titulares de cuenta obtienen memoria persistente cifrada — sin limite de conversacion, cero fugas de datos.",wp_ic_l1t:"Mensajes en vivo",wp_ic_l1d:"Mensajes recientes en RAM. Acceso rapido, siempre frescos.",wp_ic_l2t:"Resumen inteligente",wp_ic_l2d:"Resumen generado por el LLM de mensajes antiguos. Auto-condensado cuando crece.",wp_ic_l3t:"Archivo cifrado",wp_ic_l3d:"Historial completo cifrado con su token de cuenta. Solo usted puede leerlo.",wp_4ic2:"Cuando el contexto se llena, los mensajes antiguos se resumen y archivan. El resumen se re-resume cuando crece (meta-compactacion). Los datos archivados estan cifrados en AES con una clave derivada de su token de cuenta — ni los administradores pueden leer sus conversaciones. Todo se elimina al expirar la sesion. Resultado: converse por horas sin perder contexto, con privacidad de extremo a extremo.",wp_4ic_dist_t:"Compactacion distribuida",wp_4ic_dist:"Los workers cooperan a traves del pool. Cuando una conversacion necesita compactacion, el pool delega el resumen a un worker inactivo — liberando al worker principal para seguir sirviendo al usuario. El pool actua como broker de confianza: conoce cada worker, sus capacidades y su estado.",wp_5bonus_t:"Recompensas de fidelidad",wp_5bonus:"Cada 30 segundos, el pool recompensa aleatoriamente a un worker en linea con 0.5 a 3 $IAMINE. Bonus raros (5-15) y jackpots (20-50) mantienen la emocion. Cuanto mas tiempo en linea, mas oportunidades. Los nuevos workers reciben un bono de bienvenida de 500 $IAMINE.",wp_5t:"5. Tokenomics $IAMINE",wp_4:"El token $IAMINE crea una economia autosuficiente:",wp_4_model:"Modelo",wp_4_earn:"Ganar (servir 100 tok)",wp_4_cost:"Costo (usar/solicitud)",wp_4note:"Los modelos mas grandes cuestan mas pero generan mas para los workers que los sirven.",wp_6t:"6. Progresion por niveles",wp_6:"A medida que la red crece, modelos mas potentes se desbloquean automaticamente. Esta gamificacion impulsa el crecimiento organico.",wp_7t:"7. Privacidad y Seguridad",wp_7:"IAMINE toma la privacidad en serio. Los usuarios demo tienen conversaciones efimeras solo en RAM — cero persistencia. Los titulares de cuenta se benefician de archivos L3 cifrados: el historial de conversacion esta cifrado en AES con una clave derivada de su token personal. Ni los administradores del servidor pueden leer sus datos. Todos los datos (L1, L2, L3) se purgan automaticamente tras 1h de inactividad. Sin logs, sin entrenamiento con sus datos.",wp_8t:"8. Arquitectura tecnica",wp_9t:"9. Hoja de ruta",wp_r1:"Lanzamiento MVP. Pool + Worker + Sitio. Modelos 0.5B a 3B. Sistema de tokens.",wp_r2:"Workers Linux + Android. Modelos hasta 14B. Enrutamiento inteligente v2.",wp_r3:"Token $IAMINE on-chain (ERC-20). Listing DEX. Exportacion wallet.",wp_r4:"Paralelismo pipeline. Modelos hasta 72B. API empresarial.",wp_9t:"9. Equipo",wp_9a:"Co-fundador. Arquitectura e Ingenieria. Disenador del motor de enrutamiento inteligente.",wp_9b:"Co-fundador. Estrategia y Negocios. Impulsa tokenomics y salida al mercado.",
 }};
 
 let cl = localStorage.getItem('iamine-lang')||'en';
@@ -1094,7 +1397,7 @@ ms.forEach((m,i)=>{
     const serveTxt={en:'Serve',fr:'Servir',es:'Servir'}[cl]||'Serve';
     const useTxt={en:'Use',fr:'Utiliser',es:'Usar'}[cl]||'Use';
     const reqTxt={en:'request',fr:'requete',es:'solicitud'}[cl]||'request';
-    el.innerHTML=`<div class="level-circle ${cc}">${ICONS[i]||'?'}</div><div class="level-info"><div class="level-header"><span class="level-name">${m.name}</span><span class="lvl-badge ${bc}">${bt}</span></div><div class="level-sub">${m.size_gb} GB · ${m.ram_required_gb} GB RAM · ${ps}</div><div class="level-bar-bg"><div class="level-bar bar-${barC}" style="width:${p}%"></div></div><div style="display:flex;gap:1.5rem;margin-top:0.3rem;font-size:0.8rem;"><span style="color:var(--accent2);">⬆ ${serveTxt}: +${earn} $IAMINE/100tok</span><span style="color:var(--accent);">⬇ ${useTxt}: ${cost} $IAMINE/${reqTxt}</span></div></div>`;
+    el.innerHTML=`<div class="level-circle ${cc}">${ICONS[i]||'?'}</div><div class="level-info"><div class="level-header"><span class="level-name">${esc(m.name)}</span><span class="lvl-badge ${bc}">${bt}</span></div><div class="level-sub">${m.size_gb} GB · ${m.ram_required_gb} GB RAM · ${ps}</div><div class="level-bar-bg"><div class="level-bar bar-${barC}" style="width:${p}%"></div></div><div style="display:flex;gap:1.5rem;margin-top:0.3rem;font-size:0.8rem;"><span style="color:var(--accent2);">⬆ ${serveTxt}: +${earn} $IAMINE/100tok</span><span style="color:var(--accent);">⬇ ${useTxt}: ${cost} $IAMINE/${reqTxt}</span></div></div>`;
     tk.appendChild(el);
 });
 document.getElementById('level-line-fill').style.height=`${ms.length>0?((lastA+1.5)/ms.length)*100:0}%`;}catch(e){}}
@@ -1103,7 +1406,7 @@ refreshLevels();setInterval(refreshLevels,15000);
 // ====== CHAT ======
 const cMsgs=document.getElementById('chat-msgs'),cIn=document.getElementById('c-input'),cSend=document.getElementById('c-send');
 function addM(txt,r,meta){const d=document.createElement('div');d.className=`msg ${r}`;d.textContent=txt;if(meta){const m=document.createElement('div');m.className='meta';m.textContent=meta;d.appendChild(m);}cMsgs.appendChild(d);cMsgs.scrollTop=cMsgs.scrollHeight;return d;}
-const LANG_SYSTEM={en:"You are IAMINE AI. Answer in English. Be concise and helpful.",fr:"Tu es IAMINE AI. Reponds en francais. Sois concis et utile.",es:"Eres IAMINE AI. Responde en espanol. Se conciso y util."};
+const LANG_SYSTEM={en:"You are Cellule AI, an assistant running on a community-powered distributed network. Answer naturally and thoroughly.",fr:"Tu es Cellule AI, un assistant qui tourne sur un réseau distribué communautaire. Réponds de manière naturelle et complète.",es:"Eres Cellule AI, un asistente que funciona sobre una red distribuida comunitaria. Responde de forma natural y completa."};
 
 // Load available models into select
 async function loadChatModels(){
@@ -1125,15 +1428,17 @@ async function loadChatModels(){
 loadChatModels();
 
 let chatConvId = null;
+let chatHistory = [];
 async function doChat(){const txt=cIn.value.trim();if(!txt)return;cIn.value='';cSend.disabled=true;addM(txt,'user');const th=addM('...','bot');
 const selectedModel=document.getElementById('c-model').value;
-if(!chatConvId) chatConvId = 'web_' + Math.random().toString(36).substr(2,12);
-const body={messages:[{role:'system',content:LANG_SYSTEM[cl]||LANG_SYSTEM.en},{role:'user',content:txt}],max_tokens:256,conv_id:chatConvId};
+if(!chatConvId){chatConvId='web_'+Math.random().toString(36).substr(2,12);chatHistory=[{role:'system',content:LANG_SYSTEM[cl]||LANG_SYSTEM.en}];}
+chatHistory.push({role:'user',content:txt});
+const body={messages:chatHistory,max_tokens:1024,conv_id:chatConvId};
 if(selectedModel!=='auto') body.model=selectedModel;
 if(localWorker?.api_token_full) body.api_token=localWorker.api_token_full;
-try{const r=await fetch(`${API}/v1/chat/completions`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(d.error){th.textContent=d.error;if(d.hint)addM(d.hint,'bot');return;}th.textContent=d.choices?.[0]?.message?.content||'';}catch(e){th.textContent=e.message;}finally{cSend.disabled=false;cIn.focus();}}
+try{const r=await fetch(`${API}/v1/chat/completions`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(d.error){th.textContent=d.error;if(d.hint)addM(d.hint,'bot');return;}const reply=d.choices?.[0]?.message?.content||'';th.textContent=reply;chatHistory.push({role:'assistant',content:reply});}catch(e){th.textContent=e.message;}finally{cSend.disabled=false;cIn.focus();}}
 cSend.addEventListener('click',doChat);cIn.addEventListener('keydown',e=>{if(e.key==='Enter')doChat();});
-document.getElementById('c-clear').addEventListener('click',()=>{const msgs=document.getElementById('chat-msgs');msgs.innerHTML='<div class="msg bot">'+t('c_welcome')+'</div>';if(chatConvId){fetch(`${API}/v1/conversation/${chatConvId}`,{method:'DELETE'}).catch(()=>{});}chatConvId=null;});
+document.getElementById('c-clear').addEventListener('click',()=>{const msgs=document.getElementById('chat-msgs');msgs.innerHTML='<div class="msg bot">'+t('c_welcome')+'</div>';if(chatConvId){fetch(`${API}/v1/conversation/${chatConvId}`,{method:'DELETE'}).catch(()=>{});}chatConvId=null;chatHistory=[];});
 
 // ====== BENCHMARK ======
 const bStart=document.getElementById('b-start'),prompts=["Explain quantum computing.","Write a haiku about AI.","Benefits of distributed computing?","How do neural networks work?","What is edge computing?"];
@@ -1145,10 +1450,12 @@ bStart.addEventListener('click',doBench);
 // ====== POOL VISUALIZATION ======
 let poolNodes = [];
 let poolAnim = null;
+let poolData = null;  // données status pour l'animation des tâches distribuées
 async function refreshPool() {
     try {
         const [sr, pr] = await Promise.all([fetch(`${API}/v1/status`), fetch(`${API}/v1/pool/power`)]);
         const status = await sr.json(), power = await pr.json();
+        poolData = status;  // exposer pour drawPool
         document.getElementById('pool-workers').textContent = status.workers_online || 0;
         document.getElementById('pool-tps').textContent = (power.pool_capacity_tps || 0).toFixed(0);
         document.getElementById('pool-jobs').textContent = status.total_jobs || 0;
@@ -1160,15 +1467,29 @@ async function refreshPool() {
             ram: w.ram_gb, isLocal: localWorker && localWorker.worker_id === w.id,
         }));
 
+        // Distributed tasks indicator — seulement les tâches actives (running)
+        const taskDiv = document.getElementById('pool-tasks');
+        if (taskDiv) {
+            const tasks = status.active_tasks || [];
+            if (tasks.length > 0) {
+                taskDiv.innerHTML = tasks.map(t => {
+                    const elapsed = Math.round((Date.now()/1000) - (t.started || 0));
+                    return `<div style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.25rem 0.6rem;background:var(--bg);border:1px solid var(--accent2);border-radius:6px;font-size:0.75rem;color:var(--accent2);animation:pulse 2s infinite;">&#9889; ${esc(t.source)} &rarr; ${esc(t.helper)} (${t.task_type})</div>`;
+                }).join(' ');
+            } else {
+                taskDiv.innerHTML = '';
+            }
+        }
+
         // Worker list under canvas
         const list = document.getElementById('pool-list');
         list.innerHTML = poolNodes.map(n => `
             <div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;background:var(--bg2);border:1px solid ${n.isLocal?'var(--accent2)':'var(--border)'};border-radius:8px;margin-bottom:0.5rem;">
                 <div style="width:10px;height:10px;border-radius:50%;background:${n.busy?'var(--accent3)':'var(--accent2)'};${n.isLocal?'box-shadow:0 0 10px var(--accent2);animation:pulse 2s infinite;':''}"></div>
-                <span style="font-weight:600;color:${n.isLocal?'var(--accent2)':'var(--text)'};">${n.id}</span>
+                <span style="font-weight:600;color:${n.isLocal?'var(--accent2)':'var(--text)'};">${esc(n.id)}</span>
                 ${n.isLocal?'<span style="font-size:0.7rem;background:var(--accent2);color:var(--bg);padding:0.1rem 0.4rem;border-radius:8px;">YOU</span>':''}
                 <span style="flex:1;"></span>
-                <span style="font-size:0.8rem;color:var(--text2);">${n.model}</span>
+                <span style="font-size:0.8rem;color:var(--text2);">${esc(n.model)}</span>
                 <span style="font-size:0.8rem;color:var(--text2);">${n.ram||'?'} GB</span>
                 <span style="font-size:0.8rem;color:${n.busy?'var(--accent3)':'var(--accent2)'};">${n.busy?'BUSY':'IDLE'}</span>
             </div>
@@ -1216,13 +1537,91 @@ function drawPool() {
     }
 
     const radius = Math.min(W, H) * 0.35;
+
+    // Calculer les positions des nodes (on en a besoin pour les tracés)
+    const nodePos = {};
     poolNodes.forEach((node, i) => {
         const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
         const wobble = node.isLocal ? Math.sin(t * 3 + i) * 5 : Math.sin(t + i) * 2;
-        const nx = cx + Math.cos(angle) * (radius + wobble);
-        const ny = cy + Math.sin(angle) * (radius + wobble);
+        nodePos[node.id] = {
+            x: cx + Math.cos(angle) * (radius + wobble),
+            y: cy + Math.sin(angle) * (radius + wobble),
+        };
+    });
 
-        // Connection line
+    // === TRACÉS COURBES DISTRIBUÉS (worker → worker) ===
+    // Temps réel : affiche UNIQUEMENT les tâches en cours (running)
+    // Disparaît dès que la tâche est terminée
+    const activeTasks = (poolData && poolData.active_tasks) ? poolData.active_tasks : [];
+    for (let ti = 0; ti < activeTasks.length; ti++) {
+        const task = activeTasks[ti];
+        const src = nodePos[task.source];
+        const dst = nodePos[task.helper];
+        if (!src || !dst) continue;
+
+        const fade = 0.6 + Math.sin(t * 3) * 0.3; // pulsation pendant l'exécution
+
+        // Vert pulsant = en cours
+        const r = 63, g = 185, b = 80;
+
+        // Point de contrôle Bézier — courbe vers l'extérieur du cercle
+        const mx = (src.x + dst.x) / 2, my = (src.y + dst.y) / 2;
+        const dx = dst.x - src.x, dy = dst.y - src.y;
+        const cpX = mx - dy * 0.5, cpY = my + dx * 0.5;
+
+        // Glow (halo large derrière la courbe)
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(src.x, src.y);
+        ctx.quadraticCurveTo(cpX, cpY, dst.x, dst.y);
+        ctx.strokeStyle = `rgba(${r},${g},${b},${0.15 * fade})`;
+        ctx.lineWidth = 12;
+        ctx.stroke();
+        ctx.restore();
+
+        // Courbe principale épaisse
+        ctx.beginPath();
+        ctx.moveTo(src.x, src.y);
+        ctx.quadraticCurveTo(cpX, cpY, dst.x, dst.y);
+        ctx.strokeStyle = `rgba(${r},${g},${b},${0.7 * fade})`;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Particule animée qui voyage le long de la courbe
+        const speed = 0.8 + ti * 0.3;
+        const pct = ((t * speed + ti * 1.7) % 2.5) / 2.5;
+        const ip = 1 - pct;
+        const px = ip*ip*src.x + 2*ip*pct*cpX + pct*pct*dst.x;
+        const py = ip*ip*src.y + 2*ip*pct*cpY + pct*pct*dst.y;
+
+        // Halo de la particule
+        ctx.beginPath();
+        ctx.arc(px, py, 10 + Math.sin(t * 4) * 3, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${r},${g},${b},${0.15 * fade})`;
+        ctx.fill();
+
+        // Particule
+        ctx.beginPath();
+        ctx.arc(px, py, 5, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${r},${g},${b},${0.9 * fade})`;
+        ctx.fill();
+
+        // Label au milieu de la courbe
+        const lx = 0.25*src.x + 0.5*cpX + 0.25*dst.x;
+        const ly = 0.25*src.y + 0.5*cpY + 0.25*dst.y;
+        ctx.fillStyle = `rgba(${r},${g},${b},${0.9 * fade})`;
+        ctx.font = 'bold 9px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(task.task_type.toUpperCase(), lx, ly - 6);
+        ctx.font = '8px sans-serif';
+        ctx.fillText('running...', lx, ly + 5);
+    }
+
+    // === WORKERS ===
+    poolNodes.forEach((node, i) => {
+        const {x: nx, y: ny} = nodePos[node.id];
+
+        // Connection line to pool
         ctx.beginPath();
         ctx.moveTo(cx, cy);
         ctx.lineTo(nx, ny);
@@ -1242,17 +1641,26 @@ function drawPool() {
         }
 
         // Node circle
-        const nodeR = node.isLocal ? 20 + Math.sin(t * 4) * 3 : 16;
+        const nodeR = node.isLocal ? 20 + Math.sin(t * 4) * 3 : node.busy ? 18 + Math.sin(t * 6) * 3 : 16;
         ctx.beginPath();
         ctx.arc(nx, ny, nodeR, 0, Math.PI * 2);
         const color = node.isLocal ? '#3fb950' : node.busy ? '#f0883e' : '#30363d';
-        ctx.fillStyle = color + '30';
+        ctx.fillStyle = color + (node.busy ? (Math.sin(t*6)>0?'60':'20') : '30');
         ctx.fill();
         ctx.strokeStyle = color;
-        ctx.lineWidth = node.isLocal ? 3 : 1.5;
+        ctx.lineWidth = node.isLocal ? 3 : node.busy ? 2.5 : 1.5;
         ctx.stroke();
 
-        // Glow for local worker
+        // Glow for busy worker (orange pulsing)
+        if (node.busy) {
+            ctx.beginPath();
+            ctx.arc(nx, ny, nodeR + 6 + Math.sin(t * 5) * 4, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(240,136,62,' + (0.3 + Math.sin(t * 5) * 0.25) + ')';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        // Glow for local worker (green pulsing)
         if (node.isLocal) {
             ctx.beginPath();
             ctx.arc(nx, ny, nodeR + 8 + Math.sin(t * 3) * 4, 0, Math.PI * 2);
@@ -1270,8 +1678,61 @@ function drawPool() {
 
     poolAnim = requestAnimationFrame(drawPool);
 }
-refreshPool(); setInterval(refreshPool, 5000);
+refreshPool(); setInterval(refreshPool, 2000);
 requestAnimationFrame(drawPool);
+
+// ====== DASHBOARD ======
+const DASH_COLORS = ['#3fb950','#58a6ff','#f0883e','#d2a8ff','#f778ba','#79c0ff','#ffd33d','#7ee787','#ff7b72','#a5d6ff','#56d364','#e3b341'];
+async function refreshDash() {
+    try {
+        const r = await fetch(`${API}/v1/status`);
+        const d = await r.json();
+        const ws = (d.workers || []).filter(w => !w.outdated && !w.unknown_model);
+        ws.sort((a,b) => (b.total_jobs||0) - (a.total_jobs||0));
+
+        const totalJobs = ws.reduce((s,w) => s + (w.total_jobs||0), 0) || 1;
+        const totalCred = ws.reduce((s,w) => s + (w.credits_earned||0), 0);
+
+        document.getElementById('dash-workers').textContent = ws.length;
+        document.getElementById('dash-total-jobs').textContent = totalJobs === 1 ? 0 : totalJobs;
+        document.getElementById('dash-total-credits').textContent = totalCred.toFixed(1);
+
+        // Horizontal bars
+        const maxJobs = Math.max(...ws.map(w => w.total_jobs||0), 1);
+        document.getElementById('dash-bars').innerHTML = ws.map((w,i) => {
+            const pct = ((w.total_jobs||0) / maxJobs * 100).toFixed(0);
+            const share = ((w.total_jobs||0) / totalJobs * 100).toFixed(1);
+            const col = DASH_COLORS[i % DASH_COLORS.length];
+            const gpu = w.has_gpu ? ' GPU' : '';
+            return `<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem;">
+                <span style="width:120px;font-size:0.75rem;color:var(--text);text-align:right;flex-shrink:0;">${esc(w.id.split('-')[0])}${gpu}</span>
+                <div style="flex:1;height:18px;background:var(--bg);border-radius:4px;overflow:hidden;">
+                    <div style="width:${pct}%;height:100%;background:${col};border-radius:4px;transition:width 0.5s;"></div>
+                </div>
+                <span style="width:45px;font-size:0.7rem;color:var(--text2);text-align:right;">${share}%</span>
+            </div>`;
+        }).join('');
+
+        // Table
+        document.getElementById('dash-table').innerHTML = ws.map((w,i) => {
+            const model = (w.model||'?').split('/').pop().replace('Qwen_Qwen','Q').replace('-Q4_K_M.gguf','');
+            const tps = (w.real_tps || w.bench_tps || 0).toFixed(1);
+            const jobs = w.total_jobs || 0;
+            const share = ((jobs / totalJobs) * 100).toFixed(1);
+            const cred = (w.credits_earned || 0).toFixed(1);
+            const col = DASH_COLORS[i % DASH_COLORS.length];
+            return `<tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:0.4rem;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${col};margin-right:0.4rem;"></span>${esc(w.id)}</td>
+                <td style="text-align:right;padding:0.4rem;color:var(--text2);">${model}</td>
+                <td style="text-align:right;padding:0.4rem;color:var(--accent2);">${tps}</td>
+                <td style="text-align:right;padding:0.4rem;">${jobs}</td>
+                <td style="text-align:right;padding:0.4rem;color:var(--accent);">${share}%</td>
+                <td style="text-align:right;padding:0.4rem;color:var(--gold);">${cred}</td>
+            </tr>`;
+        }).join('');
+    } catch(e) {}
+}
+refreshDash(); setInterval(refreshDash, 10000);
 
 // ====== LOCAL WORKER DETECTION ======
 let localWorker = null;
@@ -1291,8 +1752,10 @@ async function detectLocalWorker() {
 
         // Auto-fill API token input
         if (d.api_token_full) {
-            document.getElementById('api-token-input').value = d.api_token_full;
-            updateOwuiToken();
+            // Si pas connecté, utiliser le token worker
+            if (!mwSession) {
+                fillApiExamples(d.api_token_full);
+            }
         }
     } catch(e) {
         // No local worker
@@ -1303,17 +1766,31 @@ async function detectLocalWorker() {
 detectLocalWorker(); setInterval(detectLocalWorker, 10000);
 
 // ====== COPY HELPER ======
+// ====== XSS PROTECTION ======
+function esc(s) { const d=document.createElement('div');d.textContent=String(s);return d.innerHTML; }
+
 function copyEl(id) {
     const el = document.getElementById(id);
     navigator.clipboard.writeText(el.textContent);
     const btn = event.target; btn.textContent='OK!'; setTimeout(()=>btn.textContent='Copy',1500);
 }
 
-// ====== AUTO-FILL OWUI TOKEN ======
-function updateOwuiToken() {
-    if (localWorker?.api_token_full) {
-        document.getElementById('owui-key').textContent = localWorker.api_token_full;
-    }
+// ====== AUTO-FILL API EXAMPLES WITH USER TOKEN ======
+function fillApiExamples(token) {
+    if (!token) return;
+    const re = /iam_YOUR_TOKEN_HERE|iam_YOUR_TOKEN|acc_[a-f0-9]+|iam_[a-f0-9_]+|iam_xxx/g;
+    // API page
+    document.getElementById('owui-key').textContent = token;
+    document.getElementById('api-token-input').value = token;
+    ['api-curl','api-python','owui-docker'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = el.textContent.replace(re, token);
+    });
+    // Tuto page
+    ['tuto-claude','tuto-owui','tuto-python','tuto-curl'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = el.textContent.replace(re, token);
+    });
 }
 
 // ====== API TOKEN CHECK ======
@@ -1327,8 +1804,9 @@ function updateMyWorkers() {
     const none = document.getElementById('mw-none');
     const dash = document.getElementById('mw-dashboard');
 
+    document.getElementById('mw-register').style.display = 'none';
     if (mwSession) {
-        // Logged in — show dashboard
+        // Logged in — show dashboard, hide login form
         solo.style.display = 'none'; none.style.display = 'none'; dash.style.display = 'block';
         refreshDashboard();
     } else if (localWorker) {
@@ -1354,31 +1832,94 @@ async function refreshDashboard() {
         document.getElementById('mw-dash-credits').textContent = d.total_credits?.toFixed(1) || '0';
         document.getElementById('mw-dash-earned').textContent = d.total_earned?.toFixed(1) || '0';
         document.getElementById('mw-dash-count').textContent = d.worker_count || 0;
-        // Account token
+        // Account token — aussi remplir l'API page et OpenWebUI
         if (d.account_token) {
             document.getElementById('mw-acc-token-box').style.display = 'block';
             document.getElementById('mw-acc-token').textContent = d.account_token;
+            fillApiExamples(d.account_token);
         }
         const wl = document.getElementById('mw-dash-workers');
+        const statusColor = s => s==='ok'?'var(--accent2)':s==='migrating'?'#f0883e':s==='outdated'?'#f0883e':'var(--red)';
+        const statusLabel = s => s==='ok'?'ONLINE':s==='migrating'?'MIGRATING':s==='outdated'?'OUTDATED':'OFFLINE';
         wl.innerHTML = (d.workers || []).map(w => `
             <div style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0.75rem;background:var(--bg2);border:1px solid var(--border);border-radius:8px;margin-bottom:0.5rem;">
-                <div style="width:10px;height:10px;border-radius:50%;background:${w.is_online?'var(--accent2)':'var(--red)'};"></div>
-                <span style="font-weight:600;color:var(--accent);">${w.worker_id}</span>
+                <div style="width:10px;height:10px;border-radius:50%;background:${statusColor(w.model_status)};"></div>
+                <span style="font-weight:600;color:var(--accent);">${esc(w.worker_id)}</span>
                 <span style="flex:1;"></span>
-                <span style="font-size:0.8rem;color:var(--text2);">${w.model}</span>
+                <span style="font-size:0.8rem;color:var(--text2);">${esc(w.assigned_model||w.model)}</span>
                 <span style="font-size:0.8rem;font-weight:600;color:var(--accent2);">${w.credits} $IAMINE</span>
-                <span style="font-size:0.8rem;color:${w.is_online?'var(--accent2)':'var(--red)'};">${w.is_online?'ONLINE':'OFFLINE'}</span>
+                <span style="font-size:0.8rem;color:${statusColor(w.model_status)};">${statusLabel(w.model_status)}</span>
+                <button onclick="unlinkWorker('${esc(w.worker_id)}')" style="background:none;border:1px solid var(--red);color:var(--red);border-radius:4px;padding:0.1rem 0.4rem;font-size:0.7rem;cursor:pointer;" title="Remove worker">X</button>
             </div>
         `).join('') || '<p style="color:var(--text2);">No workers linked yet.</p>';
     } catch(e) {}
 }
 
+// ====== MOBILE QR PAIRING ======
+async function generateQR() {
+    if (!mwSession) {
+        document.getElementById('mob-login-required').style.display = 'block';
+        document.getElementById('mob-qr-section').style.display = 'none';
+        return;
+    }
+    document.getElementById('mob-login-required').style.display = 'none';
+    document.getElementById('mob-qr-section').style.display = 'block';
+
+    try {
+        const r = await fetch(`${API}/v1/mobile/qr?session_id=${mwSession}`);
+        const d = await r.json();
+        if (d.error) { alert(d.error); return; }
+
+        const img = document.getElementById('mob-qr-img');
+        if (d.qr_image) {
+            img.innerHTML = `<img src="${d.qr_image}" style="width:100%;height:100%;border-radius:8px;">`;
+        } else {
+            // Fallback : afficher les donnees brutes
+            img.innerHTML = `<code style="font-size:0.7rem;word-break:break-all;padding:1rem;">${esc(d.qr_data)}</code>`;
+        }
+
+        const expEl = document.getElementById('mob-expires');
+        let sec = d.expires_in;
+        expEl.textContent = `Expires in ${sec}s`;
+        const timer = setInterval(() => {
+            sec--;
+            if (sec <= 0) { clearInterval(timer); expEl.textContent = 'Expired — generate a new one'; return; }
+            expEl.textContent = `Expires in ${sec}s`;
+        }, 1000);
+    } catch(e) { alert('Error: ' + e.message); }
+}
+
+// Auto-generate QR quand on ouvre l'onglet Mobile
+const origGo = window.go || function(){};
+const _oldNav = document.querySelectorAll('.nav-tab');
+_oldNav.forEach(tab => {
+    tab.addEventListener('click', () => {
+        if (tab.dataset.page === 'mobile') setTimeout(generateQR, 100);
+    });
+});
+
+async function unlinkWorker(workerId) {
+    const confirmMsg = {en:'Remove this worker from your account?',fr:'Retirer ce worker de votre compte ?',es:'Eliminar este worker de su cuenta?'}[cl]||'Remove?';
+    if (!confirm(confirmMsg)) return;
+    try {
+        const r = await fetch(`${API}/v1/account/unlink-worker`, {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({session_id: mwSession, worker_id: workerId})
+        });
+        const d = await r.json();
+        if (d.error) { alert(d.error); return; }
+        refreshDashboard();
+    } catch(e) { alert('Error: '+e.message); }
+}
+
 document.getElementById('mw-do-register').addEventListener('click', async () => {
+    const pseudo = document.getElementById('mw-pseudo').value.trim();
     const email = document.getElementById('mw-email').value;
     const pass = document.getElementById('mw-pass').value;
     const msg = document.getElementById('mw-auth-msg');
+    if (!pseudo) { msg.textContent = 'Pseudo requis'; msg.style.display = 'block'; return; }
     try {
-        const r = await fetch(`${API}/v1/auth/register`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+        const r = await fetch(`${API}/v1/auth/register`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pseudo,email,password:pass})});
         const d = await r.json();
         if (d.error) { msg.textContent = d.error; msg.style.display = 'block'; return; }
         mwSession = d.session_id; localStorage.setItem('iamine-session', mwSession);
@@ -1494,6 +2035,9 @@ setTimeout(() => { updateMyWorkers(); updateNavAuth(); }, 2000);
 
 // ====== CONTACT ======
 document.getElementById('ct-send').addEventListener('click',async()=>{const n=document.getElementById('ct-name').value,e=document.getElementById('ct-email').value,m=document.getElementById('ct-msg').value;if(!e||!m)return;try{await fetch(`${API}/v1/contact`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n,email:e,message:m})});}catch(x){}document.getElementById('ct-ok').style.display='block';document.getElementById('ct-name').value='';document.getElementById('ct-email').value='';document.getElementById('ct-msg').value='';});
+
+// ====== DEV CHAT ======
+let _devChatTimer = null;
 </script>
 </body>
 </html>
