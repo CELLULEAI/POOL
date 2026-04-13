@@ -51,28 +51,14 @@ LOGIN_PAGE_HTML = """<!DOCTYPE html>
 <html><head><title>Cellule.ai — Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>""" + _CELLULE_STYLE + """.sep{margin:1.2rem 0;color:rgba(255,255,255,0.1);font-size:0.8rem;letter-spacing:2px}</style>
-<script src="https://accounts.google.com/gsi/client" async></script></head>
 <body><div class="card"><h2>Cellule.ai</h2>
 <p class="sub">Pool Administration</p>
-<div id="g_id_onload" data-client_id="106098942094-u10np9r0n03pg0g0370m0su0tgcjede0.apps.googleusercontent.com" data-callback="onGoogleLogin" data-auto_prompt="false"></div>
-<div class="g_id_signin" data-type="standard" data-size="large" data-theme="filled_black" data-text="sign_in_with" data-shape="rectangular" data-logo_alignment="left" data-width="380"></div>
-<div class="sep">— or —</div>
 <input type="email" id="em" placeholder="Email">
 <input type="password" id="pw" placeholder="Password" onkeydown="if(event.key==='Enter')loginPw()">
 <button onclick="loginPw()">Sign In</button>
 <div class="err" id="err"></div>
 <div class="logo">Cellule.ai</div>
 <script>
-function onGoogleLogin(response) {
-    fetch('/v1/auth/google', {method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({credential: response.credential})
-    }).then(r=>r.json()).then(d=>{
-        if(d.session_id) {
-            document.cookie='session_id='+d.session_id+';path=/;max-age=86400;SameSite=Lax';
-            location.reload();
-        }
-        else { document.getElementById('err').style.display='block'; document.getElementById('err').textContent=d.error||'Not authorized'; }
-    });
 }
 async function loginPw() {
     const r = await fetch('/admin/login', {method:'POST', headers:{'Content-Type':'application/json'},
