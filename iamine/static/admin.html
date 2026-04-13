@@ -16,6 +16,101 @@
             --neon-blue: #00d4ff; --neon-green: #00ff88;
             --red: #f85149; --purple: var(--neon-blue);
         }
+
+        /* ── Cellule.ai buttons & forms ───────────────────────────── */
+        .btn {
+            display: inline-block;
+            padding: 8px 20px;
+            background: transparent;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 13px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn:hover {
+            border-color: var(--neon-blue);
+            color: var(--neon-blue);
+            background: rgba(0,212,255,0.04);
+        }
+        .btn-primary {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, var(--neon-blue), var(--neon-green));
+            color: #000;
+            font-weight: 700;
+            font-size: 13px;
+            border: none;
+            border-radius: 8px;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 16px rgba(0,212,255,0.2);
+            transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-primary:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px rgba(0,212,255,0.3);
+            color: #000;
+        }
+        .btn-danger {
+            padding: 8px 20px;
+            background: rgba(248,81,73,0.08);
+            color: var(--red);
+            font-weight: 600;
+            font-size: 13px;
+            border: 1px solid rgba(248,81,73,0.3);
+            border-radius: 8px;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        .btn-danger:hover {
+            background: var(--red);
+            color: #fff;
+            border-color: var(--red);
+        }
+        .btn-accent {
+            padding: 8px 20px;
+            background: rgba(255,136,68,0.08);
+            color: var(--accent3);
+            font-weight: 600;
+            font-size: 13px;
+            border: 1px solid rgba(255,136,68,0.3);
+            border-radius: 8px;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        .btn-accent:hover {
+            background: var(--accent3);
+            color: #000;
+        }
+        .btn-sm { padding: 6px 14px; font-size: 12px; }
+
+        .input, select.input, input.input {
+            padding: 0.5rem 0.75rem;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        .input:focus {
+            outline: none;
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 0 3px rgba(0,212,255,0.1);
+        }
+        .input::placeholder { color: var(--text2); }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family:'Inter',-apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
 
