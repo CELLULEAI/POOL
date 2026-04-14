@@ -3972,7 +3972,7 @@ Style : bref, direct, pas de preambule, pas de bullshit marketing. Si tu ne sais
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-                model: Math.random() < 0.5 ? 'qwen3.5-2b' : 'qwen3.5-4b',
+                model: 'qwen3.5-2b',
                 messages: _trialHistory.slice(),
                 stream: true
             })
@@ -3996,7 +3996,7 @@ Style : bref, direct, pas de preambule, pas de bullshit marketing. Si tu ne sais
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
-                        model: Math.random() < 0.5 ? 'qwen3.5-2b' : 'qwen3.5-4b',
+                        model: 'qwen3.5-2b',
                         messages: _trialHistory.slice(),
                         stream: true
                     })
