@@ -539,7 +539,15 @@ async def _load_conversations_for_replication(pool, token_hash: str = None,
                      LIMIT $2
                 """, token_hash, limit)
             else:
-                return []
+                # Bootstrap: no cursor yet, load most recent N
+                rows = await conn.fetch("""
+                    SELECT conv_id, api_token, messages, total_tokens,
+                           model_used, worker_id, created, last_activity,
+                           expires, title, message_count
+                      FROM conversations
+                     ORDER BY last_activity ASC
+                     LIMIT $1
+                """, limit)
 
             result = []
             for r in rows:

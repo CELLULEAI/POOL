@@ -266,7 +266,7 @@ async def federation_memory_ingest(request: Request):
     # Verify federation signature
     p = _pool()
     from ..core.federation import verify_request_signature
-    from_atom_id = request.headers.get("X-Federation-Atom-Id", "")
+    from_atom_id = request.headers.get("X-IAMINE-Atom-Id", "")
     if not from_atom_id:
         return JSONResponse({"error": "missing federation headers"}, status_code=403)
 
@@ -286,7 +286,7 @@ async def federation_memory_ingest(request: Request):
 async def federation_memory_forget(request: Request):
     """Receive RGPD forget tombstone from a bonded peer."""
     p = _pool()
-    from_atom_id = request.headers.get("X-Federation-Atom-Id", "")
+    from_atom_id = request.headers.get("X-IAMINE-Atom-Id", "")
     if not from_atom_id:
         return JSONResponse({"error": "missing federation headers"}, status_code=403)
 
@@ -306,20 +306,35 @@ async def federation_memory_forget(request: Request):
 # All require trust level 3 (TRUST_BONDED) via Ed25519 envelope.
 # ---------------------------------------------------------------------------
 
-def _verify_bonded_peer(request: Request, p) -> tuple[str, object]:
+async def _verify_bonded_peer(request: Request, p) -> tuple[str, object]:
     """Return (from_atom_id, error_response_or_None).
 
-    Validates the X-Federation-Atom-Id header points to a trust >= 3 peer.
+    Validates the X-IAMINE-Atom-Id header points to a trust >= 3 peer.
+    Reads trust_level from DB (federation_peers) for resilience.
     """
-    from_atom_id = request.headers.get("X-Federation-Atom-Id", "")
+    from_atom_id = request.headers.get("X-IAMINE-Atom-Id", "")
     if not from_atom_id:
         return "", JSONResponse({"error": "missing federation headers"},
                                   status_code=403)
-    peers = p.federation_peers if hasattr(p, "federation_peers") else {}
-    peer = peers.get(from_atom_id, {})
-    if peer.get("trust_level", 0) < 3:
+    trust = 0
+    try:
+        async with p.store.pool.acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT trust_level FROM federation_peers "
+                "WHERE atom_id=$1 AND revoked_at IS NULL",
+                from_atom_id)
+            if row:
+                trust = int(row["trust_level"])
+        log.info(f"[M11.5 verify] peer={from_atom_id[:12]} trust={trust}")
+    except Exception as e:
+        import traceback
+        log.warning(f"[M11.5 verify] DB error for {from_atom_id[:12]}: {e}")
+        log.warning(traceback.format_exc())
+        trust = 0
+    if trust < 3:
         return from_atom_id, JSONResponse(
-            {"error": "insufficient trust (requires bonded/trust=3)"},
+            {"error": "insufficient trust (requires bonded/trust=3)",
+             "current_trust": trust},
             status_code=403)
     return from_atom_id, None
 
@@ -329,7 +344,7 @@ async def federation_conversations_ingest(request: Request):
     """Receive replicated conversations from a bonded peer.
     Messages are Fernet-encrypted blobs (zero-knowledge preserved)."""
     p = _pool()
-    from_atom_id, err = _verify_bonded_peer(request, p)
+    from_atom_id, err = await _verify_bonded_peer(request, p)
     if err:
         return err
     data = await request.json()
@@ -342,7 +357,7 @@ async def federation_conversations_ingest(request: Request):
 async def federation_episodes_ingest(request: Request):
     """Receive replicated agent_episodes (T2) from a bonded peer."""
     p = _pool()
-    from_atom_id, err = _verify_bonded_peer(request, p)
+    from_atom_id, err = await _verify_bonded_peer(request, p)
     if err:
         return err
     data = await request.json()
@@ -363,7 +378,7 @@ async def federation_memory_since(request: Request):
     Invariant 4: returns {rows, count, latest_ts} — NO merkle.
     """
     p = _pool()
-    from_atom_id, err = _verify_bonded_peer(request, p)
+    from_atom_id, err = await _verify_bonded_peer(request, p)
     if err:
         return err
 
