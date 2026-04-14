@@ -1022,8 +1022,12 @@ Où la trouver : Dashboard Resend → API Keys → Create API Key.
 
 Recommandé : créer une clé dédiée 'pool-vps' avec scope 'Sending access' uniquement.
 
-Piège : ne jamais commiter cette clé en clair dans git. Elle est masquée à l'affichage ici.">i</span></label>
-            <input id="resend-key" type="password" placeholder="re_xxx..." style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+Piège : ne jamais commiter cette clé en clair dans git. Cliquez sur l'œil pour afficher.">i</span></label>
+            <div style="display:flex;gap:0.4rem;align-items:center;">
+                <input id="resend-key" type="password" placeholder="re_xxx..." style="flex:1;padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+                <button type="button" onclick="toggleResendKeyVisibility()" id="resend-key-eye" title="Afficher/masquer la clé" style="padding:0.45rem 0.7rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;cursor:pointer;font-size:0.95rem;">👁</button>
+                <a href="https://resend.com/api-keys" target="_blank" rel="noopener" style="padding:0.45rem 0.7rem;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);color:var(--neon-blue);border-radius:6px;text-decoration:none;font-size:0.75rem;white-space:nowrap;">↗ Resend</a>
+            </div>
             <label style="font-size:0.85rem;color:var(--text2);">Expéditeur<span class="info-i" data-tip="Adresse expéditeur visible dans le 'De' des emails.
 
 Format : 'Cellule.ai <noreply@cellule.ai>' ou juste 'noreply@cellule.ai'.
@@ -2183,8 +2187,16 @@ async function loadResend() {
         const r = await fetch('/admin/api/resend-config');
         const d = await r.json();
         if (d.from) document.getElementById('resend-from').value = d.from;
-        if (d.api_key_masked) document.getElementById('resend-key').placeholder = d.api_key_masked + ' (already set, leave blank to keep)';
+        if (d.api_key) {
+            document.getElementById('resend-key').value = d.api_key;
+        }
     } catch(e) { /* silent */ }
+}
+function toggleResendKeyVisibility() {
+    const inp = document.getElementById('resend-key');
+    const eye = document.getElementById('resend-key-eye');
+    if (inp.type === 'password') { inp.type = 'text'; eye.textContent = '🙈'; }
+    else { inp.type = 'password'; eye.textContent = '👁'; }
 }
 async function saveResend() {
     const apiKey = document.getElementById('resend-key').value;

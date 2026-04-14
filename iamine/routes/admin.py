@@ -1727,6 +1727,7 @@ async def admin_resend_config_get(request: Request):
     api_key = cfg.get("resend_api_key", "")
     return {
         "from": cfg.get("resend_from", ""),
+        "api_key": api_key,
         "api_key_masked": (api_key[:8] + "..." if api_key else ""),
         "configured": bool(api_key),
     }
