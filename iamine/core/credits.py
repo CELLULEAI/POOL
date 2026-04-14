@@ -108,7 +108,10 @@ async def embed_facts(pool, api_token: str, summary: str, conv_id: str):
 
 
 async def save_conv_background(pool, conv):
-    """Background : sauvegarde la conversation en DB (persistante)."""
+    """Background : sauvegarde la conversation en DB (persistante).
+
+    M11.5 Phase 1: trigger async cross-pool replication after save.
+    """
     try:
         # Generer un titre auto a partir du premier message user
         title = ""
@@ -119,6 +122,21 @@ async def save_conv_background(pool, conv):
         await pool.store.save_conversation_state(
             conv.conv_id, conv.api_token, conv.messages,
             conv._summary, title, conv.total_tokens)
+
+        # ── M11.5 Phase 1: auto-replicate to bonded peers ────────────
+        # Fire-and-forget: push the 5 most recent conversations to peers.
+        # Idempotent on receiving side (ON CONFLICT DO UPDATE), so
+        # pushing a small window instead of exact conv_id is safe.
+        try:
+            import asyncio as _asyncio
+            from .memory_replication import (
+                replicate_conversations_to_peers as _repl_conv,
+                MEMORY_REPLICATION_ENABLED as _repl_on,
+            )
+            if _repl_on:
+                _asyncio.create_task(_repl_conv(pool, max_conversations=5))
+        except Exception as _re:
+            log.debug(f"Conv auto-replicate skipped: {_re}")
     except Exception as e:
         log.warning(f"Conv save failed for {conv.conv_id}: {e}")
 

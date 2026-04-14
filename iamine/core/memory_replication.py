@@ -559,7 +559,7 @@ async def _load_conversations_for_replication(pool, token_hash: str = None,
                            model_used, worker_id, created, last_activity,
                            expires, title, message_count
                       FROM conversations
-                     ORDER BY last_activity ASC
+                     ORDER BY last_activity DESC
                      LIMIT $1
                 """, limit)
 
