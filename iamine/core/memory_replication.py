@@ -212,7 +212,7 @@ async def ingest_memories(pool, payload: dict, from_atom_id: str) -> dict:
                             mem.get("category", "fact"),
                             mem.get("confidence", 1.0),
                             mem.get("decay_factor", 1.0),
-                            mem.get("created"))
+                            _iso_to_dt(mem.get("created")))
                         ingested += 1
 
                     elif table == "agent_procedures":
@@ -231,7 +231,7 @@ async def ingest_memories(pool, payload: dict, from_atom_id: str) -> dict:
                             mem.get("success_rate", 0.5),
                             mem.get("use_count", 0),
                             mem.get("active", True),
-                            mem.get("created_at"))
+                            _iso_to_dt(mem.get("created_at")))
                         ingested += 1
                     else:
                         skipped += 1
@@ -401,6 +401,20 @@ All functions respect the 5 invariants validated by molecule-guardian.
 # =============================================================================
 # M11.5 EXTENSIONS (Conversations + Episodes gossip, Bootstrap, Circuit breaker)
 # =============================================================================
+
+
+def _iso_to_dt(val):
+    """Convert ISO 8601 string to datetime, or return as-is if already datetime/None."""
+    if val is None or val == "":
+        return None
+    if isinstance(val, str):
+        from datetime import datetime as _dt
+        try:
+            return _dt.fromisoformat(val)
+        except Exception:
+            return None
+    return val
+
 
 # Invariant 5: trust level constant
 TRUST_BONDED = 3
@@ -691,8 +705,10 @@ async def ingest_conversations(pool, payload: dict, from_atom_id: str) -> dict:
                     """, c["conv_id"], c.get("api_token"), msgs,
                         c.get("total_tokens", 0),
                         c.get("model_used"), c.get("worker_id"),
-                        c.get("created"), c.get("last_activity"),
-                        c.get("expires"), c.get("title", ""),
+                        _iso_to_dt(c.get("created")),
+                        _iso_to_dt(c.get("last_activity")),
+                        _iso_to_dt(c.get("expires")),
+                        c.get("title", ""),
                         c.get("message_count", 0), from_atom_id)
                     ingested += 1
                 except Exception as e:
@@ -847,8 +863,11 @@ async def ingest_episodes(pool, payload: dict, from_atom_id: str) -> dict:
                         ON CONFLICT DO NOTHING
                     """, ep["token_hash"], ep.get("episode_type", "generic"),
                         ep["summary_enc"], ep["salt"], ep.get("embedding"),
-                        obs_ids, ep.get("started_at"), ep.get("ended_at"),
-                        meta, ep.get("created_at"))
+                        obs_ids,
+                        _iso_to_dt(ep.get("started_at")),
+                        _iso_to_dt(ep.get("ended_at")),
+                        meta,
+                        _iso_to_dt(ep.get("created_at")))
                     ingested += 1
                 except Exception as e:
                     log.warning(f"EPISODE INGEST: row failed: {e}")
@@ -1006,10 +1025,18 @@ async def pull_from_peer(pool, peer: dict, table: str,
         # Update cursor if we received rows
         if latest_ts and rows:
             try:
-                async with pool.store.pool.acquire() as conn:
-                    await conn.execute(
-                        f"UPDATE federation_peers SET {ts_column}=$1 "
-                        f"WHERE atom_id=$2", latest_ts, peer["atom_id"])
+                from datetime import datetime as _dt
+                latest_dt = latest_ts
+                if isinstance(latest_ts, str):
+                    try:
+                        latest_dt = _dt.fromisoformat(latest_ts)
+                    except Exception:
+                        latest_dt = None
+                if latest_dt is not None:
+                    async with pool.store.pool.acquire() as conn:
+                        await conn.execute(
+                            f"UPDATE federation_peers SET {ts_column}=$1 "
+                            f"WHERE atom_id=$2", latest_dt, peer["atom_id"])
             except Exception as e:
                 log.warning(f"PULL: cursor update failed: {e}")
 
