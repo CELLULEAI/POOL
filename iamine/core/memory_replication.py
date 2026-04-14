@@ -122,8 +122,12 @@ async def replicate_memories_to_peers(pool, token_hash: str,
 async def _load_memories_for_replication(pool, token_hash: str,
                                           memory_ids: list[int] = None,
                                           table: str = "user_memories") -> list[dict]:
-    """Load memory rows for replication. Encrypted content passes as-is."""
+    """Load memory rows for replication. Encrypted content passes as-is.
+
+    Special sentinel: token_hash="_all_" loads across all users (bootstrap).
+    """
     try:
+        _all = (token_hash == "_all_")
         async with pool.store.pool.acquire() as conn:
             if table == "user_memories":
                 if memory_ids:
@@ -133,6 +137,14 @@ async def _load_memories_for_replication(pool, token_hash: str,
                                confidence, decay_factor, created
                         FROM user_memories WHERE id = ANY($1::bigint[])
                     """, memory_ids)
+                elif _all:
+                    rows = await conn.fetch("""
+                        SELECT id, token_hash, embedding::text as embedding,
+                               fact_text_enc, salt, conv_id, category,
+                               confidence, decay_factor, created
+                        FROM user_memories
+                        ORDER BY created DESC LIMIT 500
+                    """)
                 else:
                     rows = await conn.fetch("""
                         SELECT id, token_hash, embedding::text as embedding,
@@ -151,6 +163,16 @@ async def _load_memories_for_replication(pool, token_hash: str,
                                success_rate, use_count, active, created_at
                         FROM agent_procedures WHERE id = ANY($1::bigint[])
                     """, memory_ids)
+                elif _all:
+                    rows = await conn.fetch("""
+                        SELECT id, token_hash, name, description_enc, salt,
+                               trigger_pattern, steps_enc,
+                               embedding::text as embedding,
+                               success_rate, use_count, active, created_at
+                        FROM agent_procedures
+                        WHERE active = TRUE
+                        ORDER BY created_at DESC LIMIT 500
+                    """)
                 else:
                     rows = await conn.fetch("""
                         SELECT id, token_hash, name, description_enc, salt,
