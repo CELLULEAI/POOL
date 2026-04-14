@@ -38,11 +38,18 @@ services:
       DB_USER: iamine
       DB_PASS: ${DB_PASS:?DB_PASS must be set in .env}
       DB_NAME: iamine
-      IAMINE_FED: observe
+      IAMINE_FED: active
       POOL_NAME: ${POOL_NAME:?POOL_NAME must be set in .env}
       POOL_URL: ${POOL_URL:?POOL_URL must be set in .env}
       IAMINE_FED_MOLECULE: iamine-testnet
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-change-me-in-production}
+      # Pool operator mode: restricted admin UI (admin_pool.html)
+      POOL_OPERATOR_MODE: "true"
+      # M11.5 memory replication: opt-in via .env, default true
+      MEMORY_REPLICATION_ENABLED: ${MEMORY_REPLICATION_ENABLED:-true}
+      MEMORY_GOSSIP_LOOP_ENABLED: ${MEMORY_GOSSIP_LOOP_ENABLED:-true}
+      # M13 agent memory: enabled by default
+      AGENT_MEMORY_ENABLED: ${AGENT_MEMORY_ENABLED:-true}
     volumes:
       - cellule-fed-keys:/root/.iamine/federation
     networks:
