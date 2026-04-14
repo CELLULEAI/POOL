@@ -1394,6 +1394,31 @@ footer {
     margin-bottom: 1rem;
     white-space: nowrap;
     overflow-x: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    cursor: pointer;
+    position: relative;
+}
+.tool-card-cmd:hover {
+    border-color: rgba(0,255,136,0.3);
+}
+.tool-card-cmd .copy-icon {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    opacity: 0.4;
+    transition: opacity 0.2s;
+}
+.tool-card-cmd:hover .copy-icon {
+    opacity: 0.8;
+}
+.tool-card-cmd.copied {
+    border-color: var(--neon-green);
+}
+.tool-card-cmd.copied .copy-icon {
+    opacity: 1;
 }
 .tool-card-link {
     display: inline-block;
@@ -1757,26 +1782,26 @@ footer {
         <div style="background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.25);border-radius:12px;padding:1.3rem 1.25rem;">
             <div style="font-size:1.5rem;margin-bottom:0.5rem;">💾</div>
             <h3 style="color:#00d4ff;font-size:1rem;margin-bottom:0.5rem;" data-i18n="mem_save_t">Save</h3>
-            <code style="display:block;background:rgba(0,0,0,0.3);padding:0.5rem 0.75rem;border-radius:6px;font-size:0.8rem;color:#00ff88;font-family:ui-monospace,monospace;margin-bottom:0.5rem;">enregistre</code>
+            <code style="display:block;background:rgba(0,0,0,0.3);padding:0.5rem 0.75rem;border-radius:6px;font-size:0.8rem;color:#00ff88;font-family:ui-monospace,monospace;margin-bottom:0.5rem;">save / enregistre</code>
             <p style="font-size:0.85rem;opacity:0.7;margin:0;" data-i18n="mem_save_d">Persist the current conversation in your account. Works in any chat client.</p>
         </div>
 
         <div style="background:rgba(0,255,234,0.05);border:1px solid rgba(0,255,234,0.25);border-radius:12px;padding:1.3rem 1.25rem;">
             <div style="font-size:1.5rem;margin-bottom:0.5rem;">🔄</div>
             <h3 style="color:#00ffea;font-size:1rem;margin-bottom:0.5rem;" data-i18n="mem_restore_t">Restore</h3>
-            <code style="display:block;background:rgba(0,0,0,0.3);padding:0.5rem 0.75rem;border-radius:6px;font-size:0.8rem;color:#00ff88;font-family:ui-monospace,monospace;margin-bottom:0.5rem;">restaure &lt;num&gt;</code>
+            <code style="display:block;background:rgba(0,0,0,0.3);padding:0.5rem 0.75rem;border-radius:6px;font-size:0.8rem;color:#00ff88;font-family:ui-monospace,monospace;margin-bottom:0.5rem;">restore / restaure &lt;num&gt;</code>
             <p style="font-size:0.85rem;opacity:0.7;margin:0;" data-i18n="mem_restore_d">Bring back a saved conversation. List with <code>restaure</code>, then pick one by number or ID.</p>
         </div>
 
         <div style="background:rgba(232,255,0,0.05);border:1px solid rgba(232,255,0,0.25);border-radius:12px;padding:1.3rem 1.25rem;">
             <div style="font-size:1.5rem;margin-bottom:0.5rem;">🗑️</div>
             <h3 style="color:#e8ff00;font-size:1rem;margin-bottom:0.5rem;" data-i18n="mem_delete_t">Delete</h3>
-            <code style="display:block;background:rgba(0,0,0,0.3);padding:0.5rem 0.75rem;border-radius:6px;font-size:0.8rem;color:#00ff88;font-family:ui-monospace,monospace;margin-bottom:0.5rem;">supprime &lt;num|all&gt;</code>
+            <code style="display:block;background:rgba(0,0,0,0.3);padding:0.5rem 0.75rem;border-radius:6px;font-size:0.8rem;color:#00ff88;font-family:ui-monospace,monospace;margin-bottom:0.5rem;">delete / supprime &lt;num|all&gt;</code>
             <p style="font-size:0.85rem;opacity:0.7;margin:0;" data-i18n="mem_delete_d">Remove one conversation or all at once. Opt-in memory + GDPR compliant.</p>
         </div>
     </div>
 
-    <p style="text-align:center;font-size:0.9rem;opacity:0.6;max-width:620px;margin:0 auto;" data-i18n="mem_footnote">These commands work <em>inside any chat</em>, across any tool that talks to cellule.ai/v1. Type <code>enregistre</code> in OpenWebUI, then open Cursor tomorrow and type <code>restaure</code> — your context is there.</p>
+    <p style="text-align:center;font-size:0.9rem;opacity:0.6;max-width:620px;margin:0 auto;" data-i18n="mem_footnote">These commands work <em>inside any chat</em>, across any tool that talks to cellule.ai/v1. Type <code>save / enregistre</code> in OpenWebUI, then open Cursor tomorrow and type <code>restaure</code> — your context is there.</p>
 </section>
 
 <!-- ── HOW IT WORKS ─────────────────────────────────── -->
@@ -1909,7 +1934,7 @@ footer {
             <span style="color:rgba(255,255,255,0.5);">base_url</span>
             <code style="color:var(--neon-green);">https://cellule.ai/v1</code>
             <span style="color:rgba(255,255,255,0.5);">api_key</span>
-            <code style="color:var(--neon-blue);">acc_YOUR_TOKEN</code>
+            <code id="tools-api-key" style="color:var(--neon-blue);">acc_YOUR_TOKEN</code>
             <span style="color:rgba(255,255,255,0.5);">model</span>
             <code style="color:var(--neon-pink);">iamine/auto</code>
         </div>
@@ -1919,11 +1944,13 @@ footer {
         <div class="tool-card recommended">
             <span class="tool-card-badge" data-i18n="tools_recommended">Recommande</span>
             <h3 class="tool-card-name">OpenCode</h3>
-            <p class="tool-card-desc" data-i18n="tools_opencode_desc">Agent de coding terminal, recommande. Bootstrap minute avec <code>iamine init</code> puis commande <code>/iamine</code> dans OpenCode pour generer un SPEC.md propre.</p>
-            <div class="tool-card-cmd">npm i -g opencode-ai &amp;&amp; iamine init</div>
+            <p class="tool-card-desc" data-i18n="tools_opencode_desc">Agent de coding terminal recommandé. Installez avec <code>npm i -g opencode-ai</code>, initialisez avec <code>iamine init</code>, puis tapez <code>/cellule</code> pour générer un SPEC.md.</p>
+            <div class="tool-card-cmd" style="margin-bottom:0.3rem;">pip install iamine-ai -i https://cellule.ai/pypi --extra-index-url https://pypi.org/simple</div>
+            <div class="tool-card-cmd" style="margin-bottom:0.3rem;">npm i -g opencode-ai</div>
+            <div class="tool-card-cmd" id="cmd-iamine-init">iamine init opencode --token acc_YOUR_TOKEN</div>
             <div style="margin-top:0.6rem;padding:0.55rem 0.7rem;background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.3);border-radius:6px;font-size:0.72rem;color:rgba(255,255,255,0.85);line-height:1.5;">
-                <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:#00ff88;margin-bottom:0.3rem;" data-i18n="tools_opencode_tuto_label">Mini tuto /iamine</div>
-                <div data-i18n="tools_opencode_tuto_step1"><span style="color:#00ff88;">1.</span> Dans OpenCode tapez <code>/iamine</code></div>
+                <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:#00ff88;margin-bottom:0.3rem;" data-i18n="tools_opencode_tuto_label">Mini tuto /cellule</div>
+                <div data-i18n="tools_opencode_tuto_step1"><span style="color:#00ff88;">1.</span> Lancez <code>iamine init opencode --token acc_xxx</code></div>
                 <div data-i18n="tools_opencode_tuto_step2"><span style="color:#00ff88;">2.</span> Decrivez votre feature en 1-2 phrases</div>
                 <div data-i18n="tools_opencode_tuto_step3"><span style="color:#00ff88;">3.</span> Le pool genere <code>SPEC.md</code> decoupe en micro-taches</div>
                 <div data-i18n="tools_opencode_tuto_step4"><span style="color:#00ff88;">4.</span> OpenCode execute tache par tache, sessions courtes = meilleurs resultats</div>
@@ -1932,20 +1959,47 @@ footer {
         </div>
         <div class="tool-card">
             <h3 class="tool-card-name">ClawCode</h3>
-            <p class="tool-card-desc" data-i18n="tools_clawcode_desc">Reecriture open-source de Claude Code en Rust et Python. Agent CLI model-agnostic, DMCA-proof.</p>
-            <div class="tool-card-cmd">cargo install agent-code</div>
+            <p class="tool-card-desc" data-i18n="tools_clawcode_desc">Open-source Claude Code rewrite in Rust. Model-agnostic CLI agent.</p>
+            <div class="tool-card-cmd" style="margin-bottom:0.3rem;">cargo install agent-code</div>
+            <div class="tool-card-cmd" style="margin-bottom:0.3rem;">pip install iamine-ai -i https://cellule.ai/pypi --extra-index-url https://pypi.org/simple</div>
+            <div class="tool-card-cmd" id="cmd-clawcode-init">iamine init clawcode --token acc_YOUR_TOKEN</div>
+            <div style="margin-top:0.6rem;padding:0.55rem 0.7rem;background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.3);border-radius:6px;font-size:0.72rem;color:rgba(255,255,255,0.85);line-height:1.5;">
+                <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:#00ff88;margin-bottom:0.3rem;">Setup</div>
+                <div data-i18n="tools_clawcode_step1"><span style="color:#00ff88;">1.</span> <code>iamine init clawcode --token acc_xxx</code></div>
+                <div data-i18n="tools_clawcode_step2"><span style="color:#00ff88;">2.</span> Launch <code>agent</code> and describe what you want to build</div>
+                <div data-i18n="tools_clawcode_step3"><span style="color:#00ff88;">3.</span> Code directly — no slash command needed — Cellule.ai is your backend</div>
+            </div>
             <a href="https://claw-code.io" target="_blank" rel="noopener" class="tool-card-link" data-i18n="tools_setup">claw-code.io &rarr;</a>
         </div>
         <div class="tool-card">
             <h3 class="tool-card-name">Cursor</h3>
-            <p class="tool-card-desc" data-i18n="tools_cursor_desc">IDE base sur VS Code avec IA integree. Configurez l'override URL vers Cellule.ai pour utiliser le pool.</p>
-            <div class="tool-card-cmd">cursor.com</div>
+            <p class="tool-card-desc" data-i18n="tools_cursor_desc">VS Code-based AI IDE. Override the API URL to use Cellule.ai as your backend.</p>
+            <div class="tool-card-cmd" style="margin-bottom:0.3rem;">https://cellule.ai/v1</div>
+            <div class="tool-card-cmd" style="margin-bottom:0.3rem;" id="cmd-cursor-key">acc_YOUR_TOKEN</div>
+            <div class="tool-card-cmd">iamine</div>
+            <div style="margin-top:0.6rem;padding:0.55rem 0.7rem;background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.3);border-radius:6px;font-size:0.72rem;color:rgba(255,255,255,0.85);line-height:1.5;">
+                <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:#00ff88;margin-bottom:0.3rem;">Setup</div>
+                <div data-i18n="tools_cursor_step1"><span style="color:#00ff88;">1.</span> Cursor Settings → Models → OpenAI API Key</div>
+                <div data-i18n="tools_cursor_step2"><span style="color:#00ff88;">2.</span> Paste your token + Override URL + Model name</div>
+                <div data-i18n="tools_cursor_step3"><span style="color:#00ff88;">3.</span> Start coding — Cellule.ai handles the rest</div>
+        tools_aider_step1: "<span style=\"color:#00ff88;\">1.</span> Install aider + set your token as env variable",
+        tools_aider_step2: "<span style=\"color:#00ff88;\">2.</span> Launch aider with Cellule.ai as backend",
+        tools_aider_step3: "<span style=\"color:#00ff88;\">3.</span> Start coding — git commits are handled automatically",
+            </div>
             <a href="https://cursor.com" target="_blank" rel="noopener" class="tool-card-link" data-i18n="tools_setup">cursor.com &rarr;</a>
         </div>
         <div class="tool-card">
             <h3 class="tool-card-name">aider</h3>
-            <p class="tool-card-desc" data-i18n="tools_aider_desc">Pair-programming en CLI base sur git. Tres efficace pour refactoring et fixes cibles.</p>
-            <div class="tool-card-cmd">pip install aider-chat</div>
+            <p class="tool-card-desc" data-i18n="tools_aider_desc">Git-based CLI pair-programming. Very efficient for refactoring and targeted fixes.</p>
+            <div class="tool-card-cmd" style="margin-bottom:0.3rem;">pip install aider-chat</div>
+            <div class="tool-card-cmd" style="margin-bottom:0.3rem;" id="cmd-aider-key">export OPENAI_API_KEY=acc_YOUR_TOKEN</div>
+            <div class="tool-card-cmd">aider --model openai/iamine --openai-api-base https://cellule.ai/v1</div>
+            <div style="margin-top:0.6rem;padding:0.55rem 0.7rem;background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.3);border-radius:6px;font-size:0.72rem;color:rgba(255,255,255,0.85);line-height:1.5;">
+                <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:#00ff88;margin-bottom:0.3rem;">Setup</div>
+                <div data-i18n="tools_aider_step1"><span style="color:#00ff88;">1.</span> Install aider + set your token as env variable</div>
+                <div data-i18n="tools_aider_step2"><span style="color:#00ff88;">2.</span> Launch aider with Cellule.ai as backend</div>
+                <div data-i18n="tools_aider_step3"><span style="color:#00ff88;">3.</span> Start coding — git commits are handled automatically</div>
+            </div>
             <a href="https://aider.chat" target="_blank" rel="noopener" class="tool-card-link" data-i18n="tools_setup">aider.chat &rarr;</a>
         </div>
         <div class="tool-card">
@@ -2513,12 +2567,12 @@ var L = {
         mem_title: "Your conversations follow you",
         mem_subtitle: "Most LLM providers give you a stateless API. Cellule.ai persists your conversations server-side and lets you save, restore, or delete them from any client \u2014 OpenWebUI, Cursor, OpenCode, curl, whatever. Your context lives in the molecule, not in the client.",
         mem_save_t: "Save",
-        mem_save_d: "Persist the current conversation in your account. Works in any chat client.",
+        mem_save_d: "Persist the current conversation in your account. Type <code>save</code> or <code>enregistre</code> in any chat client.",
         mem_restore_t: "Restore",
-        mem_restore_d: "Bring back a saved conversation. List with <code>restaure</code>, then pick one by number or ID.",
+        mem_restore_d: "Bring back a saved conversation. Type <code>restore</code> to list, then pick by number or ID.",
         mem_delete_t: "Delete",
-        mem_delete_d: "Remove one conversation or all at once. Opt-in memory + GDPR compliant.",
-        mem_footnote: "These commands work <em>inside any chat</em>, across any tool that talks to cellule.ai/v1. Type <code>enregistre</code> in OpenWebUI, then open Cursor tomorrow and type <code>restaure</code> \u2014 your context is there.",
+        mem_delete_d: "Type <code>delete 3</code> or <code>delete all</code>. Opt-in memory, GDPR compliant.",
+        mem_footnote: "These commands work <em>inside any chat</em>, across any tool that talks to cellule.ai/v1. Type <code>save / enregistre</code> in OpenWebUI, then open Cursor tomorrow and type <code>restaure</code> \u2014 your context is there.",
         footer_whitepaper: "Read the Whitepaper",
         footer_bottom: "\u00a9 2026 CELLULE.AI \u2014 Powered by the community (PREPROD testnet)",
         login_title: "Sign in",
@@ -2602,11 +2656,11 @@ var L = {
         tools_cfg_hint: "OpenAI-compatible API. Point any tool below to these 3 params.",
         tools_recommended: "Recommended",
         tools_setup: "Setup \u2192",
-        tools_opencode_desc: "Recommended terminal coding agent. Bootstrap in a minute with <code>iamine init</code>, then type <code>/iamine</code> inside OpenCode to generate a clean SPEC.md.",
-        tools_opencode_tuto_label: "Mini tutorial /iamine",
-        tools_opencode_tuto_step1: "<span style=\"color:#00ff88;\">1.</span> In OpenCode type <code>/iamine</code>",
+        tools_opencode_desc: "Recommended terminal coding agent. Install with <code>npm i -g opencode-ai</code>, bootstrap with <code>iamine init</code>, then type <code>/cellule</code> to generate a SPEC.md.",
+        tools_opencode_tuto_label: "Mini tutorial /cellule",
+        tools_opencode_tuto_step1: "<span style=\"color:#00ff88;\">1.</span> Run <code>iamine init opencode --token acc_xxx</code>",
         tools_opencode_tuto_step2: "<span style=\"color:#00ff88;\">2.</span> Describe your feature in 1\u20132 sentences",
-        tools_opencode_tuto_step3: "<span style=\"color:#00ff88;\">3.</span> The pool generates a <code>SPEC.md</code> split into micro-tasks",
+        tools_opencode_tuto_step3: "<span style=\"color:#00ff88;\">3.</span> Type <code>/cellule</code> + describe your project in 1–2 sentences",
         tools_opencode_tuto_step4: "<span style=\"color:#00ff88;\">4.</span> OpenCode runs task by task \u2014 short sessions = best results",
         tools_clawcode_desc: "Open-source rewrite of Claude Code in Rust and Python. Model-agnostic CLI agent, DMCA-proof.",
         tools_cursor_desc: "VS Code-based IDE with built-in AI. Configure the override URL to Cellule.ai to use the pool.",
@@ -2614,6 +2668,12 @@ var L = {
         tools_continue_desc: "VS Code and JetBrains extension for AI completion and chat in your IDE.",
         tools_openwebui_desc: "Full self-hosted web interface. Multi-conversation chat, history, templates. OpenAI-compatible.",
         tools_openwebui_hint: "\u26a0 Settings \u2192 Interface \u2192 disable <b>Title Auto-Generation</b> (and <b>Tags Auto-Generation</b>) to avoid JSON leaking into chat.",
+        tools_clawcode_step1: "<span style=\"color:#00ff88;\">1.</span> <code>iamine init clawcode --token acc_xxx</code>",
+        tools_clawcode_step2: "<span style=\"color:#00ff88;\">2.</span> Launch <code>agent</code> and describe what you want to build",
+        tools_clawcode_step3: "<span style=\"color:#00ff88;\">3.</span> Code directly — no slash command needed — Cellule.ai is your backend",
+        tools_cursor_step1: "<span style=\"color:#00ff88;\">1.</span> Cursor Settings → Models → OpenAI API Key",
+        tools_cursor_step2: "<span style=\"color:#00ff88;\">2.</span> Paste your token + Override URL + Model name",
+        tools_cursor_step3: "<span style=\"color:#00ff88;\">3.</span> Start coding — Cellule.ai handles the rest",
         trial_title: "Cellule.ai — Try it",
         trial_welcome: "AI belongs to those who run it. 6 messages to try — no account needed. Create an account to join the network.",
         trial_placeholder: "Ask me anything...",
@@ -2715,7 +2775,7 @@ var L = {
         mem_restore_d: "R\u00e9cup\u00e8re une conversation sauvegard\u00e9e. Listez avec <code>restaure</code>, puis choisissez par num\u00e9ro ou ID.",
         mem_delete_t: "Supprimer",
         mem_delete_d: "Efface une conversation ou toutes d\u0027un coup. M\u00e9moire opt-in + conforme RGPD.",
-        mem_footnote: "Ces commandes fonctionnent <em>\u00e0 l\u0027int\u00e9rieur de n\u0027importe quel chat</em>, sur n\u0027importe quel outil qui parle \u00e0 cellule.ai/v1. Tapez <code>enregistre</code> dans OpenWebUI, puis ouvrez Cursor demain et tapez <code>restaure</code> \u2014 votre contexte est l\u00e0.",
+        mem_footnote: "Ces commandes fonctionnent <em>\u00e0 l\u0027int\u00e9rieur de n\u0027importe quel chat</em>, sur n\u0027importe quel outil qui parle \u00e0 cellule.ai/v1. Tapez <code>save / enregistre</code> dans OpenWebUI, puis ouvrez Cursor demain et tapez <code>restaure</code> \u2014 votre contexte est l\u00e0.",
         footer_whitepaper: "Lire le livre blanc",
         footer_bottom: "\u00a9 2026 CELLULE.AI \u2014 Propuls\u00e9 par la communaut\u00e9 (PREPROD testnet)",
         login_title: "Connexion",
@@ -2799,9 +2859,9 @@ var L = {
         tools_cfg_hint: "API OpenAI-compatible. Pointez n'importe quel outil ci-dessous sur ces 3 param\u00e8tres.",
         tools_recommended: "Recommand\u00e9",
         tools_setup: "Setup \u2192",
-        tools_opencode_desc: "Agent de coding terminal recommand\u00e9. Bootstrap minute avec <code>iamine init</code>, puis tapez <code>/iamine</code> dans OpenCode pour g\u00e9n\u00e9rer un SPEC.md propre.",
-        tools_opencode_tuto_label: "Mini tuto /iamine",
-        tools_opencode_tuto_step1: "<span style=\"color:#00ff88;\">1.</span> Dans OpenCode tapez <code>/iamine</code>",
+        tools_opencode_desc: "Agent de coding terminal recommand\u00e9. Bootstrap minute avec <code>iamine init</code>, puis tapez <code>/cellule</code> dans OpenCode pour g\u00e9n\u00e9rer un SPEC.md propre.",
+        tools_opencode_tuto_label: "Mini tuto /cellule",
+        tools_opencode_tuto_step1: "<span style=\"color:#00ff88;\">1.</span> Lancez <code>iamine init opencode --token acc_xxx</code>",
         tools_opencode_tuto_step2: "<span style=\"color:#00ff88;\">2.</span> D\u00e9crivez votre feature en 1\u20132 phrases",
         tools_opencode_tuto_step3: "<span style=\"color:#00ff88;\">3.</span> Le pool g\u00e9n\u00e8re un <code>SPEC.md</code> d\u00e9coup\u00e9 en micro-t\u00e2ches",
         tools_opencode_tuto_step4: "<span style=\"color:#00ff88;\">4.</span> OpenCode ex\u00e9cute t\u00e2che par t\u00e2che \u2014 sessions courtes = meilleurs r\u00e9sultats",
@@ -2811,6 +2871,18 @@ var L = {
         tools_continue_desc: "Extension VS Code et JetBrains pour la compl\u00e9tion et le chat IA dans l'IDE.",
         tools_openwebui_desc: "Interface web compl\u00e8te self-hosted. Chat multi-conversations, historique, templates. Compatible OpenAI.",
         tools_openwebui_hint: "\u26a0 Settings \u2192 Interface \u2192 d\u00e9sactivez <b>Title Auto-Generation</b> (et <b>Tags Auto-Generation</b>) pour \u00e9viter les JSON dans le chat.",
+        tools_clawcode_step1: "<span style=\"color:#00ff88;\">1.</span> <code>iamine init clawcode --token acc_xxx</code>",
+
+        tools_clawcode_step2: "<span style=\"color:#00ff88;\">2.</span> Lancez <code>agent</code> et décrivez ce que vous voulez construire",
+
+        tools_clawcode_step3: "<span style=\"color:#00ff88;\">3.</span> Codez directement — pas de commande slash nécessaire — Cellule.ai est votre backend",
+
+        tools_cursor_step1: "<span style=\"color:#00ff88;\">1.</span> Cursor Settings → Models → OpenAI API Key",
+        tools_cursor_step2: "<span style=\"color:#00ff88;\">2.</span> Collez votre token + Override URL + nom du modèle",
+        tools_cursor_step3: "<span style=\"color:#00ff88;\">3.</span> Codez — Cellule.ai gère le reste",
+        tools_aider_step1: "<span style=\"color:#00ff88;\">1.</span> Installez aider + définissez votre token en variable d'environnement",
+        tools_aider_step2: "<span style=\"color:#00ff88;\">2.</span> Lancez aider avec Cellule.ai comme backend",
+        tools_aider_step3: "<span style=\"color:#00ff88;\">3.</span> Codez — les commits git sont gérés automatiquement",
         or_label: "OU",
         pool_cta_title: "Lancez votre propre pool",
         pool_cta_desc: "Une fois la base de workers d\u00e9velopp\u00e9e, lancez votre propre pool pour h\u00e9berger des workers et rejoindre la mol\u00e9cule. 3 minutes via docker compose.",
@@ -4076,7 +4148,7 @@ async function handleGoogleLoginV2(response) {
         });
         const d = await r.json();
         if (d.error) { showLoginError(d.error); return; }
-        localStorage.setItem('iamine-session', d.session_id); if (d.api_token) localStorage.setItem('iamine-api-token', d.api_token);
+        localStorage.setItem('iamine-session', d.session_id); if (d.api_token) localStorage.setItem('iamine-api-token', d.api_token); if (typeof updateToolsApiKey === 'function') updateToolsApiKey();
         if (d.needs_pseudo) {
             promptPseudoAfterGoogle(d.session_id);
         } else {
@@ -4100,7 +4172,7 @@ async function doLoginV2() {
             return;
         }
         if (d.error) { showLoginError(d.error); return; }
-        localStorage.setItem('iamine-session', d.session_id); if (d.api_token) localStorage.setItem('iamine-api-token', d.api_token);
+        localStorage.setItem('iamine-session', d.session_id); if (d.api_token) localStorage.setItem('iamine-api-token', d.api_token); if (typeof updateToolsApiKey === 'function') updateToolsApiKey();
         closeLoginModal(); updateNavAuthV2();
     } catch(e) { showLoginError(e.message); }
 }
@@ -4134,7 +4206,7 @@ async function doRegisterV2() {
         }
         // Legacy (shouldn't happen post-migration)
         if (d.session_id) {
-            localStorage.setItem('iamine-session', d.session_id); if (d.api_token) localStorage.setItem('iamine-api-token', d.api_token);
+            localStorage.setItem('iamine-session', d.session_id); if (d.api_token) localStorage.setItem('iamine-api-token', d.api_token); if (typeof updateToolsApiKey === 'function') updateToolsApiKey();
             closeLoginModal(); updateNavAuthV2();
         }
     } catch(e) { showLoginError(e.message); }
@@ -4154,7 +4226,7 @@ async function doActivate() {
             showActivateError(d.error);
             return;
         }
-        localStorage.setItem('iamine-session', d.session_id); if (d.api_token) localStorage.setItem('iamine-api-token', d.api_token);
+        localStorage.setItem('iamine-session', d.session_id); if (d.api_token) localStorage.setItem('iamine-api-token', d.api_token); if (typeof updateToolsApiKey === 'function') updateToolsApiKey();
         closeLoginModal(); updateNavAuthV2();
     } catch(e) { showActivateError(e.message); }
 }
@@ -4229,7 +4301,7 @@ async function updateNavAuthV2() {
         const r = await fetch('/v1/account/my-workers?session_id=' + encodeURIComponent(session));
         const d = await r.json();
         if (d.error || (!d.display_name && !d.email)) {
-            localStorage.removeItem('iamine-session'); localStorage.removeItem('iamine-api-token');
+            localStorage.removeItem('iamine-session'); localStorage.removeItem('iamine-api-token'); if (typeof updateToolsApiKey === 'function') updateToolsApiKey();
             area.innerHTML = '<a href="#" class="btn-small" onclick="openLoginModal();return false;" data-i18n="nav_login">Login</a>';
             var dash2 = document.getElementById('dashboard'); if (dash2) dash2.style.display = 'none';
             return;
@@ -4277,7 +4349,7 @@ function scrollToCard(which) {
 }
 function doLogoutV2() {
     localStorage.removeItem('iamine-session');
-    localStorage.removeItem('iamine-api-token');
+    localStorage.removeItem('iamine-api-token'); if (typeof updateToolsApiKey === 'function') updateToolsApiKey();
     updateNavAuthV2();
 }
 
@@ -4690,6 +4762,80 @@ setInterval(fedLoadPools, 30000);
     document.addEventListener('DOMContentLoaded', loadRecruitmentNeeds);
     setInterval(loadRecruitmentNeeds, 30000);
 })();
+
+/* ── Copy-to-clipboard for tool-card-cmd ─────── */
+document.querySelectorAll('.tool-card-cmd').forEach(function(el) {
+    // Add copy icon
+    var icon = document.createElement('span');
+    icon.className = 'copy-icon';
+    icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
+    el.appendChild(icon);
+
+    el.addEventListener('click', function() {
+        // Get text content excluding the icon
+        var text = '';
+        for (var i = 0; i < el.childNodes.length; i++) {
+            if (el.childNodes[i].nodeType === 3) text += el.childNodes[i].textContent;
+        }
+        text = text.trim();
+        navigator.clipboard.writeText(text).then(function() {
+            el.classList.add('copied');
+            icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>';
+            setTimeout(function() {
+                el.classList.remove('copied');
+                icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
+            }, 1500);
+        });
+    });
+});
+
+/* ── Update API token display when logged in ─────── */
+function updateToolsApiKey() {
+    var initCmd = document.getElementById('cmd-iamine-init');
+    var clawInit = document.getElementById('cmd-clawcode-init');
+    var cursorKey = document.getElementById('cmd-cursor-key');
+    var aiderKey = document.getElementById('cmd-aider-key');
+    if (aiderKey) {
+        var ta = localStorage.getItem('iamine-api-token');
+        aiderKey.childNodes[0].textContent = ta ? 'export OPENAI_API_KEY=' + ta : 'export OPENAI_API_KEY=acc_YOUR_TOKEN';
+    }
+    if (cursorKey) {
+        var tk = localStorage.getItem('iamine-api-token');
+        if (tk) { cursorKey.childNodes[0].textContent = tk; }
+        else { cursorKey.childNodes[0].textContent = 'acc_YOUR_TOKEN'; }
+    }
+    if (clawInit) {
+        var t2 = localStorage.getItem('iamine-api-token');
+        clawInit.childNodes[0].textContent = t2 ? 'iamine init clawcode --token ' + t2 : 'iamine init clawcode --token acc_YOUR_TOKEN';
+    }
+    if (initCmd) {
+        var t = localStorage.getItem('iamine-api-token');
+        initCmd.childNodes[0].textContent = t ? 'iamine init opencode --token ' + t : 'iamine init opencode --token acc_YOUR_TOKEN';
+    }
+    var el = document.getElementById('tools-api-key');
+    if (!el) return;
+    var token = localStorage.getItem('iamine-api-token');
+    if (token) {
+        el.textContent = token;
+        el.style.cursor = 'pointer';
+        el.title = 'Click to copy';
+        el.onclick = function() {
+            navigator.clipboard.writeText(token).then(function() {
+                var orig = el.textContent;
+                el.textContent = 'Copied!';
+                el.style.color = '#00ff88';
+                setTimeout(function() { el.textContent = orig; el.style.color = ''; }, 1200);
+            });
+        };
+    } else {
+        el.textContent = 'acc_YOUR_TOKEN';
+        el.style.cursor = '';
+        el.title = '';
+        el.onclick = null;
+    }
+}
+// Run on page load and after any auth change
+document.addEventListener('DOMContentLoaded', updateToolsApiKey);
 </script>
 </body>
 </html>
