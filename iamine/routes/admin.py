@@ -235,6 +235,18 @@ async def admin_page(request: Request):
     if not admin_email:
         return HTMLResponse(LOGIN_PAGE_HTML)
     static_dir = _static_dir()
+
+    # Pool-operator mode: serve the restricted admin UI
+    if _is_pool_operator_mode():
+        pool_admin = static_dir / "admin_pool.html"
+        if pool_admin.exists():
+            from fastapi.responses import FileResponse as FR
+            resp = FR(str(pool_admin))
+            resp.set_cookie("admin_token", os.environ.get("ADMIN_PASSWORD"),
+                            httponly=False, max_age=86400, samesite="lax")
+            return resp
+
+    # Full admin (VPS operator)
     admin_file = static_dir / "admin.html"
     if admin_file.exists():
         from fastapi.responses import FileResponse as FR
@@ -1410,3 +1422,287 @@ async def admin_push_update(request: Request):
             skipped.append({"worker_id": w.worker_id, "version": wv, "status": "up-to-date"})
 
     return {"ok": True, "pool_version": __version__, "pushed": updated, "skipped": skipped}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# M11.5 — Pool Operator Admin (admin_pool.html)
+# Served when POOL_OPERATOR_MODE=true (Docker image default).
+# Restricted settings — protocol-level parameters remain hardcoded.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Whitelist of pool-operator-settable toggles. Anything NOT in this list
+# cannot be changed via the pool admin UI (protects network invariants).
+POOL_OPERATOR_SETTABLE = {
+    "memory_replication",       # MEMORY_REPLICATION_ENABLED
+    "gossip_loop",              # MEMORY_GOSSIP_LOOP_ENABLED
+    "accept_new_accounts",      # pool_config
+    "require_email_verif",      # pool_config
+    "auto_push_updates",        # pool_config
+}
+
+
+def _is_pool_operator_mode() -> bool:
+    """True if this pool runs in community-operator mode (restricted admin)."""
+    return os.environ.get("POOL_OPERATOR_MODE", "").strip().lower() in ("1", "true", "yes", "on")
+
+
+# ─── GET /admin/api/pool-overview ──────────────────────────────────────────
+
+@router.get("/admin/api/pool-overview")
+async def pool_overview(request: Request):
+    admin_email = await _check_admin(request)
+    if not admin_email:
+        return JSONResponse({"error": "not authorized"}, status_code=403)
+
+    p = _pool()
+    import time as _time
+
+    # Pool identity + status
+    from iamine import __version__ as version
+    atom_id = ""
+    pool_name = ""
+    pool_url = ""
+    if p.federation_self is not None:
+        atom_id = p.federation_self.atom_id
+        pool_name = p.federation_self.name
+        pool_url = p.federation_self.url
+
+    workers = []
+    for w in (p.router.connected.values() if hasattr(p.router, 'connected') else []):
+        workers.append({
+            "id": w.worker_id,
+            "model": w.info.get("model", ""),
+            "busy": w.busy,
+            "real_tps": w.info.get("real_tps", 0),
+            "bench_tps": w.info.get("bench_tps", 0),
+            "version": w.info.get("version", ""),
+        })
+
+    workers_online = len(workers)
+    workers_busy = sum(1 for w in workers if w["busy"])
+
+    # Peers
+    peers = []
+    try:
+        async with p.store.pool.acquire() as conn:
+            rows = await conn.fetch("""
+                SELECT atom_id, name, url, trust_level,
+                       last_sync_conv_ts, last_sync_memory_ts
+                  FROM federation_peers
+                 WHERE revoked_at IS NULL
+                 ORDER BY trust_level DESC, name
+            """)
+            now = _time.time()
+            for r in rows:
+                last_sync = None
+                for ts_col in ("last_sync_conv_ts", "last_sync_memory_ts"):
+                    ts = r[ts_col]
+                    if ts and (last_sync is None or ts > last_sync):
+                        last_sync = ts
+                ago = "never"
+                if last_sync:
+                    delta = int(now - last_sync.timestamp())
+                    if delta < 60:
+                        ago = f"{delta}s ago"
+                    elif delta < 3600:
+                        ago = f"{delta//60}m ago"
+                    else:
+                        ago = f"{delta//3600}h ago"
+                peers.append({
+                    "atom_id": r["atom_id"],
+                    "name": r["name"],
+                    "url": r["url"],
+                    "trust_level": r["trust_level"],
+                    "last_sync_ago": ago,
+                })
+    except Exception as e:
+        log.warning(f"pool-overview peers load failed: {e}")
+
+    # DB counts
+    accounts_count = 0
+    conversations_count = 0
+    memories_count = 0
+    try:
+        async with p.store.pool.acquire() as conn:
+            accounts_count = await conn.fetchval("SELECT count(*) FROM accounts") or 0
+            conversations_count = await conn.fetchval("SELECT count(*) FROM conversations") or 0
+            memories_count = await conn.fetchval("SELECT count(*) FROM user_memories") or 0
+    except Exception:
+        pass
+
+    uptime_sec = int(_time.time() - getattr(p, "start_time", _time.time()))
+
+    return {
+        "name": pool_name,
+        "url": pool_url,
+        "atom_id": atom_id,
+        "version": version,
+        "uptime_sec": uptime_sec,
+        "workers": workers,
+        "workers_online": workers_online,
+        "workers_busy": workers_busy,
+        "total_jobs": getattr(p, "total_jobs", 0),
+        "accounts_count": accounts_count,
+        "conversations_count": conversations_count,
+        "memories_count": memories_count,
+        "peers": peers,
+    }
+
+
+# ─── GET /admin/api/pool-settings ──────────────────────────────────────────
+
+@router.get("/admin/api/pool-settings")
+async def pool_settings_get(request: Request):
+    admin_email = await _check_admin(request)
+    if not admin_email:
+        return JSONResponse({"error": "not authorized"}, status_code=403)
+
+    p = _pool()
+
+    # Env-based toggles
+    def _env_bool(name: str, default: bool = False) -> bool:
+        return os.environ.get(name, "true" if default else "false").strip().lower() in (
+            "1", "true", "yes", "on")
+
+    # DB-based toggles (pool_config)
+    pool_cfg = {}
+    try:
+        async with p.store.pool.acquire() as conn:
+            rows = await conn.fetch("SELECT key, value FROM pool_config") \
+                if await conn.fetchval(
+                    "SELECT to_regclass('pool_config') IS NOT NULL") else []
+            for r in rows:
+                pool_cfg[r["key"]] = r["value"]
+    except Exception:
+        pass
+
+    return {
+        "memory_replication": _env_bool("MEMORY_REPLICATION_ENABLED"),
+        "gossip_loop": _env_bool("MEMORY_GOSSIP_LOOP_ENABLED"),
+        "accept_new_accounts": pool_cfg.get("accept_new_accounts", "true") == "true",
+        "require_email_verif": pool_cfg.get("require_email_verif", "false") == "true",
+        "auto_push_updates": pool_cfg.get("auto_push_updates", "true") == "true",
+    }
+
+
+# ─── POST /admin/api/pool-settings ─────────────────────────────────────────
+
+@router.post("/admin/api/pool-settings")
+async def pool_settings_set(request: Request):
+    admin_email = await _check_admin(request)
+    if not admin_email:
+        return JSONResponse({"error": "not authorized"}, status_code=403)
+
+    data = await request.json()
+    key = data.get("key", "")
+    value = bool(data.get("value", False))
+
+    # Whitelist check — protocol invariants cannot be changed here
+    if key not in POOL_OPERATOR_SETTABLE:
+        return JSONResponse({
+            "error": "setting not allowed",
+            "reason": f"'{key}' is a protocol-level parameter and cannot be changed from the pool admin UI",
+        }, status_code=403)
+
+    p = _pool()
+
+    # Env-based: changes require restart (notify the operator)
+    if key in ("memory_replication", "gossip_loop"):
+        return JSONResponse({
+            "ok": True,
+            "key": key,
+            "value": value,
+            "note": "This setting requires a pool restart (docker compose restart cellule-pool) after updating docker-compose.yml",
+            "env_var": "MEMORY_REPLICATION_ENABLED" if key == "memory_replication"
+                        else "MEMORY_GOSSIP_LOOP_ENABLED",
+        })
+
+    # DB-based: live update
+    try:
+        async with p.store.pool.acquire() as conn:
+            await conn.execute("""
+                CREATE TABLE IF NOT EXISTS pool_config (
+                    key VARCHAR(128) PRIMARY KEY,
+                    value TEXT,
+                    updated_at TIMESTAMP DEFAULT now()
+                )
+            """)
+            await conn.execute("""
+                INSERT INTO pool_config (key, value, updated_at)
+                VALUES ($1, $2, now())
+                ON CONFLICT (key) DO UPDATE SET
+                    value = EXCLUDED.value,
+                    updated_at = now()
+            """, key, "true" if value else "false")
+        return {"ok": True, "key": key, "value": value}
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+# ─── POST /admin/api/kick-worker ───────────────────────────────────────────
+
+@router.post("/admin/api/kick-worker")
+async def pool_kick_worker(request: Request):
+    admin_email = await _check_admin(request)
+    if not admin_email:
+        return JSONResponse({"error": "not authorized"}, status_code=403)
+
+    data = await request.json()
+    worker_id = data.get("worker_id", "").strip()
+    if not worker_id:
+        return JSONResponse({"error": "missing worker_id"}, status_code=400)
+
+    p = _pool()
+
+    # Add to local blacklist + disconnect if connected
+    try:
+        if hasattr(p, "blacklist"):
+            p.blacklist.add(worker_id)
+        # Disconnect active websocket if present
+        if hasattr(p.router, "connected") and worker_id in p.router.connected:
+            w = p.router.connected[worker_id]
+            try:
+                await w.ws.close(code=4003, reason="banned by operator")
+            except Exception:
+                pass
+        return {"ok": True, "banned": worker_id}
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+# ─── GET /admin/api/pool-activity ──────────────────────────────────────────
+
+@router.get("/admin/api/pool-activity")
+async def pool_activity(request: Request):
+    admin_email = await _check_admin(request)
+    if not admin_email:
+        return JSONResponse({"error": "not authorized"}, status_code=403)
+
+    p = _pool()
+    entries = []
+    try:
+        async with p.store.pool.acquire() as conn:
+            # Replication activity (last 20)
+            if await conn.fetchval(
+                    "SELECT to_regclass('replication_activity_log') IS NOT NULL"):
+                rows = await conn.fetch("""
+                    SELECT ts, direction, table_name, rows_count,
+                           latency_ms, success, error_msg
+                      FROM replication_activity_log
+                     ORDER BY ts DESC LIMIT 20
+                """)
+                for r in rows:
+                    kind = f"{r['direction'].upper()}"
+                    msg = f"{r['table_name']} · {r['rows_count']} rows · {r['latency_ms']}ms"
+                    if not r["success"]:
+                        msg += f" · ERR: {r['error_msg'] or '?'}"
+                    entries.append({
+                        "time": r["ts"].strftime("%H:%M:%S"),
+                        "kind": kind,
+                        "msg": msg,
+                        "success": r["success"],
+                    })
+    except Exception as e:
+        log.warning(f"pool-activity load failed: {e}")
+
+    return {"entries": entries}

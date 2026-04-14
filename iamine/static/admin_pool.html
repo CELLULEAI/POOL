@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cellule.ai — Pool Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0a; --bg2: #111111; --bg3: #1a1a1a;
+            --text: #f0f0f0; --text2: #888888; --border: #222222;
+            --neon-blue: #00d4ff; --neon-green: #00ff88;
+            --accent3: #ff6b00; --red: #ff4444; --purple: #8b5cf6;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+
+        nav {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 2rem; height: 64px; z-index: 1000;
+            position: sticky; top: 0;
+            background: rgba(10,10,10,0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 1px 0 var(--border);
+        }
+        .logo {
+            font-size: 1.15rem; font-weight: 800; letter-spacing: 1px;
+            text-decoration: none;
+            background: linear-gradient(135deg, var(--neon-blue), var(--neon-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .logo span { opacity: 0.85; }
+        .logo small {
+            font-size: 0.65rem; color: var(--text2); margin-left: 0.6rem;
+            font-weight: 600; letter-spacing: 2px;
+            -webkit-text-fill-color: var(--text2);
+        }
+        nav a { color: var(--text2); text-decoration: none; margin-left: 1.25rem; font-size: 0.85rem; transition: color 0.2s; font-weight: 500; }
+        nav a:hover { color: var(--neon-blue); }
+
+        .lang-switch {
+            display: inline-flex; gap: 0; margin-left: 1.25rem;
+            border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+        }
+        .lang-switch button {
+            background: transparent; color: var(--text2); border: none;
+            padding: 0.35rem 0.7rem; font-size: 0.75rem; font-weight: 600;
+            cursor: pointer; letter-spacing: 1px; transition: all 0.2s;
+        }
+        .lang-switch button.active { background: var(--neon-blue); color: var(--bg); }
+        .lang-switch button:not(.active):hover { color: var(--text); }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+        h2 {
+            font-size: 1.5rem; margin-bottom: 1rem; font-weight: 700;
+            background: linear-gradient(135deg, var(--neon-blue), var(--neon-green));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .sub { color: var(--text2); font-size: 0.9rem; margin-bottom: 2rem; }
+
+        .card {
+            background: var(--bg2); border: 1px solid var(--border);
+            border-radius: 12px; padding: 1.5rem; margin-bottom: 1.25rem;
+        }
+        .card h3 {
+            font-size: 0.95rem; font-weight: 600; color: var(--text);
+            margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;
+            letter-spacing: 0.5px;
+        }
+        .card h3 .icon { color: var(--neon-blue); font-size: 1.1rem; }
+
+        /* Pool info rows */
+        .info-row { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+        .info-row:last-child { border: none; }
+        .info-row .label { color: var(--text2); }
+        .info-row .value { color: var(--text); font-family: monospace; }
+
+        /* Stats grid */
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; }
+        .stat {
+            text-align: center; padding: 1rem; background: var(--bg3);
+            border-radius: 10px; border: 1px solid var(--border);
+        }
+        .stat .v { font-size: 2rem; font-weight: 700; color: var(--neon-green); line-height: 1; }
+        .stat .v.active { color: var(--accent3); }
+        .stat .l { font-size: 0.7rem; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; margin-top: 0.4rem; }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 0.6rem 0.75rem; font-size: 0.85rem; border-bottom: 1px solid var(--border); }
+        th { color: var(--text2); text-transform: uppercase; letter-spacing: 1px; font-size: 0.7rem; font-weight: 600; }
+        td.mono { font-family: monospace; color: var(--text2); font-size: 0.8rem; }
+        .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 0.5rem; }
+        .status-dot.idle { background: var(--neon-green); }
+        .status-dot.busy { background: var(--accent3); }
+        .status-dot.offline { background: var(--text2); }
+
+        /* Buttons */
+        .btn {
+            display: inline-block; padding: 6px 14px; background: transparent;
+            color: var(--text); font-weight: 600; font-size: 12px;
+            border: 1px solid var(--border); border-radius: 8px;
+            letter-spacing: 0.5px; cursor: pointer; transition: all 0.2s;
+            font-family: inherit;
+        }
+        .btn:hover { border-color: var(--neon-blue); color: var(--neon-blue); background: rgba(0,212,255,0.05); }
+        .btn-danger { border-color: rgba(255,68,68,0.3); color: var(--red); }
+        .btn-danger:hover { background: var(--red); color: #fff; border-color: var(--red); }
+
+        /* Toggle switches */
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+        .toggle-row:last-child { border: none; }
+        .toggle-info { flex: 1; }
+        .toggle-info .name { font-weight: 600; font-size: 0.9rem; color: var(--text); }
+        .toggle-info .desc { font-size: 0.75rem; color: var(--text2); margin-top: 0.2rem; }
+        .toggle {
+            position: relative; width: 48px; height: 24px; background: var(--bg3);
+            border: 1px solid var(--border); border-radius: 999px; cursor: pointer;
+            transition: all 0.25s;
+        }
+        .toggle::after {
+            content: ''; position: absolute; top: 2px; left: 2px;
+            width: 18px; height: 18px; background: var(--text2);
+            border-radius: 50%; transition: all 0.25s;
+        }
+        .toggle.on { background: linear-gradient(135deg, var(--neon-blue), var(--neon-green)); border-color: transparent; }
+        .toggle.on::after { left: 26px; background: var(--bg); }
+
+        /* Activity log */
+        .log-line { font-family: monospace; font-size: 0.75rem; padding: 0.3rem 0.5rem; color: var(--text2); border-bottom: 1px solid var(--border); display: flex; gap: 1rem; }
+        .log-line:last-child { border: none; }
+        .log-line .ts { color: var(--text2); width: 70px; flex-shrink: 0; }
+        .log-line .kind { color: var(--neon-blue); width: 90px; flex-shrink: 0; }
+        .log-line .kind.error { color: var(--red); }
+        .log-line .msg { color: var(--text); flex: 1; }
+
+        /* Federation peers */
+        .peer-row { padding: 0.6rem 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .peer-row:last-child { border: none; }
+        .peer-name { font-weight: 600; color: var(--text); }
+        .peer-meta { font-size: 0.75rem; color: var(--text2); font-family: monospace; }
+        .trust-badge {
+            padding: 2px 8px; border-radius: 999px; font-size: 0.65rem;
+            font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .trust-3 { background: rgba(0,255,136,0.15); color: var(--neon-green); }
+        .trust-2 { background: rgba(0,212,255,0.15); color: var(--neon-blue); }
+        .trust-1 { background: rgba(255,107,0,0.15); color: var(--accent3); }
+
+        .foot { text-align: center; color: var(--text2); font-size: 0.7rem; padding: 2rem 0 1rem; letter-spacing: 2px; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="/admin" class="logo">CELLULE<span>.AI</span><small>POOL</small></a>
+    <div style="display:flex;align-items:center;">
+        <a href="/" data-i18n="nav_site">Site</a>
+        <a href="/docs" data-i18n="nav_api">API</a>
+        <a href="/admin/logout" data-i18n="nav_logout">Logout</a>
+        <div class="lang-switch">
+            <button onclick="setLang('en')" id="lang-en" class="active">EN</button>
+            <button onclick="setLang('fr')" id="lang-fr">FR</button>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <h2 data-i18n="page_title">Pool Administration</h2>
+    <p class="sub" data-i18n="page_sub">Local settings for your federated pool. Protocol-level parameters are managed by the network.</p>
+
+    <!-- MY POOL -->
+    <div class="card">
+        <h3><span class="icon">◆</span> <span data-i18n="section_pool">My Pool</span></h3>
+        <div class="info-row"><span class="label" data-i18n="info_name">Name</span><span class="value" id="pool-name">-</span></div>
+        <div class="info-row"><span class="label" data-i18n="info_url">Public URL</span><span class="value" id="pool-url">-</span></div>
+        <div class="info-row"><span class="label" data-i18n="info_version">Version</span><span class="value" id="pool-version">-</span></div>
+        <div class="info-row"><span class="label" data-i18n="info_atom">Atom ID</span><span class="value" id="pool-atom" style="font-size:0.75rem;">-</span></div>
+        <div class="info-row"><span class="label" data-i18n="info_uptime">Uptime</span><span class="value" id="pool-uptime">-</span></div>
+    </div>
+
+    <!-- STATS -->
+    <div class="card">
+        <h3><span class="icon">▦</span> <span data-i18n="section_stats">Live Stats</span></h3>
+        <div class="stats">
+            <div class="stat"><div class="v" id="s-workers">0</div><div class="l" data-i18n="stat_workers">Workers</div></div>
+            <div class="stat"><div class="v active" id="s-busy">0</div><div class="l" data-i18n="stat_busy">Busy</div></div>
+            <div class="stat"><div class="v" id="s-jobs">0</div><div class="l" data-i18n="stat_jobs">Jobs</div></div>
+            <div class="stat"><div class="v" id="s-accounts">0</div><div class="l" data-i18n="stat_accounts">Accounts</div></div>
+            <div class="stat"><div class="v" id="s-conv">0</div><div class="l" data-i18n="stat_conv">Conversations</div></div>
+            <div class="stat"><div class="v" id="s-memories">0</div><div class="l" data-i18n="stat_memories">Memories</div></div>
+        </div>
+    </div>
+
+    <!-- WORKERS -->
+    <div class="card">
+        <h3><span class="icon">⚙</span> <span data-i18n="section_workers">Connected Workers</span></h3>
+        <table>
+            <thead>
+                <tr>
+                    <th data-i18n="col_id">ID</th>
+                    <th data-i18n="col_model">Model</th>
+                    <th data-i18n="col_status">Status</th>
+                    <th data-i18n="col_tps">Speed</th>
+                    <th data-i18n="col_version">Version</th>
+                    <th data-i18n="col_actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="workers-tbody">
+                <tr><td colspan="6" style="text-align:center;color:var(--text2);padding:1rem;" data-i18n="loading">Loading...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- FEDERATION -->
+    <div class="card">
+        <h3><span class="icon">⬡</span> <span data-i18n="section_federation">Federation</span></h3>
+        <div id="peers-list">
+            <div style="text-align:center;color:var(--text2);padding:1rem;" data-i18n="loading">Loading...</div>
+        </div>
+    </div>
+
+    <!-- SETTINGS (toggles) -->
+    <div class="card">
+        <h3><span class="icon">⚡</span> <span data-i18n="section_settings">Local Settings</span></h3>
+        <p class="sub" style="margin-bottom:1rem;" data-i18n="settings_note">These toggles affect only your pool. Network-wide parameters (revenue split, system prompt, etc.) are managed by the protocol and cannot be changed here.</p>
+
+        <div class="toggle-row">
+            <div class="toggle-info">
+                <div class="name" data-i18n="toggle_memory_repl">Memory Replication</div>
+                <div class="desc" data-i18n="toggle_memory_repl_desc">Replicate conversations + memories across bonded peers</div>
+            </div>
+            <div class="toggle" id="tog-memory-repl" onclick="toggle('memory_replication', this)"></div>
+        </div>
+
+        <div class="toggle-row">
+            <div class="toggle-info">
+                <div class="name" data-i18n="toggle_gossip">Periodic Gossip</div>
+                <div class="desc" data-i18n="toggle_gossip_desc">Auto-sync with bonded peers every 60s</div>
+            </div>
+            <div class="toggle" id="tog-gossip" onclick="toggle('gossip_loop', this)"></div>
+        </div>
+
+        <div class="toggle-row">
+            <div class="toggle-info">
+                <div class="name" data-i18n="toggle_accept_accounts">New Accounts</div>
+                <div class="desc" data-i18n="toggle_accept_accounts_desc">Accept new user signups on this pool</div>
+            </div>
+            <div class="toggle" id="tog-accounts" onclick="toggle('accept_new_accounts', this)"></div>
+        </div>
+
+        <div class="toggle-row">
+            <div class="toggle-info">
+                <div class="name" data-i18n="toggle_email_verif">Email Verification</div>
+                <div class="desc" data-i18n="toggle_email_verif_desc">Require email verification for new accounts</div>
+            </div>
+            <div class="toggle" id="tog-email" onclick="toggle('require_email_verif', this)"></div>
+        </div>
+
+        <div class="toggle-row">
+            <div class="toggle-info">
+                <div class="name" data-i18n="toggle_auto_upgrade">Auto-upgrade Workers</div>
+                <div class="desc" data-i18n="toggle_auto_upgrade_desc">Push updates to workers running older versions</div>
+            </div>
+            <div class="toggle" id="tog-auto-upgrade" onclick="toggle('auto_push_updates', this)"></div>
+        </div>
+    </div>
+
+    <!-- ACTIVITY LOG -->
+    <div class="card">
+        <h3><span class="icon">◉</span> <span data-i18n="section_activity">Activity Log</span></h3>
+        <div id="activity-log" style="max-height:360px;overflow-y:auto;">
+            <div style="text-align:center;color:var(--text2);padding:1rem;" data-i18n="loading">Loading...</div>
+        </div>
+    </div>
+
+    <div class="foot">Cellule.ai · Pool Operator · v<span id="ver">?</span></div>
+</div>
+
+<script>
+// ── i18n ──────────────────────────────────────────────────
+const I18N = {
+    en: {
+        nav_site: "Site", nav_api: "API", nav_logout: "Logout",
+        page_title: "Pool Administration",
+        page_sub: "Local settings for your federated pool. Protocol-level parameters are managed by the network.",
+        section_pool: "My Pool", section_stats: "Live Stats", section_workers: "Connected Workers",
+        section_federation: "Federation", section_settings: "Local Settings", section_activity: "Activity Log",
+        info_name: "Name", info_url: "Public URL", info_version: "Version", info_atom: "Atom ID", info_uptime: "Uptime",
+        stat_workers: "Workers", stat_busy: "Busy", stat_jobs: "Jobs",
+        stat_accounts: "Accounts", stat_conv: "Conversations", stat_memories: "Memories",
+        col_id: "ID", col_model: "Model", col_status: "Status", col_tps: "Speed", col_version: "Version", col_actions: "Actions",
+        settings_note: "These toggles affect only your pool. Network-wide parameters (revenue split, system prompt, etc.) are managed by the protocol and cannot be changed here.",
+        toggle_memory_repl: "Memory Replication",
+        toggle_memory_repl_desc: "Replicate conversations + memories across bonded peers",
+        toggle_gossip: "Periodic Gossip",
+        toggle_gossip_desc: "Auto-sync with bonded peers every 60s",
+        toggle_accept_accounts: "New Accounts",
+        toggle_accept_accounts_desc: "Accept new user signups on this pool",
+        toggle_email_verif: "Email Verification",
+        toggle_email_verif_desc: "Require email verification for new accounts",
+        toggle_auto_upgrade: "Auto-upgrade Workers",
+        toggle_auto_upgrade_desc: "Push updates to workers running older versions",
+        loading: "Loading...",
+        act_ban: "Ban"
+    },
+    fr: {
+        nav_site: "Site", nav_api: "API", nav_logout: "Déconnexion",
+        page_title: "Administration du Pool",
+        page_sub: "Réglages locaux de votre pool fédéré. Les paramètres du protocole sont gérés par le réseau.",
+        section_pool: "Mon Pool", section_stats: "Statistiques live", section_workers: "Workers connectés",
+        section_federation: "Fédération", section_settings: "Réglages locaux", section_activity: "Journal d'activité",
+        info_name: "Nom", info_url: "URL publique", info_version: "Version", info_atom: "ID Atome", info_uptime: "Uptime",
+        stat_workers: "Workers", stat_busy: "Occupés", stat_jobs: "Jobs",
+        stat_accounts: "Comptes", stat_conv: "Conversations", stat_memories: "Mémoires",
+        col_id: "ID", col_model: "Modèle", col_status: "État", col_tps: "Vitesse", col_version: "Version", col_actions: "Actions",
+        settings_note: "Ces réglages n'affectent que votre pool. Les paramètres du réseau (split revenu, system prompt, etc.) sont gérés par le protocole et non modifiables ici.",
+        toggle_memory_repl: "Réplication mémoire",
+        toggle_memory_repl_desc: "Répliquer conversations + mémoires vers les pairs bondés",
+        toggle_gossip: "Gossip périodique",
+        toggle_gossip_desc: "Synchronisation automatique toutes les 60s",
+        toggle_accept_accounts: "Nouveaux comptes",
+        toggle_accept_accounts_desc: "Accepter de nouvelles inscriptions sur ce pool",
+        toggle_email_verif: "Vérification email",
+        toggle_email_verif_desc: "Vérification email obligatoire pour les nouveaux comptes",
+        toggle_auto_upgrade: "Auto-upgrade workers",
+        toggle_auto_upgrade_desc: "Pousser les mises à jour aux workers obsolètes",
+        loading: "Chargement...",
+        act_ban: "Bannir"
+    }
+};
+function setLang(lang) {
+    localStorage.setItem("admin_pool_lang", lang);
+    document.documentElement.lang = lang;
+    document.querySelectorAll("[data-i18n]").forEach(el => {
+        const k = el.getAttribute("data-i18n");
+        if (I18N[lang] && I18N[lang][k]) el.textContent = I18N[lang][k];
+    });
+    document.getElementById("lang-en").classList.toggle("active", lang === "en");
+    document.getElementById("lang-fr").classList.toggle("active", lang === "fr");
+}
+
+// ── Data loaders ──────────────────────────────────────────
+async function loadOverview() {
+    try {
+        const r = await fetch('/admin/api/pool-overview');
+        const d = await r.json();
+        document.getElementById('pool-name').textContent = d.name || '-';
+        document.getElementById('pool-url').textContent = d.url || '-';
+        document.getElementById('pool-version').textContent = d.version || '-';
+        document.getElementById('pool-atom').textContent = (d.atom_id || '').substring(0, 24) + '...';
+        document.getElementById('pool-uptime').textContent = formatUptime(d.uptime_sec || 0);
+        document.getElementById('ver').textContent = d.version || '?';
+
+        // Stats
+        document.getElementById('s-workers').textContent = d.workers_online || 0;
+        document.getElementById('s-busy').textContent = d.workers_busy || 0;
+        document.getElementById('s-jobs').textContent = d.total_jobs || 0;
+        document.getElementById('s-accounts').textContent = d.accounts_count || 0;
+        document.getElementById('s-conv').textContent = d.conversations_count || 0;
+        document.getElementById('s-memories').textContent = d.memories_count || 0;
+
+        // Workers table
+        const tbody = document.getElementById('workers-tbody');
+        if (d.workers && d.workers.length > 0) {
+            tbody.innerHTML = d.workers.map(w => `
+                <tr>
+                    <td class="mono">${escapeHtml(w.id)}</td>
+                    <td class="mono">${escapeHtml((w.model || '').split('/').pop().substring(0, 30))}</td>
+                    <td><span class="status-dot ${w.busy ? 'busy' : 'idle'}"></span>${w.busy ? 'busy' : 'idle'}</td>
+                    <td class="mono">${(w.real_tps || w.bench_tps || 0).toFixed(0)} t/s</td>
+                    <td class="mono">${w.version || '-'}</td>
+                    <td><button class="btn btn-danger" onclick="banWorker('${escapeHtml(w.id)}')">${getText('act_ban')}</button></td>
+                </tr>`).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text2);padding:1rem;">—</td></tr>';
+        }
+
+        // Peers
+        const peers = d.peers || [];
+        const peersDiv = document.getElementById('peers-list');
+        if (peers.length > 0) {
+            peersDiv.innerHTML = peers.map(p => `
+                <div class="peer-row">
+                    <div>
+                        <div class="peer-name">${escapeHtml(p.name || p.atom_id.substring(0, 12))}</div>
+                        <div class="peer-meta">${escapeHtml(p.url)} · ${p.last_sync_ago || 'never'}</div>
+                    </div>
+                    <div><span class="trust-badge trust-${p.trust_level}">trust ${p.trust_level}</span></div>
+                </div>`).join('');
+        } else {
+            peersDiv.innerHTML = '<div style="color:var(--text2);text-align:center;padding:1rem;">No bonded peers yet</div>';
+        }
+    } catch (e) {
+        console.error('overview load error:', e);
+    }
+}
+
+async function loadSettings() {
+    try {
+        const r = await fetch('/admin/api/pool-settings');
+        const d = await r.json();
+        setToggle('tog-memory-repl', d.memory_replication);
+        setToggle('tog-gossip', d.gossip_loop);
+        setToggle('tog-accounts', d.accept_new_accounts);
+        setToggle('tog-email', d.require_email_verif);
+        setToggle('tog-auto-upgrade', d.auto_push_updates);
+    } catch (e) {
+        console.error('settings load error:', e);
+    }
+}
+function setToggle(id, on) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.toggle('on', !!on);
+}
+async function toggle(key, el) {
+    const currentlyOn = el.classList.contains('on');
+    const newState = !currentlyOn;
+    el.classList.toggle('on', newState);  // Optimistic UI
+    try {
+        const r = await fetch('/admin/api/pool-settings', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({key, value: newState})
+        });
+        if (!r.ok) {
+            el.classList.toggle('on', currentlyOn);  // Revert
+            const err = await r.json();
+            alert((err.error || 'Failed') + (err.reason ? ': ' + err.reason : ''));
+        }
+    } catch (e) {
+        el.classList.toggle('on', currentlyOn);
+        alert('Network error');
+    }
+}
+
+async function banWorker(workerId) {
+    if (!confirm('Ban ' + workerId + ' from this pool?')) return;
+    try {
+        const r = await fetch('/admin/api/kick-worker', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({worker_id: workerId})
+        });
+        if (r.ok) loadOverview();
+        else alert('Ban failed');
+    } catch (e) {
+        alert('Network error');
+    }
+}
+
+async function loadActivity() {
+    try {
+        const r = await fetch('/admin/api/pool-activity');
+        const d = await r.json();
+        const box = document.getElementById('activity-log');
+        const entries = d.entries || [];
+        if (entries.length === 0) {
+            box.innerHTML = '<div style="color:var(--text2);text-align:center;padding:1rem;">—</div>';
+            return;
+        }
+        box.innerHTML = entries.map(e => `
+            <div class="log-line">
+                <span class="ts">${escapeHtml(e.time || '')}</span>
+                <span class="kind ${e.success === false ? 'error' : ''}">${escapeHtml(e.kind || '')}</span>
+                <span class="msg">${escapeHtml(e.msg || '')}</span>
+            </div>`).join('');
+    } catch (e) {
+        console.error('activity load error:', e);
+    }
+}
+
+// ── Helpers ──────────────────────────────────────────────
+function escapeHtml(s) {
+    const div = document.createElement('div');
+    div.textContent = String(s == null ? '' : s);
+    return div.innerHTML;
+}
+function formatUptime(sec) {
+    if (sec < 60) return sec + 's';
+    if (sec < 3600) return Math.floor(sec / 60) + 'm';
+    if (sec < 86400) return Math.floor(sec / 3600) + 'h ' + Math.floor((sec % 3600) / 60) + 'm';
+    return Math.floor(sec / 86400) + 'd ' + Math.floor((sec % 86400) / 3600) + 'h';
+}
+function getText(key) {
+    const lang = localStorage.getItem('admin_pool_lang') || 'en';
+    return (I18N[lang] && I18N[lang][key]) || key;
+}
+
+// ── Init ─────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    setLang(localStorage.getItem('admin_pool_lang') || 'en');
+    loadOverview();
+    loadSettings();
+    loadActivity();
+    setInterval(loadOverview, 10000);
+    setInterval(loadActivity, 15000);
+});
+</script>
+
+</body>
+</html>
