@@ -1005,15 +1005,52 @@ Piège : un prompt trop long mange du contexte (chaque token = -1 disponible pou
         </div>
     </div>
 
+    
     <div class="section" style="border-top:1px solid var(--border);padding-top:1.5rem;">
-        <h3 style="margin-bottom:0.75rem;">Configuration Email / SMTP<span class="info-i" data-tip="Paramètres du serveur SMTP utilisé par le pool pour envoyer des emails (alertes admin, vérifications email, settlement disputes).
+        <h3 style="margin-bottom:0.75rem;">Resend Email (principal)<span class="info-i" data-tip="Resend (resend.com) est le service d'envoi d'emails transactionnels utilisé en production.
+
+À quoi ça sert : envoyer les emails de vérification, alertes admin, et notifications utilisateur via une API HTTP simple (pas de SMTP).
+
+Recommandé : créer un compte sur resend.com, ajouter ton domaine (cellule.ai) avec SPF/DKIM, puis copier la clé API ici.
+
+Piège : la clé d'API doit être gardée secrète. Resend impose la vérification du domaine — sans ça, les emails partent en spam ou sont rejetés.">i</span></h3>
+        <p style="color:var(--text2);font-size:0.8rem;margin-bottom:1rem;">Service d'envoi via API HTTP. Configuré ici, lu par le code d'authentification (signup, magic link, alertes).</p>
+        <div style="display:grid;grid-template-columns:120px 1fr;gap:0.4rem 0.75rem;align-items:center;margin-bottom:1rem;">
+            <label style="font-size:0.85rem;color:var(--text2);">Clé API<span class="info-i" data-tip="Clé API Resend (commence par 're_').
+
+Où la trouver : Dashboard Resend → API Keys → Create API Key.
+
+Recommandé : créer une clé dédiée 'pool-vps' avec scope 'Sending access' uniquement.
+
+Piège : ne jamais commiter cette clé en clair dans git. Elle est masquée à l'affichage ici.">i</span></label>
+            <input id="resend-key" type="password" placeholder="re_xxx..." style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+            <label style="font-size:0.85rem;color:var(--text2);">Expéditeur<span class="info-i" data-tip="Adresse expéditeur visible dans le 'De' des emails.
+
+Format : 'Cellule.ai <noreply@cellule.ai>' ou juste 'noreply@cellule.ai'.
+
+Recommandé : le domaine doit être vérifié dans Resend (sinon Resend refusera l'envoi).
+
+Piège : si le domaine n'est pas vérifié côté Resend, l'envoi échoue silencieusement ou retourne 422.">i</span></label>
+            <input id="resend-from" placeholder="Cellule.ai <noreply@cellule.ai>" style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+            <label style="font-size:0.85rem;color:var(--text2);">Destinataire test</label>
+            <input id="resend-test-to" placeholder="david.mourgues@gmail.com" style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+        </div>
+        <div style="display:flex;gap:0.5rem;">
+            <button onclick="saveResend()" class="btn btn-primary btn-sm">Sauvegarder Resend</button>
+            <button onclick="testResend()" class="btn btn-primary btn-sm">Envoyer un test</button>
+        </div>
+        <div id="resend-result" style="color:var(--accent2);font-size:0.85rem;margin-top:0.5rem;"></div>
+    </div>
+
+    <div class="section" style="border-top:1px solid var(--border);padding-top:1.5rem;">
+        <h3 style="margin-bottom:0.75rem;">SMTP (fallback urgence — legacy)<span class="info-i" data-tip="Paramètres du serveur SMTP utilisé par le pool pour envoyer des emails (alertes admin, vérifications email, settlement disputes).
 
 Recommandé : utiliser un service transactionnel (Resend, Brevo) plutôt que Gmail (limites 500/jour, risque ban).
 
 Important : si tu utilises un domaine custom (noreply@cellule.ai), configure SPF/DKIM/DMARC dans ton DNS sinon les emails partent en spam.
 
 Test : utilise 'Envoyer un test' après config pour valider en bout-en-bout.">i</span></h3>
-        <p style="color:var(--text2);font-size:0.8rem;margin-bottom:1rem;">Parametres pour les alertes email (endpoint /admin/api/alert).</p>
+        <p style="color:var(--text2);font-size:0.8rem;margin-bottom:1rem;">Configuration SMTP de secours, utilisée uniquement si Resend ci-dessus n'est pas configuré ou échoue. À éviter en prod (Gmail/SMTP a des limites strictes).</p>
         <div style="display:grid;grid-template-columns:120px 1fr;gap:0.4rem 0.75rem;align-items:center;margin-bottom:1rem;">
             <label style="font-size:0.85rem;color:var(--text2);">Serveur SMTP<span class="info-i" data-tip="Adresse du serveur (smtp.gmail.com, smtp-mail.outlook.com, smtp-relay.brevo.com, smtp.resend.com).
 
@@ -1559,7 +1596,7 @@ function showTab(id) {
     if (idx >= 0 && btns[idx]) btns[idx].classList.add('active');
     if (id === 'home') loadHomeStats();
     if (id === 'workers-tab') loadWorkerSelector();
-    if (id === 'config-tab') { loadConfig(); loadSmtp(); loadSystemPrompt(); }
+    if (id === 'config-tab') { loadConfig(); loadSmtp(); loadSystemPrompt(); loadResend(); }
 
     if (id === 'checker-tab') { loadCheckerStatus(); }
     if (id === 'queue-tab') { loadQueue(); }
@@ -2140,6 +2177,49 @@ setTimeout(loadAccounts,2500);
     }
 
 </script>
-<script src="/static/admin_federation.js"></script>
+<script src="/static/admin_federation.js">
+async function loadResend() {
+    try {
+        const r = await fetch('/admin/api/resend-config');
+        const d = await r.json();
+        if (d.from) document.getElementById('resend-from').value = d.from;
+        if (d.api_key_masked) document.getElementById('resend-key').placeholder = d.api_key_masked + ' (already set, leave blank to keep)';
+    } catch(e) { /* silent */ }
+}
+async function saveResend() {
+    const apiKey = document.getElementById('resend-key').value;
+    const from = document.getElementById('resend-from').value;
+    const body = {};
+    if (apiKey) body.api_key = apiKey;
+    if (from) body.from = from;
+    try {
+        const r = await fetch('/admin/api/resend-config', {
+            method: 'POST', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify(body)
+        });
+        const d = await r.json();
+        document.getElementById('resend-result').textContent = d.ok ? 'Sauvegardé ✓' : ('Erreur : ' + (d.error || ''));
+        document.getElementById('resend-key').value = '';
+        loadResend();
+    } catch(e) {
+        document.getElementById('resend-result').textContent = 'Erreur réseau';
+    }
+}
+async function testResend() {
+    const to = document.getElementById('resend-test-to').value;
+    if (!to) { document.getElementById('resend-result').textContent = 'Renseigne un destinataire test'; return; }
+    document.getElementById('resend-result').textContent = 'Envoi en cours...';
+    try {
+        const r = await fetch('/admin/api/resend-test', {
+            method: 'POST', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({to})
+        });
+        const d = await r.json();
+        document.getElementById('resend-result').textContent = d.ok ? ('Email envoyé à ' + to + ' ✓') : ('Erreur : ' + (d.error || JSON.stringify(d)));
+    } catch(e) {
+        document.getElementById('resend-result').textContent = 'Erreur réseau';
+    }
+}
+</script>
 </body>
 </html>

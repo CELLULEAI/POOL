@@ -1706,3 +1706,101 @@ async def pool_activity(request: Request):
         log.warning(f"pool-activity load failed: {e}")
 
     return {"entries": entries}
+
+# ─── Resend Email (principal) ───────────────────────────────────────────────
+
+@router.get("/admin/api/resend-config")
+async def admin_resend_config_get(request: Request):
+    admin_email = await _check_admin(request)
+    if not admin_email:
+        return JSONResponse({"error": "not authorized"}, status_code=403)
+    pool = _pool()
+    cfg = {}
+    try:
+        async with pool.store.pool.acquire() as conn:
+            rows = await conn.fetch(
+                "SELECT key, value FROM pool_config WHERE key IN ('resend_api_key', 'resend_from')")
+            for row in rows:
+                cfg[row["key"]] = row["value"]
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+    api_key = cfg.get("resend_api_key", "")
+    return {
+        "from": cfg.get("resend_from", ""),
+        "api_key_masked": (api_key[:8] + "..." if api_key else ""),
+        "configured": bool(api_key),
+    }
+
+
+@router.post("/admin/api/resend-config")
+async def admin_resend_config_set(request: Request):
+    admin_email = await _check_admin(request)
+    if not admin_email:
+        return JSONResponse({"error": "not authorized"}, status_code=403)
+    data = await request.json()
+    pool = _pool()
+    try:
+        async with pool.store.pool.acquire() as conn:
+            await conn.execute("""
+                CREATE TABLE IF NOT EXISTS pool_config (
+                    key VARCHAR(128) PRIMARY KEY,
+                    value TEXT,
+                    updated_at TIMESTAMP DEFAULT now()
+                )
+            """)
+            if "api_key" in data and data["api_key"]:
+                await conn.execute("""
+                    INSERT INTO pool_config (key, value, updated_at)
+                    VALUES ('resend_api_key', $1, now())
+                    ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()
+                """, data["api_key"])
+            if "from" in data and data["from"]:
+                await conn.execute("""
+                    INSERT INTO pool_config (key, value, updated_at)
+                    VALUES ('resend_from', $1, now())
+                    ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()
+                """, data["from"])
+        return {"ok": True}
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@router.post("/admin/api/resend-test")
+async def admin_resend_test(request: Request):
+    admin_email = await _check_admin(request)
+    if not admin_email:
+        return JSONResponse({"error": "not authorized"}, status_code=403)
+    data = await request.json()
+    to = data.get("to", "").strip()
+    if not to:
+        return JSONResponse({"error": "missing 'to'"}, status_code=400)
+    pool = _pool()
+    try:
+        async with pool.store.pool.acquire() as conn:
+            rows = await conn.fetch(
+                "SELECT key, value FROM pool_config WHERE key IN ('resend_api_key', 'resend_from')")
+            cfg = {row["key"]: row["value"] for row in rows}
+        api_key = cfg.get("resend_api_key", "")
+        from_addr = cfg.get("resend_from", "noreply@cellule.ai")
+        if not api_key:
+            return JSONResponse({"error": "resend_api_key not configured"}, status_code=400)
+
+        import aiohttp as _aiohttp
+        async with _aiohttp.ClientSession(timeout=_aiohttp.ClientTimeout(total=10)) as s:
+            payload = {
+                "from": from_addr,
+                "to": [to],
+                "subject": "Test Cellule.ai admin — Resend",
+                "html": "<p>Ceci est un email de test envoyé depuis l'admin Cellule.ai via Resend.</p><p>Si tu reçois ce message, la configuration Resend fonctionne ✓</p>",
+            }
+            async with s.post("https://api.resend.com/emails",
+                              headers={"Authorization": f"Bearer {api_key}",
+                                       "Content-Type": "application/json"},
+                              json=payload) as r:
+                body = await r.text()
+                if r.status in (200, 201):
+                    return {"ok": True, "to": to, "resend_response": body[:200]}
+                return JSONResponse({"error": f"Resend HTTP {r.status}", "body": body[:300]},
+                                      status_code=500)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
