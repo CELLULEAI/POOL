@@ -77,6 +77,27 @@ def _is_active(pool) -> bool:
     return getattr(pool, "federation_mode", fed.FED_MODE_OFF) == fed.FED_MODE_ACTIVE
 
 
+
+
+async def _read_pool_config_bool(pool, key: str, default: bool = True) -> bool:
+    """Read a boolean flag from pool_config with fallback on default.
+
+    Used to honor pool-operator toggles (accept_forwarding, publish_capabilities)
+    configured via admin_pool.html.
+    """
+    try:
+        if not (hasattr(pool, "store") and hasattr(pool.store, "pool")):
+            return default
+        async with pool.store.pool.acquire() as conn:
+            v = await conn.fetchval(
+                "SELECT value FROM pool_config WHERE key=$1", key)
+        if v is None:
+            return default
+        return str(v).strip().lower() == "true"
+    except Exception:
+        return default
+
+
 # ─── GET /v1/federation/info (unsigned) ──────────────────────────────────────
 
 @router.get("/v1/federation/info")
@@ -84,7 +105,17 @@ async def federation_info():
     pool = _pool()
     if _is_off(pool):
         return JSONResponse({"mode": "off"}, status_code=503)
-    return _self_info_card(pool)
+
+    card = _self_info_card(pool)
+
+    # Pool-operator toggle: hide capabilities if publish_capabilities=false
+    if not await _read_pool_config_bool(pool, "publish_capabilities", default=True):
+        # Keep the identity card (needed for handshake) but strip capabilities
+        if isinstance(card, dict):
+            card = dict(card)
+            card["capabilities"] = []
+            card["private"] = True
+    return card
 
 
 # ─── GET /v1/federation/pools (public, unsigned) ─────────────────────────────
@@ -476,6 +507,13 @@ async def federation_peers(request: Request):
 @router.post("/v1/federation/job")
 async def federation_job(request: Request):
     pool = _pool()
+
+    # Pool-operator toggle: respect accept_forwarding
+    if not await _read_pool_config_bool(pool, "accept_forwarding", default=True):
+        return JSONResponse(
+            {"error": "this pool does not accept forwarded jobs",
+             "reason": "operator disabled accept_forwarding"},
+            status_code=503)
 
     raw_body = await request.body()
     try:
@@ -2113,6 +2151,14 @@ async def federation_discover():
     IPs are proxied via pool names (no raw IPs exposed).
     """
     pool = _pool()
+
+    # Pool-operator toggle: hide this pool from discovery when OFF
+    if not await _read_pool_config_bool(pool, "publish_capabilities", default=True):
+        return JSONResponse(
+            {"pools": [], "private": True,
+             "reason": "this pool does not publish capabilities"},
+            status_code=200)
+
     from ..core import federation as fed
     
     try:
