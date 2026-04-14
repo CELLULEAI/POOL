@@ -11,6 +11,13 @@ from fastapi.responses import JSONResponse
 
 router = APIRouter()
 log = logging.getLogger("iamine.pool")
+def _is_pool_operator_mode() -> bool:
+    """True if running as a community Docker pool (restricted mode)."""
+    import os
+    return os.environ.get("POOL_OPERATOR_MODE", "").strip().lower() in (
+        "1", "true", "yes", "on")
+
+
 
 
 # --- Lazy imports pour eviter les imports circulaires ---
@@ -33,6 +40,11 @@ def _version():
 # --- Page d'accueil ---
 @router.get("/")
 async def root():
+    # Pool operator mode: redirect public traffic to cellule.ai — the Docker
+    # image is for pool infrastructure, not for hosting the public site.
+    if _is_pool_operator_mode():
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url="https://cellule.ai", status_code=302)
     from fastapi.responses import FileResponse
     index = _static_dir() / "index.html"
     if index.exists():
@@ -147,7 +159,10 @@ async def pypi_root_index():
 # --- Pages speciales ---
 @router.get("/m")
 async def mobile_page():
-    """Page mobile epuree."""
+    """Page mobile epuree (redirect to cellule.ai in operator mode)."""
+    if _is_pool_operator_mode():
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url="https://cellule.ai/m", status_code=302)
     from fastapi.responses import FileResponse
     mobile = Path(__file__).parent.parent / "static" / "mobile-app.html"
     if mobile.exists():
@@ -203,13 +218,18 @@ async def contact(data: dict):
 @router.get("/new")
 async def new_frontend_deprecated():
     from fastapi.responses import RedirectResponse
+    if _is_pool_operator_mode():
+        return RedirectResponse(url="https://cellule.ai", status_code=302)
     return RedirectResponse(url="/", status_code=301)
 
 
 # --- Ancien frontend (chat, dashboard, login Google/email) ---
 @router.get("/app")
 async def app_frontend():
-    """Ancien frontend IAMINE — chat, dashboard, login Google/email."""
+    """Redirect to cellule.ai/app in pool operator mode."""
+    if _is_pool_operator_mode():
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url="https://cellule.ai/app", status_code=302)
     from fastapi.responses import FileResponse
     app_html = _static_dir() / "index_app.html"
     if app_html.exists():
