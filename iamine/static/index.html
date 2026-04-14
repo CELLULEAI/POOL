@@ -2997,6 +2997,10 @@ function formatUptime(sec) {
         var oi = workerIdx % 3;
         var orbits = assignOrbits(atomWorkers);
         var arr = orbits[oi];
+        /* Empty orbit fallback: happens when a worker busy at spawn time
+           has disconnected before a setTimeout-scheduled particle fires.
+           Without this, angle = 0/0 = NaN and poisons the draw loop. */
+        if (!arr || arr.length === 0) return { x: cx, y: cy };
         var jInOrbit = Math.floor(workerIdx / 3);
         if (jInOrbit >= arr.length) jInOrbit = 0;
         var r = baseR * (0.45 + oi * 0.28);
@@ -3430,6 +3434,13 @@ function formatUptime(sec) {
             var omt = 1 - ease2;
             var px = omt * omt * p.fromX + 2 * omt * ease2 * p.cpX + ease2 * ease2 * p.toX;
             var py = omt * omt * p.fromY + 2 * omt * ease2 * p.cpY + ease2 * ease2 * p.toY;
+
+            /* Defensive guard: drop particles with non-finite coords (prevents
+               createRadialGradient non-finite double crash which blanks the canvas) */
+            if (!isFinite(px) || !isFinite(py) || !isFinite(p.size)) {
+                jobParticles.splice(pi, 1);
+                continue;
+            }
 
             p.trail.push({ x: px, y: py, age: 0 });
             if (p.trail.length > 18) p.trail.shift();
