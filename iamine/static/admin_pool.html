@@ -247,18 +247,18 @@
 
         <div class="toggle-row">
             <div class="toggle-info">
-                <div class="name" data-i18n="toggle_accept_accounts">New Accounts</div>
-                <div class="desc" data-i18n="toggle_accept_accounts_desc">Accept new user signups on this pool</div>
+                <div class="name" data-i18n="toggle_forwarding">Accept cross-pool forwarding</div>
+                <div class="desc" data-i18n="toggle_forwarding_desc">ON: when another federated pool is saturated, its jobs overflow to your workers (M7a). You earn credits on each forwarded job. OFF: your pool only serves its own origin traffic.</div>
             </div>
-            <div class="toggle" id="tog-accounts" onclick="toggle('accept_new_accounts', this)"></div>
+            <div class="toggle" id="tog-forwarding" onclick="toggle('accept_forwarding', this)"></div>
         </div>
 
         <div class="toggle-row">
             <div class="toggle-info">
-                <div class="name" data-i18n="toggle_email_verif">Email Verification</div>
-                <div class="desc" data-i18n="toggle_email_verif_desc">Require email verification for new accounts</div>
+                <div class="name" data-i18n="toggle_publish_caps">Publish capabilities to the network</div>
+                <div class="desc" data-i18n="toggle_publish_caps_desc">ON: your pool appears in the public capability list (models, worker count, TPS) so contributors seeking a pool can find yours. OFF: your pool stays private — only explicit handshakes can reach it.</div>
             </div>
-            <div class="toggle" id="tog-email" onclick="toggle('require_email_verif', this)"></div>
+            <div class="toggle" id="tog-publish-caps" onclick="toggle('publish_capabilities', this)"></div>
         </div>
 
         <div class="toggle-row">
@@ -299,10 +299,10 @@ const I18N = {
         toggle_memory_repl_desc: "ON: your pool shares conversations and user memories with bonded peer pools — users can reconnect from any pool and recover their data. OFF: memories stay local (users lose their data if your pool goes down).",
         toggle_gossip: "Periodic Gossip",
         toggle_gossip_desc: "ON: every 60s, your pool pulls fresh data from bonded peers to catch anything a real-time push might have missed. Recommended in production. OFF: only real-time pushes (riskier on flaky networks).",
-        toggle_accept_accounts: "New Accounts",
-        toggle_accept_accounts_desc: "ON: anyone can create a new account via the signup form. OFF: signups disabled — only existing users (or accounts replicated from other pools) can log in. Useful to restrict your pool to a known user base.",
-        toggle_email_verif: "Email Verification",
-        toggle_email_verif_desc: "ON: new accounts must confirm their email via a code before activation (protects against spam/bots). OFF: accounts are usable immediately after signup. Recommended ON for public pools.",
+        toggle_forwarding: "Accept cross-pool forwarding",
+        toggle_forwarding_desc: "ON: when another federated pool is saturated, its jobs overflow to your workers (M7a). You earn credits on each forwarded job. OFF: your pool only serves its own origin traffic.",
+        toggle_publish_caps: "Publish capabilities to the network",
+        toggle_publish_caps_desc: "ON: your pool appears in the public capability list (models, worker count, TPS) so contributors seeking a pool can find yours. OFF: your pool stays private — only explicit handshakes can reach it.",
         toggle_auto_upgrade: "Auto-upgrade Workers",
         toggle_auto_upgrade_desc: "ON: outdated workers are automatically told to update themselves (pip install latest + restart) on connect. Keeps the network homogeneous. OFF: workers stay on their current version until upgraded manually.",
         loading: "Loading...",
@@ -329,10 +329,10 @@ const I18N = {
         toggle_memory_repl_desc: "ACTIF : votre pool partage conversations et mémoires utilisateur avec les pools fédérés bondés — les utilisateurs peuvent se reconnecter depuis n'importe quel pool et retrouver leurs données. INACTIF : les mémoires restent locales (les utilisateurs perdent leurs données si votre pool tombe).",
         toggle_gossip: "Gossip périodique",
         toggle_gossip_desc: "ACTIF : toutes les 60 secondes, votre pool récupère les données des pairs bondés pour rattraper ce qu'un push temps-réel aurait pu manquer. Recommandé en prod. INACTIF : seuls les pushes temps-réel sont utilisés (plus risqué sur réseau instable).",
-        toggle_accept_accounts: "Nouveaux comptes",
-        toggle_accept_accounts_desc: "ACTIF : n'importe qui peut créer un compte via le formulaire d'inscription. INACTIF : inscriptions désactivées — seuls les utilisateurs existants (ou comptes répliqués depuis d'autres pools) peuvent se connecter. Utile pour limiter votre pool à une base utilisateur connue.",
-        toggle_email_verif: "Vérification email",
-        toggle_email_verif_desc: "ACTIF : les nouveaux comptes doivent confirmer leur email via un code avant activation (protège contre spam/bots). INACTIF : les comptes sont utilisables immédiatement. Recommandé pour les pools publics.",
+        toggle_forwarding: "Accepter le forwarding inter-pool",
+        toggle_forwarding_desc: "ACTIF : quand un autre pool fédéré est saturé, ses jobs débordent vers vos workers (M7a). Vous gagnez des crédits pour chaque job forwardé. INACTIF : votre pool ne sert que son trafic d'origine.",
+        toggle_publish_caps: "Publier les capacités au réseau",
+        toggle_publish_caps_desc: "ACTIF : votre pool apparaît dans la liste publique des capacités (modèles, nombre de workers, TPS) pour que les contributeurs cherchant un pool puissent vous trouver. INACTIF : votre pool reste privé — seuls les handshakes explicites peuvent l'atteindre.",
         toggle_auto_upgrade: "Auto-upgrade workers",
         toggle_auto_upgrade_desc: "ACTIF : les workers obsolètes sont automatiquement mis à jour (pip install dernière version + redémarrage) dès connexion. Maintient le réseau homogène. INACTIF : les workers restent sur leur version actuelle jusqu'à upgrade manuel.",
         loading: "Chargement...",
@@ -418,8 +418,8 @@ async function loadSettings() {
         const d = await r.json();
         setToggle('tog-memory-repl', d.memory_replication);
         setToggle('tog-gossip', d.gossip_loop);
-        setToggle('tog-accounts', d.accept_new_accounts);
-        setToggle('tog-email', d.require_email_verif);
+        setToggle('tog-forwarding', d.accept_forwarding);
+        setToggle('tog-publish-caps', d.publish_capabilities);
         setToggle('tog-auto-upgrade', d.auto_push_updates);
     } catch (e) {
         console.error('settings load error:', e);

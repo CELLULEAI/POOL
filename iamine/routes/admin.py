@@ -1433,11 +1433,11 @@ async def admin_push_update(request: Request):
 # Whitelist of pool-operator-settable toggles. Anything NOT in this list
 # cannot be changed via the pool admin UI (protects network invariants).
 POOL_OPERATOR_SETTABLE = {
-    "memory_replication",       # MEMORY_REPLICATION_ENABLED
-    "gossip_loop",              # MEMORY_GOSSIP_LOOP_ENABLED
-    "accept_new_accounts",      # pool_config
-    "require_email_verif",      # pool_config
-    "auto_push_updates",        # pool_config
+    "memory_replication",       # MEMORY_REPLICATION_ENABLED (env, needs restart)
+    "gossip_loop",              # MEMORY_GOSSIP_LOOP_ENABLED (env, needs restart)
+    "accept_forwarding",        # pool_config — accept M7a cross-pool overflow jobs
+    "publish_capabilities",     # pool_config — list this pool in /v1/federation/info capabilities
+    "auto_push_updates",        # pool_config — push self_update to outdated workers
 }
 
 
@@ -1579,8 +1579,8 @@ async def pool_settings_get(request: Request):
     return {
         "memory_replication": _env_bool("MEMORY_REPLICATION_ENABLED"),
         "gossip_loop": _env_bool("MEMORY_GOSSIP_LOOP_ENABLED"),
-        "accept_new_accounts": pool_cfg.get("accept_new_accounts", "true") == "true",
-        "require_email_verif": pool_cfg.get("require_email_verif", "false") == "true",
+        "accept_forwarding": pool_cfg.get("accept_forwarding", "true") == "true",
+        "publish_capabilities": pool_cfg.get("publish_capabilities", "true") == "true",
         "auto_push_updates": pool_cfg.get("auto_push_updates", "true") == "true",
     }
 
