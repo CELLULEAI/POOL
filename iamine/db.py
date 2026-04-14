@@ -655,7 +655,8 @@ class PostgresStore(Store):
                 try:
                     await conn.execute(sql)
                     await conn.execute(
-                        "INSERT INTO schema_version (version, filename) VALUES ($1, $2)",
+                        "INSERT INTO schema_version (version, filename) "
+                        "VALUES ($1, $2) ON CONFLICT (version) DO NOTHING",
                         version, mf.name
                     )
                     applied += 1
