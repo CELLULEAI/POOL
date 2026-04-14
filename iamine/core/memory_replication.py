@@ -751,14 +751,21 @@ async def ingest_conversations(pool, payload: dict, from_atom_id: str) -> dict:
 
 async def _load_episodes_for_replication(pool, since_ts=None,
                                            limit: int = PAGE_EPISODES) -> list[dict]:
-    """Load agent_episodes rows for replication."""
+    """Load agent_episodes rows for replication.
+
+    Uses the real M13 Phase 1 schema:
+    id, token_hash, conv_id, title, summary_enc, salt, embedding, outcome,
+    participants, observation_count, importance, access_count, last_accessed,
+    decay_factor, created_at.
+    """
     try:
         async with pool.store.pool.acquire() as conn:
             if since_ts is not None:
                 rows = await conn.fetch("""
-                    SELECT id, token_hash, episode_type, summary_enc, salt,
-                           embedding::text as embedding, observation_ids,
-                           started_at, ended_at, metadata, created_at
+                    SELECT id, token_hash, conv_id, title, summary_enc, salt,
+                           embedding::text as embedding, outcome, participants,
+                           observation_count, importance, access_count,
+                           decay_factor, created_at
                       FROM agent_episodes
                      WHERE created_at > $1
                      ORDER BY created_at ASC
@@ -766,9 +773,10 @@ async def _load_episodes_for_replication(pool, since_ts=None,
                 """, since_ts, limit)
             else:
                 rows = await conn.fetch("""
-                    SELECT id, token_hash, episode_type, summary_enc, salt,
-                           embedding::text as embedding, observation_ids,
-                           started_at, ended_at, metadata, created_at
+                    SELECT id, token_hash, conv_id, title, summary_enc, salt,
+                           embedding::text as embedding, outcome, participants,
+                           observation_count, importance, access_count,
+                           decay_factor, created_at
                       FROM agent_episodes
                      ORDER BY created_at DESC
                      LIMIT $1
@@ -877,18 +885,21 @@ async def ingest_episodes(pool, payload: dict, from_atom_id: str) -> dict:
                     obs_ids = ep.get("observation_ids") or []
                     await conn.execute("""
                         INSERT INTO agent_episodes
-                            (token_hash, episode_type, summary_enc, salt,
-                             embedding, observation_ids, started_at, ended_at,
-                             metadata, created_at)
-                        VALUES ($1, $2, $3, $4, $5::vector, $6, $7, $8,
-                                $9::jsonb, $10)
+                            (token_hash, conv_id, title, summary_enc, salt,
+                             embedding, outcome, participants, observation_count,
+                             importance, access_count, decay_factor, created_at)
+                        VALUES ($1, $2, $3, $4, $5, $6::vector, $7, $8, $9,
+                                $10, $11, $12, $13)
                         ON CONFLICT DO NOTHING
-                    """, ep["token_hash"], ep.get("episode_type", "generic"),
-                        ep["summary_enc"], ep["salt"], ep.get("embedding"),
-                        obs_ids,
-                        _iso_to_dt(ep.get("started_at")),
-                        _iso_to_dt(ep.get("ended_at")),
-                        meta,
+                    """, ep["token_hash"], ep.get("conv_id"),
+                        ep.get("title"), ep["summary_enc"], ep["salt"],
+                        ep.get("embedding"),
+                        ep.get("outcome", "neutral"),
+                        ep.get("participants") or [],
+                        ep.get("observation_count", 0),
+                        ep.get("importance", 0.5),
+                        ep.get("access_count", 0),
+                        ep.get("decay_factor", 1.0),
                         _iso_to_dt(ep.get("created_at")))
                     ingested += 1
                 except Exception as e:
@@ -937,12 +948,14 @@ async def regenerate_relationships_for_token(pool, token_hash: str) -> dict:
                 ON CONFLICT DO NOTHING
             """, token_hash)
 
-            # Track invariant 3: relationships were rebuilt
+            # Track invariant 3: relationships were rebuilt.
+            # Schema uses consolidation_type (not event_type/details).
             await conn.execute("""
                 INSERT INTO memory_consolidation_log
-                    (token_hash, event_type, details, relationships_rebuilt_at)
-                VALUES ($1, 'relationships_regen', $2, now())
-            """, token_hash, json.dumps({"source": "replication_trigger"}))
+                    (token_hash, consolidation_type, input_count,
+                     relationships_rebuilt_at, created_at)
+                VALUES ($1, 'relationships_regen', 0, now(), now())
+            """, token_hash)
 
         log.info(f"RELATIONSHIPS: regen complete for {token_hash[:8]}...")
         return {"rebuilt": "ok", "token_hash_prefix": token_hash[:8]}
