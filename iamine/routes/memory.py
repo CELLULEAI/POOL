@@ -306,36 +306,68 @@ async def federation_memory_forget(request: Request):
 # All require trust level 3 (TRUST_BONDED) via Ed25519 envelope.
 # ---------------------------------------------------------------------------
 
-async def _verify_bonded_peer(request: Request, p) -> tuple[str, object]:
+async def _verify_bonded_peer(request: Request, p, body: bytes = b"") -> tuple[str, object]:
     """Return (from_atom_id, error_response_or_None).
 
-    Validates the X-IAMINE-Atom-Id header points to a trust >= 3 peer.
-    Reads trust_level from DB (federation_peers) for resilience.
+    M6-compliant verification for M11.5 routes:
+    1. Lookup peer pubkey + trust_level in DB via X-IAMINE-Atom-Id header
+    2. Require trust_level >= TRUST_REPLICATION_BONDED (3)
+    3. Delegate signature verification to core.federation.enforce_fed_policy
+       (kill switch + mode + Ed25519 envelope)
+
+    Unified with M6 enforcement pattern — no ad-hoc signature bypass.
+    The caller must pass the raw request body for signature verification.
     """
+    from ..core import federation as _fed
+
     from_atom_id = request.headers.get("X-IAMINE-Atom-Id", "")
     if not from_atom_id:
         return "", JSONResponse({"error": "missing federation headers"},
                                   status_code=403)
+
+    # Step 1: fetch peer pubkey + trust_level
+    peer_pubkey = None
     trust = 0
     try:
         async with p.store.pool.acquire() as conn:
             row = await conn.fetchrow(
-                "SELECT trust_level FROM federation_peers "
+                "SELECT trust_level, pubkey FROM federation_peers "
                 "WHERE atom_id=$1 AND revoked_at IS NULL",
                 from_atom_id)
             if row:
                 trust = int(row["trust_level"])
-        log.info(f"[M11.5 verify] peer={from_atom_id[:12]} trust={trust}")
+                peer_pubkey = bytes(row["pubkey"]) if row["pubkey"] else None
     except Exception as e:
-        import traceback
-        log.warning(f"[M11.5 verify] DB error for {from_atom_id[:12]}: {e}")
-        log.warning(traceback.format_exc())
-        trust = 0
-    if trust < 3:
+        log.warning(f"[M11.5 verify] DB lookup error for {from_atom_id[:12]}: {e}")
+
+    # Step 2: trust level gate (TRUST_REPLICATION_BONDED = 3)
+    if trust < _fed.TRUST_REPLICATION_BONDED:
         return from_atom_id, JSONResponse(
-            {"error": "insufficient trust (requires bonded/trust=3)",
+            {"error": "insufficient trust (requires replication-bonded, trust>=3)",
              "current_trust": trust},
             status_code=403)
+
+    if peer_pubkey is None:
+        return from_atom_id, JSONResponse(
+            {"error": "peer pubkey missing — cannot verify signature"},
+            status_code=403)
+
+    # Step 3: M6 enforcement — kill switch + mode + Ed25519 signature
+    reject, sig_ok = await _fed.enforce_fed_policy(
+        p, request, request.method, request.url.path + ("?" + request.url.query if request.url.query else ""), body,
+        peer_pubkey=peer_pubkey, require_signature=True,
+    )
+    if reject:
+        return from_atom_id, JSONResponse(
+            {"error": reject.get("error", "federation rejected")},
+            status_code=reject.get("status_code", 403))
+
+    # In observe mode, sig_ok may be False with no reject — still pass through
+    # but log the asymmetry. In active mode, invalid sig already rejected above.
+    if not sig_ok:
+        log.info(f"[M11.5 verify] sig_ok=False in observe mode, "
+                 f"passing through from {from_atom_id[:12]}")
+
     return from_atom_id, None
 
 
@@ -344,10 +376,14 @@ async def federation_conversations_ingest(request: Request):
     """Receive replicated conversations from a bonded peer.
     Messages are Fernet-encrypted blobs (zero-knowledge preserved)."""
     p = _pool()
-    from_atom_id, err = await _verify_bonded_peer(request, p)
+
+    body = await request.body()
+
+    from_atom_id, err = await _verify_bonded_peer(request, p, body)
     if err:
         return err
-    data = await request.json()
+    import json as _json
+    data = _json.loads(body.decode() or "{}")
     from ..core.memory_replication import ingest_conversations
     result = await ingest_conversations(p, data, from_atom_id)
     return result
@@ -357,10 +393,14 @@ async def federation_conversations_ingest(request: Request):
 async def federation_episodes_ingest(request: Request):
     """Receive replicated agent_episodes (T2) from a bonded peer."""
     p = _pool()
-    from_atom_id, err = await _verify_bonded_peer(request, p)
+
+    body = await request.body()
+
+    from_atom_id, err = await _verify_bonded_peer(request, p, body)
     if err:
         return err
-    data = await request.json()
+    import json as _json
+    data = _json.loads(body.decode() or "{}")
     from ..core.memory_replication import ingest_episodes
     result = await ingest_episodes(p, data, from_atom_id)
     return result
@@ -378,7 +418,10 @@ async def federation_memory_since(request: Request):
     Invariant 4: returns {rows, count, latest_ts} — NO merkle.
     """
     p = _pool()
-    from_atom_id, err = await _verify_bonded_peer(request, p)
+
+    body = await request.body()
+
+    from_atom_id, err = await _verify_bonded_peer(request, p, body)
     if err:
         return err
 
