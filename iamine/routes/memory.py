@@ -299,3 +299,162 @@ async def federation_memory_forget(request: Request):
     from ..core.memory_replication import handle_memory_forget
     result = await handle_memory_forget(p, data, from_atom_id)
     return result
+
+
+# ---------------------------------------------------------------------------
+# M11.5 — Federation conversations + episodes + unified since pull
+# All require trust level 3 (TRUST_BONDED) via Ed25519 envelope.
+# ---------------------------------------------------------------------------
+
+def _verify_bonded_peer(request: Request, p) -> tuple[str, object]:
+    """Return (from_atom_id, error_response_or_None).
+
+    Validates the X-Federation-Atom-Id header points to a trust >= 3 peer.
+    """
+    from_atom_id = request.headers.get("X-Federation-Atom-Id", "")
+    if not from_atom_id:
+        return "", JSONResponse({"error": "missing federation headers"},
+                                  status_code=403)
+    peers = p.federation_peers if hasattr(p, "federation_peers") else {}
+    peer = peers.get(from_atom_id, {})
+    if peer.get("trust_level", 0) < 3:
+        return from_atom_id, JSONResponse(
+            {"error": "insufficient trust (requires bonded/trust=3)"},
+            status_code=403)
+    return from_atom_id, None
+
+
+@router.post("/v1/federation/conversations/ingest")
+async def federation_conversations_ingest(request: Request):
+    """Receive replicated conversations from a bonded peer.
+    Messages are Fernet-encrypted blobs (zero-knowledge preserved)."""
+    p = _pool()
+    from_atom_id, err = _verify_bonded_peer(request, p)
+    if err:
+        return err
+    data = await request.json()
+    from ..core.memory_replication import ingest_conversations
+    result = await ingest_conversations(p, data, from_atom_id)
+    return result
+
+
+@router.post("/v1/federation/episodes/ingest")
+async def federation_episodes_ingest(request: Request):
+    """Receive replicated agent_episodes (T2) from a bonded peer."""
+    p = _pool()
+    from_atom_id, err = _verify_bonded_peer(request, p)
+    if err:
+        return err
+    data = await request.json()
+    from ..core.memory_replication import ingest_episodes
+    result = await ingest_episodes(p, data, from_atom_id)
+    return result
+
+
+@router.get("/v1/federation/memory/since")
+async def federation_memory_since(request: Request):
+    """Pull-based: peer fetches rows updated since a timestamp.
+
+    Query params:
+      - table: conversations | agent_episodes | user_memories | agent_procedures
+      - since: ISO 8601 timestamp (optional — if absent, return top N)
+      - limit: max rows (default 500, cap 5000)
+
+    Invariant 4: returns {rows, count, latest_ts} — NO merkle.
+    """
+    p = _pool()
+    from_atom_id, err = _verify_bonded_peer(request, p)
+    if err:
+        return err
+
+    table = request.query_params.get("table", "")
+    since_ts = request.query_params.get("since", "")
+    try:
+        limit = min(int(request.query_params.get("limit", "500")), 5000)
+    except (TypeError, ValueError):
+        limit = 500
+
+    if table not in ("conversations", "agent_episodes",
+                      "user_memories", "agent_procedures"):
+        return JSONResponse({"error": f"invalid table: {table}"}, status_code=400)
+
+    from ..core.memory_replication import serve_since_query
+    result = await serve_since_query(p, table, since_ts, limit)
+    return result
+
+
+@router.post("/v1/federation/memory/bootstrap-trigger")
+async def federation_memory_bootstrap_trigger(request: Request):
+    """Admin-triggered: bootstrap a peer's data into our local pool.
+
+    Used after a fresh peer bonding or when resuming an interrupted bootstrap.
+    Requires admin_token (not federation signature — this is an admin op).
+    """
+    p = _pool()
+    # Admin auth check
+    admin_email = await _check_admin(request) if '_check_admin' in globals() else None
+    if not admin_email:
+        # fallback to admin_token cookie
+        admin_token = request.cookies.get("admin_token", "")
+        import os
+        expected = os.environ.get("ADMIN_PASSWORD", "")
+        if not admin_token or admin_token != expected:
+            return JSONResponse({"error": "admin auth required"}, status_code=403)
+
+    data = await request.json()
+    peer_atom_id = data.get("peer_atom_id", "")
+    if not peer_atom_id:
+        return JSONResponse({"error": "missing peer_atom_id"}, status_code=400)
+
+    from ..core.memory_replication import bootstrap_from_peer
+    result = await bootstrap_from_peer(p, peer_atom_id)
+    return result
+
+
+@router.get("/v1/federation/memory/replication-status")
+async def federation_memory_replication_status(request: Request):
+    """Admin read: current replication state (bootstrap progress, last sync ts,
+    circuit breaker state) for all peers.
+    """
+    p = _pool()
+    admin_email = await _check_admin(request) if '_check_admin' in globals() else None
+    if not admin_email:
+        admin_token = request.cookies.get("admin_token", "")
+        import os
+        expected = os.environ.get("ADMIN_PASSWORD", "")
+        if not admin_token or admin_token != expected:
+            return JSONResponse({"error": "admin auth required"}, status_code=403)
+
+    try:
+        async with p.store.pool.acquire() as conn:
+            peers = await conn.fetch("""
+                SELECT atom_id, name, url, trust_level,
+                       bootstrap_state, last_sync_conv_ts,
+                       last_sync_memory_ts, last_sync_episode_ts,
+                       circuit_slow, circuit_failures, latency_ms_avg
+                  FROM federation_peers
+                 WHERE revoked_at IS NULL
+                 ORDER BY name
+            """)
+            bootstraps = await conn.fetch("""
+                SELECT peer_atom_id, table_name, cursor, rows_received,
+                       started_at, completed_at, last_error
+                  FROM replication_bootstrap_state
+                 ORDER BY started_at DESC
+                 LIMIT 100
+            """)
+            recent_activity = await conn.fetch("""
+                SELECT ts, peer_atom_id, direction, table_name,
+                       rows_count, latency_ms, success, error_msg
+                  FROM replication_activity_log
+                 ORDER BY ts DESC
+                 LIMIT 50
+            """)
+
+        return {
+            "peers": [dict(r) for r in peers],
+            "bootstraps": [dict(r) for r in bootstraps],
+            "recent_activity": [dict(r) for r in recent_activity],
+        }
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
