@@ -1226,8 +1226,13 @@ async def initialize_federation(pool) -> None:
         log.info("federation: IAMINE_FED=off, skipping keygen")
         return
 
-    name = os.environ.get("IAMINE_FED_NAME") or os.environ.get("HOSTNAME") or "unnamed-pool"
-    url = os.environ.get("IAMINE_FED_URL", "")
+    name = (os.environ.get("IAMINE_FED_NAME")
+            or os.environ.get("POOL_NAME")
+            or os.environ.get("HOSTNAME")
+            or "unnamed-pool")
+    url = (os.environ.get("IAMINE_FED_URL")
+           or os.environ.get("POOL_URL")
+           or "")
     molecule_id = os.environ.get("IAMINE_FED_MOLECULE")
 
     key_dir = _key_dir()

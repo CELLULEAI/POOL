@@ -305,7 +305,13 @@ const I18N = {
         toggle_auto_upgrade: "Auto-upgrade Workers",
         toggle_auto_upgrade_desc: "Push updates to workers running older versions",
         loading: "Loading...",
-        act_ban: "Ban"
+        act_ban: "Ban",
+        peers_empty: "No bonded peers yet",
+        err_network: "Network error",
+        err_ban: "Ban failed",
+        confirm_ban: "Ban this worker from this pool?",
+        err_toggle_failed: "Failed",
+        time_never: "never"
     },
     fr: {
         nav_site: "Site", nav_api: "API", nav_logout: "Déconnexion",
@@ -329,7 +335,13 @@ const I18N = {
         toggle_auto_upgrade: "Auto-upgrade workers",
         toggle_auto_upgrade_desc: "Pousser les mises à jour aux workers obsolètes",
         loading: "Chargement...",
-        act_ban: "Bannir"
+        act_ban: "Bannir",
+        peers_empty: "Aucun pair fédéré pour le moment",
+        err_network: "Erreur réseau",
+        err_ban: "Bannissement échoué",
+        confirm_ban: "Bannir ce worker de ce pool ?",
+        err_toggle_failed: "Échec",
+        time_never: "jamais"
     }
 };
 function setLang(lang) {
@@ -387,12 +399,12 @@ async function loadOverview() {
                 <div class="peer-row">
                     <div>
                         <div class="peer-name">${escapeHtml(p.name || p.atom_id.substring(0, 12))}</div>
-                        <div class="peer-meta">${escapeHtml(p.url)} · ${p.last_sync_ago || 'never'}</div>
+                        <div class="peer-meta">${escapeHtml(p.url)} · ${p.last_sync_ago || getText('time_never')}</div>
                     </div>
                     <div><span class="trust-badge trust-${p.trust_level}">trust ${p.trust_level}</span></div>
                 </div>`).join('');
         } else {
-            peersDiv.innerHTML = '<div style="color:var(--text2);text-align:center;padding:1rem;">No bonded peers yet</div>';
+            peersDiv.innerHTML = '<div style="color:var(--text2);text-align:center;padding:1rem;">' + getText('peers_empty') + '</div>';
         }
     } catch (e) {
         console.error('overview load error:', e);
@@ -429,25 +441,25 @@ async function toggle(key, el) {
         if (!r.ok) {
             el.classList.toggle('on', currentlyOn);  // Revert
             const err = await r.json();
-            alert((err.error || 'Failed') + (err.reason ? ': ' + err.reason : ''));
+            alert((err.error || getText('err_toggle_failed')) + (err.reason ? ': ' + err.reason : ''));
         }
     } catch (e) {
         el.classList.toggle('on', currentlyOn);
-        alert('Network error');
+        alert(getText('err_network'));
     }
 }
 
 async function banWorker(workerId) {
-    if (!confirm('Ban ' + workerId + ' from this pool?')) return;
+    if (!confirm(getText('confirm_ban') + ' (' + workerId + ')')) return;
     try {
         const r = await fetch('/admin/api/kick-worker', {
             method: 'POST', headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({worker_id: workerId})
         });
         if (r.ok) loadOverview();
-        else alert('Ban failed');
+        else alert(getText('err_ban'));
     } catch (e) {
-        alert('Network error');
+        alert(getText('err_network'));
     }
 }
 
