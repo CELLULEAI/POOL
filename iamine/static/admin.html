@@ -1629,14 +1629,17 @@ async function loadWorkerSelector() {
         });
         // Populate model selector
         const msel = document.getElementById('w-assign-model');
-        if (msel.options.length <= 1) {
-            const mr = await fetch('/admin/api/families');
+        try {
+            const mr = await fetch('/admin/api/families?t=' + Date.now(), {cache: 'no-store'});
             const md = await mr.json();
-            msel.innerHTML = '<option value="">-- Modele --</option>';
+            const prev = msel.value;
+            msel.innerHTML = '<option value="">-- Modele a assigner --</option>';
             (md.models || []).forEach(m => {
                 msel.innerHTML += `<option value="${m.id}">${m.name} (${m.params})</option>`;
             });
-        }
+            if (prev) msel.value = prev;
+            console.log('[workers] loaded ' + (md.models||[]).length + ' models');
+        } catch(err) { console.error('[workers] family fetch failed', err); }
         if (current) onWorkerSelect();
     } catch(e) {}
 }
@@ -2181,7 +2184,8 @@ setTimeout(loadAccounts,2500);
     }
 
 </script>
-<script src="/static/admin_federation.js">
+<script src="/static/admin_federation.js"></script>
+<script>
 async function loadResend() {
     try {
         const r = await fetch('/admin/api/resend-config');

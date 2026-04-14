@@ -436,12 +436,17 @@ async def admin_set_ctx(request: Request):
 async def admin_families():
     """Liste les familles disponibles et la famille active."""
     from iamine.models import MODEL_FAMILIES, get_active_family
+    active = get_active_family()
     return {
-        "active": get_active_family(),
+        "active": active,
         "available": {
             k: {"models": len(v), "sizes": [m.params for m in v]}
             for k, v in MODEL_FAMILIES.items()
         },
+        "models": [
+            {"id": m.id, "name": m.name, "params": m.params}
+            for m in MODEL_FAMILIES.get(active, [])
+        ],
     }
 
 
