@@ -17,6 +17,55 @@
             --red: #ff4444; --purple: #8b5cf6;
         }
 
+        /* ── Info tooltips (detailed help bubbles) ──────────────────── */
+        .info-i {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: rgba(0,212,255,0.12);
+            color: var(--neon-blue);
+            font-size: 11px; font-weight: 700;
+            cursor: help;
+            margin-left: 0.5rem;
+            position: relative;
+            user-select: none;
+            font-family: serif;
+            font-style: italic;
+            transition: background 0.2s;
+            vertical-align: middle;
+        }
+        .info-i:hover { background: rgba(0,212,255,0.25); }
+        .info-i::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            min-width: 320px;
+            max-width: 420px;
+            padding: 12px 14px;
+            background: rgba(15,15,25,0.98);
+            border: 1px solid rgba(0,212,255,0.4);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: 'Inter',-apple-system,sans-serif;
+            font-size: 0.78rem;
+            font-style: normal;
+            font-weight: 400;
+            line-height: 1.45;
+            text-align: left;
+            white-space: pre-line;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6), 0 0 30px rgba(0,212,255,0.15);
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.18s, visibility 0.18s;
+            z-index: 10000;
+            pointer-events: none;
+        }
+        .info-i:hover::after { opacity: 1; visibility: visible; }
+        .info-i.right::after { left: auto; right: 0; transform: none; }
+
+
+
         /* ── Cellule.ai buttons & forms ───────────────────────────── */
         .btn {
             display: inline-block;
@@ -901,30 +950,37 @@
     <h2>Configuration du <span>Pool</span></h2>
 
     <div class="section">
-        <h3 style="margin-bottom:0.5rem;">Famille active</h3>
+        <h3 style="margin-bottom:0.5rem;">Famille active<span class="info-i" data-tip="La famille de modèles LLM utilisée par le pool (qwen3.5, llama, etc.).
+Tous les workers du pool téléchargent et exécutent les modèles de cette famille.
+
+À quoi ça sert : changer collectivement la version/famille de tous les workers en une seule opération admin.
+
+Recommandé : laisser sur la famille en cours sauf migration majeure. Changer redémarre les workers et déclenche un téléchargement (10-30 min selon taille du modèle).
+
+Piège : pendant le download, le pool est dégradé (workers offline). À éviter en heures de pointe.">i</span></h3>
         <div style="display:flex;gap:0.5rem;margin-bottom:1rem;" id="family-selector"></div>
         <div id="c-family-result" style="color:var(--accent2);font-size:0.85rem;"></div>
     </div>
 
     <div class="section">
-        <h3 style="margin-bottom:0.5rem;">Routing Tool-calls</h3>
-        <p style="font-size:0.8rem;color:var(--text2);margin-bottom:0.5rem;">Worker qui recevra les tool-calls (OpenCode, aider, Cursor...)</p>
-        <div style="display:flex;gap:0.5rem;align-items:center;">
-            <select id="cfg-tool-model" style="flex:1;max-width:400px;padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:0.85rem;">
-                <option value="">Chargement...</option>
-            </select>
-            <button onclick="saveToolModel()" class="btn btn-primary btn-sm">Appliquer</button>
-        </div>
-        <div id="cfg-tool-result" style="color:var(--accent2);font-size:0.85rem;margin-top:0.3rem;"></div>
-    </div>
+        <h3 style="margin-bottom:0.5rem;">Configuration Pool (DB)<span class="info-i" data-tip="Vue lecture seule de toutes les clés stockées en DB (table pool_config).
 
-    <div class="section">
-        <h3 style="margin-bottom:0.5rem;">Configuration Pool (DB)</h3>
+À quoi ça sert : auditer rapidement ce qui est configuré sans passer par psql.
+
+Recommandé : vérifier les valeurs avant modification dans 'Modifier une clé' ci-dessous.
+
+Piège : certaines clés contiennent des secrets (smtp_pass) affichés en clair. Ne pas screenshot ce panel.">i</span></h3>
         <div id="config-list" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1rem;font-family:monospace;font-size:0.85rem;max-height:300px;overflow-y:auto;"></div>
     </div>
 
     <div class="section">
-        <h3 style="margin-bottom:0.5rem;">Modifier une cle</h3>
+        <h3 style="margin-bottom:0.5rem;">Modifier une cle<span class="info-i" data-tip="Ajoute ou met à jour une clé dans pool_config (effet immédiat sans restart pour la plupart).
+
+Clés courantes : system_prompt, tool_routing_model (vide=tous workers), accept_forwarding, publish_capabilities, smtp_*, alert_*
+
+Recommandé : copier le nom exact depuis la liste 'Configuration Pool (DB)' ci-dessus.
+
+Piège : ⚠ ne PAS inventer une clé. Une faute de frappe peut créer une clé orpheline ou désactiver une feature. Toujours vérifier dans la liste avant.">i</span></h3>
         <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
             <input id="c-key" placeholder="Key" class="input" style="width:200px">
             <input id="c-val" placeholder="Value" class="input" style="width:300px">
@@ -934,7 +990,13 @@
     </div>
 
     <div class="section" style="border-top:1px solid var(--border);padding-top:1.5rem;">
-        <h3 style="margin-bottom:0.5rem;">System Prompt</h3>
+        <h3 style="margin-bottom:0.5rem;">System Prompt<span class="info-i" data-tip="Texte invisible envoyé à l'IA AVANT chaque message utilisateur. Définit l'identité, le ton et les contraintes du modèle.
+
+À quoi ça sert : forcer le LLM à se présenter comme assistant neutre, répondre dans la langue de l'utilisateur, être concis, etc.
+
+Recommandé : court (1-3 phrases). Vide = comportement par défaut du modèle.
+
+Piège : un prompt trop long mange du contexte (chaque token = -1 disponible pour la conversation). Évite les pavés marketing — l'UX s'en ressent.">i</span></h3>
         <p style="color:var(--text2);font-size:0.8rem;margin-bottom:0.75rem;">Le prompt systeme injecte dans chaque conversation. Changement pris en compte immediatement.</p>
         <textarea id="system-prompt-textarea" rows="8" style="width:100%;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:10px;font-family:monospace;font-size:0.85rem;resize:vertical;box-sizing:border-box;"></textarea>
         <div style="display:flex;gap:0.75rem;align-items:center;margin-top:0.5rem;">
@@ -944,20 +1006,54 @@
     </div>
 
     <div class="section" style="border-top:1px solid var(--border);padding-top:1.5rem;">
-        <h3 style="margin-bottom:0.75rem;">Configuration Email / SMTP</h3>
+        <h3 style="margin-bottom:0.75rem;">Configuration Email / SMTP<span class="info-i" data-tip="Paramètres du serveur SMTP utilisé par le pool pour envoyer des emails (alertes admin, vérifications email, settlement disputes).
+
+Recommandé : utiliser un service transactionnel (Resend, Brevo) plutôt que Gmail (limites 500/jour, risque ban).
+
+Important : si tu utilises un domaine custom (noreply@cellule.ai), configure SPF/DKIM/DMARC dans ton DNS sinon les emails partent en spam.
+
+Test : utilise 'Envoyer un test' après config pour valider en bout-en-bout.">i</span></h3>
         <p style="color:var(--text2);font-size:0.8rem;margin-bottom:1rem;">Parametres pour les alertes email (endpoint /admin/api/alert).</p>
         <div style="display:grid;grid-template-columns:120px 1fr;gap:0.4rem 0.75rem;align-items:center;margin-bottom:1rem;">
-            <label style="font-size:0.85rem;color:var(--text2);">Serveur SMTP</label>
+            <label style="font-size:0.85rem;color:var(--text2);">Serveur SMTP<span class="info-i" data-tip="Adresse du serveur (smtp.gmail.com, smtp-mail.outlook.com, smtp-relay.brevo.com, smtp.resend.com).
+
+Recommandé : service transactionnel dédié (Resend, Brevo) plutôt que Gmail.">i</span></label>
             <input id="smtp-host" placeholder="smtp.gmail.com" class="input">
-            <label style="font-size:0.85rem;color:var(--text2);">Port</label>
+            <label style="font-size:0.85rem;color:var(--text2);">Port<span class="info-i" data-tip="Port TCP du serveur SMTP.
+
+• 587 : STARTTLS (recommandé moderne)
+• 465 : SMTPS implicit TLS (legacy mais OK)
+• 25 : plain (souvent bloqué par les ISP, à éviter)
+
+Recommandé : 587.">i</span></label>
             <input id="smtp-port" placeholder="587" type="number" class="input" style="width:100px">
-            <label style="font-size:0.85rem;color:var(--text2);">Login</label>
+            <label style="font-size:0.85rem;color:var(--text2);">Login<span class="info-i" data-tip="Identifiant pour s'authentifier au serveur SMTP.
+
+Souvent : l'adresse email elle-même (Gmail) ou un username dédié (Resend = 'resend', Brevo = ton login user).
+
+Recommandé : copier-coller depuis la doc de ton fournisseur, ne pas deviner.">i</span></label>
             <input id="smtp-user" placeholder="contact@cellule.ai" class="input">
-            <label style="font-size:0.85rem;color:var(--text2);">Mot de passe</label>
+            <label style="font-size:0.85rem;color:var(--text2);">Mot de passe<span class="info-i" data-tip="Mot de passe ou clé d'API SMTP.
+
+⚠ Gmail : le mot de passe principal NE FONCTIONNE PAS. Créer un 'App password' dans Google Account → Sécurité → 2-Step Verification → App passwords (16 caractères).
+
+Resend/Brevo : clé d'API du dashboard.
+
+Piège : ne jamais commiter en clair dans git.">i</span></label>
             <input id="smtp-pass" type="password" placeholder="app password" class="input">
-            <label style="font-size:0.85rem;color:var(--text2);">Expediteur</label>
+            <label style="font-size:0.85rem;color:var(--text2);">Expediteur<span class="info-i" data-tip="Adresse visible dans le champ 'De' des emails envoyés.
+
+Format : 'Nom Affiché <email@domain.com>' ou juste 'email@domain.com'.
+
+Recommandé : email du domaine que tu contrôles (ex: 'CELLULE.AI <noreply@cellule.ai>') + SPF/DKIM/DMARC dans le DNS.
+
+Piège : si From mismatch avec SMTP login → spam folder.">i</span></label>
             <input id="smtp-from" placeholder="CELLULE.AI Pool <contact@cellule.ai>" class="input">
-            <label style="font-size:0.85rem;color:var(--text2);">Destinataire</label>
+            <label style="font-size:0.85rem;color:var(--text2);">Destinataire<span class="info-i" data-tip="Adresse qui reçoit les alertes admin : erreurs critiques, settlement disputes, workers déconnectés en masse, espace disque bas.
+
+Recommandé : ton email admin perso. Plusieurs adresses possibles séparées par virgule.
+
+Piège : si l'adresse n'existe pas, tu rateras des alertes critiques. Vérifier avec 'Envoyer un test' ci-dessous.">i</span></label>
             <input id="smtp-to" placeholder="david.mourgues@gmail.com" class="input">
         </div>
         <div style="display:flex;gap:0.5rem;">
