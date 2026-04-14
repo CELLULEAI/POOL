@@ -1307,3 +1307,104 @@ async def handle_memory_forget_v2(pool, payload: dict, from_atom_id: str) -> dic
         return {"error": str(e)}
 
     return {"status": "purged", "deleted": deleted}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# M11.5 Phase 2 — Memory gossip loop (periodic pull from bonded peers)
+# ─────────────────────────────────────────────────────────────────────────────
+
+import os as _os
+MEMORY_GOSSIP_LOOP_ENABLED = _os.environ.get(
+    "MEMORY_GOSSIP_LOOP_ENABLED", "false"
+).strip().lower() in ("1", "true", "yes", "on")
+
+GOSSIP_INTERVAL_SEC = int(_os.environ.get("MEMORY_GOSSIP_INTERVAL_SEC", "60"))
+GOSSIP_HEAD_LIMIT = 1      # HEAD-like: just check if new rows exist
+GOSSIP_PAGE_LIMIT = 50     # Full pull page size if HEAD returns new data
+
+
+async def memory_gossip_loop(pool):
+    """Periodic pull from bonded peers — protects against missed pushes.
+
+    Design (frugal, validated by WAN baseline ~65ms HEAD / ~115ms full):
+    - Interval: 60s (configurable via MEMORY_GOSSIP_INTERVAL_SEC)
+    - HEAD check (limit=1) before full pull to avoid useless 167KB payloads
+    - Sequential per peer (no thundering herd)
+    - Respects circuit breaker: skip peers marked slow
+    - Per-peer per-table cursor tracked in federation_peers.last_sync_*_ts
+
+    Cost per tick:
+    - Idle (nothing new):  4 tables × 65ms WAN = 260ms, 0 payload
+    - Busy (1 table updates): 260ms + 115ms full pull = 375ms, ~167KB
+    """
+    if not MEMORY_REPLICATION_ENABLED:
+        log.info("[gossip loop] MEMORY_REPLICATION_ENABLED=false, not starting")
+        return
+    if not MEMORY_GOSSIP_LOOP_ENABLED:
+        log.info("[gossip loop] MEMORY_GOSSIP_LOOP_ENABLED=false, not starting")
+        return
+
+    log.info(f"[gossip loop] started, interval={GOSSIP_INTERVAL_SEC}s")
+
+    # Let the pool finish bootstrapping first (federation_self etc)
+    await asyncio.sleep(15)
+
+    while True:
+        try:
+            await _run_gossip_tick(pool)
+        except asyncio.CancelledError:
+            log.info("[gossip loop] cancelled")
+            raise
+        except Exception as e:
+            log.warning(f"[gossip loop] tick error: {e}")
+        await asyncio.sleep(GOSSIP_INTERVAL_SEC)
+
+
+async def _run_gossip_tick(pool):
+    """One gossip tick: for each bonded peer, HEAD-check each table and pull
+    if there is new data. Sequential per peer to keep WAN load predictable.
+    """
+    if pool.federation_self is None:
+        return
+
+    # Fetch bonded peers from DB
+    from .federation_replication import _fetch_bonded_peers_with_trust
+    peers = await _fetch_bonded_peers_with_trust(pool, min_trust=TRUST_BONDED)
+    if not peers:
+        return
+
+    import time as _time
+    tick_start = _time.time()
+    total_pulled = 0
+    total_head_checks = 0
+
+    for peer in peers:
+        # Respect circuit breaker
+        if await _peer_is_slow(pool, peer["atom_id"]):
+            continue
+
+        for table in ("conversations", "user_memories",
+                       "agent_procedures", "agent_episodes"):
+            total_head_checks += 1
+            # HEAD-like: limit=1 to peek if new data exists
+            head = await pull_from_peer(pool, peer, table, limit=GOSSIP_HEAD_LIMIT)
+
+            if head.get("error"):
+                # skip this table for now
+                continue
+
+            # If HEAD returned 0 or 1 row and cursor already advanced, nothing more
+            ingested = head.get("ingested", 0)
+            cursor_moved = head.get("cursor_advanced", False)
+
+            # If HEAD ingested >=1 and cursor advanced, there might be more → full pull
+            if ingested >= GOSSIP_HEAD_LIMIT and cursor_moved:
+                full = await pull_from_peer(pool, peer, table, limit=GOSSIP_PAGE_LIMIT)
+                if not full.get("error"):
+                    total_pulled += full.get("ingested", 0)
+
+            total_pulled += ingested
+
+    duration_ms = int((_time.time() - tick_start) * 1000)
+    if total_pulled > 0 or duration_ms > 1000:
+        log.info(f"[gossip loop] tick: {total_head_checks} HEAD checks, "
+                 f"{total_pulled} rows ingested, {duration_ms}ms total")
