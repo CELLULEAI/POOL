@@ -860,18 +860,40 @@ def compute_live_capabilities(pool) -> list:
 
 
 # ---- M5 : admin operations on peers ----
-# trust_level 3 (bonded) HARD-LOCKED jusqu'à M10 settlement protocol.
-# Enforcement code, pas juste convention. Voir project_m5_handshake_decisions.md.
+# Trust level taxonomy (v2 — amendement M11.5, validé molecule-guardian 14 apr 2026).
+# Voir project_m5_trust_taxonomy_v2.md.
+#
+#   0 unknown            — refus
+#   1 known              — read-only /info
+#   2 trusted            — forwarding M7a
+#   3 replication-bonded — memory replication M11.5 + accounts cross-pool M11.1
+#   4 settlement-bonded  — settlement economique M10 (HARD-LOCKED jusqu'a M10 go-live)
+#
+# TRUST_LEVEL_MAX_M5 = 2 (ancien nom, conserve pour compat) pointe desormais vers
+# TRUST_LEVEL_MAX_CURRENT = 3 pour refleter la taxonomie etendue.
 
-TRUST_LEVEL_MAX_M5 = 2
+TRUST_UNKNOWN            = 0
+TRUST_KNOWN              = 1
+TRUST_TRUSTED            = 2
+TRUST_REPLICATION_BONDED = 3
+TRUST_SETTLEMENT_BONDED  = 4
+
+TRUST_LEVEL_MAX_CURRENT = TRUST_REPLICATION_BONDED  # 3 ; bump to 4 when M10 go-live
+TRUST_LEVEL_MAX_M5 = TRUST_LEVEL_MAX_CURRENT  # alias retrocompat
 
 
 async def promote_peer(pool, atom_id: str, target_level: int):
     """Promote a peer. Returns (ok: bool, message: str)."""
-    if target_level < 0 or target_level > 3:
-        return False, f"invalid trust level {target_level} (must be 0-3)"
-    if target_level > TRUST_LEVEL_MAX_M5:
-        return False, "trust level 3 (bonded) requires M10 settlement protocol - not yet available"
+    if target_level < 0 or target_level > TRUST_SETTLEMENT_BONDED:
+        return False, (
+            f"invalid trust level {target_level} "
+            f"(must be 0-{TRUST_SETTLEMENT_BONDED})"
+        )
+    if target_level > TRUST_LEVEL_MAX_CURRENT:
+        return False, (
+            "trust level 4 (settlement-bonded) requires M10 settlement "
+            "protocol — not yet available"
+        )
     if not (hasattr(pool.store, 'pool') and pool.store.pool):
         return False, "no DB store"
     async with pool.store.pool.acquire() as conn:
