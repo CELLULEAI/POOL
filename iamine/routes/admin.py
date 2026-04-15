@@ -1652,11 +1652,10 @@ async def pool_settings_set(request: Request):
                 )
             """)
             await conn.execute("""
-                INSERT INTO pool_config (key, value, updated_at)
-                VALUES ($1, $2, now())
+                INSERT INTO pool_config (key, value)
+                VALUES ($1, $2)
                 ON CONFLICT (key) DO UPDATE SET
-                    value = EXCLUDED.value,
-                    updated_at = now()
+                    value = EXCLUDED.value
             """, key, "true" if value else "false")
         return {"ok": True, "key": key, "value": value}
     except Exception as e:
