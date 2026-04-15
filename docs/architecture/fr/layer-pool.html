@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CELLULE — Couche 2 · Pool</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;background:#0a0a0a;min-height:100vh;padding:2rem;color:#f0f0f0}
+  .container{max-width:1200px;margin:0 auto}
+  .nav{display:flex;gap:1rem;margin-bottom:1.5rem;font-family:'JetBrains Mono',monospace;font-size:.8rem}
+  .nav a{color:rgba(255,255,255,.6);text-decoration:none;padding:.4rem .8rem;border:1px solid #222;border-radius:6px;transition:all .2s}
+  .nav a:hover{color:#00ff88;border-color:#00ff88}
+  .nav a.active{color:#00ff88;border-color:#00ff88;background:rgba(0,255,136,.1)}
+  .header{margin-bottom:2rem}
+  .header-row{display:flex;align-items:center;gap:1rem;margin-bottom:.5rem}
+  .pulse-dot{width:12px;height:12px;background:#00ff88;border-radius:50%;animation:pulse 2s infinite;box-shadow:0 0 12px rgba(0,255,136,.6)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+  h1{font-size:1.75rem;font-weight:700;letter-spacing:-.025em;font-family:'JetBrains Mono',monospace}
+  .subtitle{color:rgba(255,255,255,.5);font-size:.9rem;margin-left:1.75rem;font-family:'JetBrains Mono',monospace}
+  .diagram-container{background:rgba(10,10,20,.5);border-radius:1rem;border:1px solid #222;padding:1.5rem;overflow-x:auto;box-shadow:0 0 40px rgba(0,255,136,.08)}
+  svg{width:100%;min-width:900px;display:block;font-family:'JetBrains Mono',monospace}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-top:2rem}
+  .card{background:rgba(10,10,20,.5);border-radius:.75rem;border:1px solid #222;padding:1.25rem}
+  .card-header{display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem}
+  .card-dot{width:10px;height:10px;border-radius:50%}
+  .card-dot.cyan{background:#00d4ff;box-shadow:0 0 8px rgba(0,212,255,.5)}
+  .card-dot.green{background:#00ff88;box-shadow:0 0 8px rgba(0,255,136,.5)}
+  .card-dot.violet{background:#a78bfa;box-shadow:0 0 8px rgba(167,139,250,.5)}
+  .card-dot.orange{background:#ff6b00;box-shadow:0 0 8px rgba(255,107,0,.5)}
+  .card-dot.rose{background:#fb7185;box-shadow:0 0 8px rgba(251,113,133,.5)}
+  .card h3{font-size:.95rem;font-weight:600;font-family:'JetBrains Mono',monospace}
+  .card ul{list-style:none;color:rgba(255,255,255,.6);font-size:.78rem}
+  .card li{margin-bottom:.375rem}
+  .footer{text-align:center;margin-top:2rem;color:rgba(255,255,255,.4);font-size:.75rem;font-family:'JetBrains Mono',monospace}
+  .footer a{color:#00ff88;text-decoration:none}
+  a.node:hover rect{filter:drop-shadow(0 0 14px rgba(0,255,136,.6));cursor:pointer}
+  body.embed{padding:1rem;background:transparent}
+  body.embed .nav,body.embed .lang-switch,body.embed .footer{display:none!important}
+  body.embed .header{margin-bottom:1rem}
+</style>
+</head>
+<body>
+<div class="lang-switch" style="position:fixed;top:1rem;right:1rem;display:flex;gap:.25rem;font-family:'JetBrains Mono',monospace;font-size:.75rem;z-index:100">
+  <a href="../en/layer-pool.html" style="padding:.3rem .6rem;border:1px solid #222;border-radius:4px;color:rgba(255,255,255,.6);text-decoration:none">EN</a>
+  <a href="layer-pool.html" style="padding:.3rem .6rem;border:1px solid #00ff88;border-radius:4px;color:#00ff88;text-decoration:none;background:rgba(0,255,136,.1)">FR</a>
+</div>
+<div class="container">
+  <div class="nav">
+    <a href="index.html">← vue d'ensemble</a>
+    <a href="layer-atome.html">1 · atome</a>
+    <a href="layer-pool.html" class="active">2 · pool</a>
+    <a href="layer-federation.html">3 · fédération</a>
+    <a href="layer-economie.html">4 · économie</a>
+  </div>
+  <div class="header">
+    <div class="header-row"><div class="pulse-dot"></div><h1>Couche 2 — Pool</h1></div>
+    <p class="subtitle">Backend · API universelle OpenAI · orchestration · mémoire zero-knowledge</p>
+  </div>
+
+  <div class="diagram-container">
+    <svg viewBox="0 0 1000 780" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+      <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#555"/></marker>
+        <marker id="arrowG" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/></marker>
+        <marker id="arrowC" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#00d4ff"/></marker>
+        <marker id="arrowV" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#a78bfa"/></marker>
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1a1a1a" stroke-width=".5"/></pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#grid)"/>
+
+      <!-- Ingress -->
+      <rect x="40" y="50" width="200" height="70" rx="6" fill="rgba(30,41,59,.5)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="140" y="76" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">Users / Agents</text>
+      <text x="140" y="94" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">Browser · OpenCode · ClawCode</text>
+      <text x="140" y="108" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">Cursor · aider · iamine CLI</text>
+
+      <!-- Cloudflare + nginx -->
+      <rect x="280" y="50" width="220" height="70" rx="6" fill="rgba(120,53,15,.3)" stroke="#ff6b00" stroke-width="1.5"/>
+      <text x="390" y="76" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">Cloudflare + nginx TLS</text>
+      <text x="390" y="94" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">Flexible SSL (→ Full strict TODO)</text>
+      <text x="390" y="108" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">:443 HTTPS · :443 WSS</text>
+
+      <!-- FastAPI -->
+      <rect x="540" y="50" width="420" height="70" rx="6" fill="rgba(0,255,136,.08)" stroke="#00ff88" stroke-width="2"/>
+      <text x="750" y="76" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">FastAPI — API universelle OpenAI-compatible</text>
+      <text x="750" y="94" fill="rgba(255,255,255,.7)" font-size="10" text-anchor="middle">/v1/chat/completions · /v1/models · /v1/federation/* · /v1/opencode-md</text>
+      <text x="750" y="108" fill="#00ff88" font-size="9" text-anchor="middle">SSE streaming · tool-calls · auto conv_id · admin_token</text>
+
+      <!-- Auth & tokens -->
+      <rect x="40" y="160" width="200" height="90" rx="6" fill="rgba(136,19,55,.4)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="140" y="184" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">Auth &amp; Tokens</text>
+      <text x="140" y="202" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">email/Google login</text>
+      <text x="140" y="216" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">verif email (M16)</text>
+      <text x="140" y="230" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">iam_token par user</text>
+      <text x="140" y="244" fill="#fb7185" font-size="8" text-anchor="middle">admin_token séparé</text>
+
+      <!-- Routing coopératif -->
+      <rect x="280" y="160" width="220" height="90" rx="6" fill="rgba(0,255,136,.06)" stroke="#00ff88" stroke-width="1.5"/>
+      <text x="390" y="184" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">Routing coopératif</text>
+      <text x="390" y="202" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">déficit scoring</text>
+      <text x="390" y="216" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">GPU 61% / CPU 38%</text>
+      <text x="390" y="230" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">toujours répondre (no 503)</text>
+      <text x="390" y="244" fill="#00ff88" font-size="8" text-anchor="middle">exclusion unknown_model</text>
+
+      <!-- LLM Checker -->
+      <rect x="540" y="160" width="200" height="90" rx="6" fill="rgba(0,255,136,.06)" stroke="#00ff88" stroke-width="1.5"/>
+      <text x="640" y="184" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">LLM Checker</text>
+      <text x="640" y="202" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">core/checker.py</text>
+      <text x="640" y="216" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">bench périodique</text>
+      <text x="640" y="230" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">skip tool-calls</text>
+      <text x="640" y="244" fill="#00ff88" font-size="8" text-anchor="middle">config DB pool_config</text>
+
+      <!-- Sub-agents -->
+      <rect x="770" y="160" width="190" height="90" rx="6" fill="rgba(0,255,136,.06)" stroke="#00ff88" stroke-width="1.5"/>
+      <text x="865" y="184" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">Sub-agents</text>
+      <text x="865" y="202" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">auto-review (1s)</text>
+      <text x="865" y="216" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">cross-pool (M7a)</text>
+      <text x="865" y="230" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">pipeline multi-rôles</text>
+      <text x="865" y="244" fill="#00ff88" font-size="8" text-anchor="middle">SSE expose review</text>
+
+      <!-- Memory L1/L2/L3 -->
+      <rect x="40" y="290" width="460" height="150" rx="8" fill="rgba(167,139,250,.08)" stroke="#a78bfa" stroke-width="2"/>
+      <text x="270" y="316" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">Memory zero-knowledge (4-tier, M13)</text>
+      <rect x="60" y="330" width="100" height="90" rx="4" fill="rgba(167,139,250,.15)" stroke="#a78bfa" stroke-width="1"/>
+      <text x="110" y="348" fill="#fff" font-size="10" font-weight="600" text-anchor="middle">L1 messages</text>
+      <text x="110" y="366" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">TTL observ.</text>
+      <text x="110" y="380" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">JSON brut</text>
+      <text x="110" y="402" fill="#a78bfa" font-size="8" text-anchor="middle">chaud</text>
+      <rect x="170" y="330" width="100" height="90" rx="4" fill="rgba(167,139,250,.15)" stroke="#a78bfa" stroke-width="1"/>
+      <text x="220" y="348" fill="#fff" font-size="10" font-weight="600" text-anchor="middle">L2 conversations</text>
+      <text x="220" y="366" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">Fernet chiffré</text>
+      <text x="220" y="380" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">compaction</text>
+      <text x="220" y="402" fill="#a78bfa" font-size="8" text-anchor="middle">opt-in</text>
+      <rect x="280" y="330" width="100" height="90" rx="4" fill="rgba(167,139,250,.15)" stroke="#a78bfa" stroke-width="1"/>
+      <text x="330" y="348" fill="#fff" font-size="10" font-weight="600" text-anchor="middle">L3 embeddings</text>
+      <text x="330" y="366" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">pgvector</text>
+      <text x="330" y="380" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">faits persos</text>
+      <text x="330" y="402" fill="#a78bfa" font-size="8" text-anchor="middle">RAG filtré</text>
+      <rect x="390" y="330" width="100" height="90" rx="4" fill="rgba(167,139,250,.15)" stroke="#a78bfa" stroke-width="1"/>
+      <text x="440" y="348" fill="#fff" font-size="10" font-weight="600" text-anchor="middle">L4 hybrid</text>
+      <text x="440" y="366" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">MCP server</text>
+      <text x="440" y="380" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">agent memory</text>
+      <text x="440" y="402" fill="#a78bfa" font-size="8" text-anchor="middle">federation sync</text>
+
+      <!-- PostgreSQL core -->
+      <rect x="540" y="290" width="420" height="150" rx="8" fill="rgba(76,29,149,.4)" stroke="#a78bfa" stroke-width="2"/>
+      <text x="750" y="316" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">PostgreSQL + pgvector</text>
+      <text x="750" y="338" fill="rgba(255,255,255,.7)" font-size="10" text-anchor="middle">cerveau du pool · DB-first pour toute donnée persistante</text>
+      <text x="560" y="360" fill="rgba(255,255,255,.65)" font-size="9">• users · accounts · tokens · sessions</text>
+      <text x="560" y="376" fill="rgba(255,255,255,.65)" font-size="9">• messages · conversations · memory (L1/L2/L3/L4)</text>
+      <text x="560" y="392" fill="rgba(255,255,255,.65)" font-size="9">• federation_state · peers · capabilities · gossip_log</text>
+      <text x="560" y="408" fill="rgba(255,255,255,.65)" font-size="9">• revenue_ledger · disputes · slashing_events</text>
+      <text x="560" y="424" fill="#a78bfa" font-size="9">• pool_config (admin) · migrations 001 → 019+</text>
+
+      <!-- WebSocket pool -->
+      <rect x="40" y="480" width="260" height="90" rx="6" fill="rgba(0,212,255,.08)" stroke="#00d4ff" stroke-width="1.5"/>
+      <text x="170" y="504" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">WebSocket pool</text>
+      <text x="170" y="522" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">wss://cellule.ai/ws</text>
+      <text x="170" y="536" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">workers join/leave</text>
+      <text x="170" y="550" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">heartbeat · job dispatch</text>
+      <text x="170" y="564" fill="#00d4ff" font-size="8" text-anchor="middle">4 workers · 0 busy · pending 39</text>
+
+      <!-- Admin dashboard -->
+      <rect x="340" y="480" width="300" height="90" rx="6" fill="rgba(30,41,59,.5)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="490" y="504" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">Admin dashboard</text>
+      <text x="490" y="522" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">admin.html + admin_pool.html</text>
+      <text x="490" y="536" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">cleanup DB · blacklist · comptes PG</text>
+      <text x="490" y="550" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">config LLM · tooltips FR · EN TODO</text>
+      <text x="490" y="564" fill="rgba(255,255,255,.4)" font-size="8" text-anchor="middle">auth admin_token</text>
+
+      <!-- User-facing UI -->
+      <rect x="680" y="480" width="280" height="90" rx="6" fill="rgba(0,212,255,.08)" stroke="#00d4ff" stroke-width="1.5"/>
+      <text x="820" y="504" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">Frontend cellule.ai</text>
+      <text x="820" y="522" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">trial chat (modèle 2B pinné)</text>
+      <text x="820" y="536" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">dashboard user · tokens · tools</text>
+      <text x="820" y="550" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">canvas molécule interactif</text>
+      <text x="820" y="564" fill="#00d4ff" font-size="8" text-anchor="middle">wording communautaire (pas "gratuit")</text>
+
+      <!-- Worker links down -->
+      <rect x="40" y="610" width="920" height="60" rx="8" fill="rgba(0,212,255,.05)" stroke="#00d4ff" stroke-width="1" stroke-dasharray="6,4"/>
+      <a class="node" xlink:href="layer-atome.html">
+        <text x="500" y="636" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">WORKERS (atomes) — Qwen 14B · 3B · 9B · 30B MoE · hétérogène · multi-machines · reset Trust-3</text>
+        <text x="500" y="655" fill="#00d4ff" font-size="9" text-anchor="middle">← cliquer pour voir la couche 1 atome</text>
+      </a>
+
+      <!-- Federation link -->
+      <a class="node" xlink:href="layer-federation.html">
+        <rect x="40" y="690" width="450" height="70" rx="8" fill="rgba(255,107,0,.08)" stroke="#ff6b00" stroke-width="1.5"/>
+        <text x="265" y="714" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">→ Fédération (couche 3)</text>
+        <text x="265" y="732" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">gossip anti-entropy · merkle · quorum RAID</text>
+        <text x="265" y="748" fill="#ff6b00" font-size="8" text-anchor="middle">sortant vers autres pools bondés</text>
+      </a>
+
+      <!-- Economie link -->
+      <a class="node" xlink:href="layer-economie.html">
+        <rect x="510" y="690" width="450" height="70" rx="8" fill="rgba(167,139,250,.08)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="735" y="714" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">→ Économie (couche 4)</text>
+        <text x="735" y="732" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">revenue_ledger · settlement · slashing · token $IAMINE</text>
+        <text x="735" y="748" fill="#a78bfa" font-size="8" text-anchor="middle">alimenté par chaque inférence</text>
+      </a>
+
+      <!-- Flows -->
+      <line x1="240" y1="85" x2="278" y2="85" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#arrowC)"/>
+      <line x1="500" y1="85" x2="538" y2="85" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#arrowC)"/>
+      <line x1="750" y1="120" x2="140" y2="158" stroke="#fb7185" stroke-width="1" stroke-dasharray="3,3" opacity=".6"/>
+      <line x1="750" y1="120" x2="390" y2="158" stroke="#00ff88" stroke-width="1" opacity=".4"/>
+      <line x1="750" y1="120" x2="640" y2="158" stroke="#00ff88" stroke-width="1" opacity=".4"/>
+      <line x1="750" y1="120" x2="865" y2="158" stroke="#00ff88" stroke-width="1" opacity=".4"/>
+
+      <line x1="390" y1="250" x2="270" y2="288" stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowV)"/>
+      <line x1="640" y1="250" x2="750" y2="288" stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowV)"/>
+      <text x="330" y="272" fill="rgba(255,255,255,.5)" font-size="8">read/write</text>
+
+      <line x1="390" y1="250" x2="170" y2="478" stroke="#00d4ff" stroke-width="1" opacity=".3"/>
+      <line x1="170" y1="570" x2="500" y2="608" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#arrowC)"/>
+      <text x="320" y="592" fill="rgba(255,255,255,.5)" font-size="8">dispatch job</text>
+    </svg>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-header"><div class="card-dot green"></div><h3>API universelle</h3></div>
+      <ul>
+        <li>• OpenAI-compatible (chat/completions)</li>
+        <li>• SSE streaming tokens + tool-calls</li>
+        <li>• auto conv_id (persistence L2)</li>
+        <li>• clients: OpenCode, Cursor, aider, ClawCode</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-dot violet"></div><h3>DB-first</h3></div>
+      <ul>
+        <li>• Toute donnée persistante en PG</li>
+        <li>• Mémoire pool = cache</li>
+        <li>• pgvector pour RAG/L3</li>
+        <li>• Migrations versionnées 001→019+</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-dot cyan"></div><h3>Routing coopératif</h3></div>
+      <ul>
+        <li>• Déficit scoring (équité GPU/CPU)</li>
+        <li>• Doctrine "toujours répondre"</li>
+        <li>• Pas de 503 sortant</li>
+        <li>• Exclusion auto unknown_model</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-dot orange"></div><h3>Sub-agents LIVE</h3></div>
+      <ul>
+        <li>• Auto-review (1s, dès phase 1)</li>
+        <li>• Cross-pool forward (M7a)</li>
+        <li>• Pipeline multi-rôles (scale N pools)</li>
+        <li>• SSE expose la review aux clients</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-dot rose"></div><h3>Mémoire zero-knowledge</h3></div>
+      <ul>
+        <li>• L2 conversations Fernet chiffrées</li>
+        <li>• Opt-in utilisateur (toggle)</li>
+        <li>• Export + delete RGPD</li>
+        <li>• Pool admin ne lit pas le contenu</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-dot green"></div><h3>Agents LLM (Z2)</h3></div>
+      <ul>
+        <li>• RED Qwen3-30B-A3B (admin)</li>
+        <li>• Coder · Tank · Scout (dédiés)</li>
+        <li>• RED daemon 3h + self_update</li>
+        <li>• 4 workers actifs à ce jour</li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="footer">CELLULE · couche 2/4 · <a href="layer-atome.html">← atome</a> · <a href="index.html">vue d'ensemble</a> · <a href="layer-federation.html">fédération →</a></p>
+</div>
+<script>if(new URLSearchParams(location.search).get('embed')==='1')document.body.classList.add('embed');</script>
+</body>
+</html>

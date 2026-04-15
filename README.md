@@ -38,6 +38,14 @@ Workers (your PC)              Pool (cellule.ai)              Users / Agents
 4. **Workers auto-migrate** — if a pool goes down, workers move to the best available
 5. **Agents remember** — 4-tier memory persists across sessions and pools
 
+### Visual diagrams
+
+Interactive SVG diagrams (EN/FR) covering the 4 layers — atom, pool, federation, economy:
+
+- **Live embedded**: [cellule.ai/#how](https://cellule.ai/#how)
+- **Standalone**: [docs/architecture/en/index.html](docs/architecture/en/index.html) · [docs/architecture/fr/index.html](docs/architecture/fr/index.html)
+- **Source**: [docs/architecture/](docs/architecture/) — plain HTML + inline SVG, no JS framework
+
 ## Features
 
 ### Compute
