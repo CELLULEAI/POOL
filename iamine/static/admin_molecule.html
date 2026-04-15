@@ -126,6 +126,7 @@
     <div class="tabs">
         <button class="tab active" data-tab="pools" onclick="showTab('pools')" data-i18n="tab_pools">Pools</button>
         <button class="tab" data-tab="events" onclick="showTab('events')" data-i18n="tab_events">Events</button>
+        <button class="tab" data-tab="outbox" onclick="showTab('outbox')" data-i18n="tab_outbox">Outbox</button>
     </div>
 
     <div id="tab-pools">
@@ -146,7 +147,53 @@
         </table>
     </div>
 
-    <p class="foot">Cellule.ai Molecule Console · Phase 1 read-only · EPHEMERAL-ACCEPTABLE local audit</p>
+    <div id="tab-outbox" style="display:none;">
+        <p class="sub" data-i18n="outbox_sub">Cross-pool admin requests you sent. Manual approve/reject on target side.</p>
+        <table class="events-table" id="outbox-table">
+            <thead><tr>
+                <th data-i18n="col_ts">When</th>
+                <th data-i18n="col_target">Target</th>
+                <th data-i18n="col_action">Action</th>
+                <th data-i18n="col_status">Status</th>
+                <th data-i18n="col_result">Result</th>
+            </tr></thead>
+            <tbody id="outbox-body"><tr><td colspan="5" style="text-align:center;color:var(--text2);padding:1rem;">—</td></tr></tbody>
+        </table>
+    </div>
+
+    <p class="foot">Cellule.ai Molecule Console · Phase 2 Request/Approve · EPHEMERAL-ACCEPTABLE local audit</p>
+</div>
+
+<!-- Phase 2 : Send Request dialog -->
+<div id="req-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:center;justify-content:center;">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;max-width:560px;width:90%;">
+        <h3 style="color:var(--neon-blue);margin-bottom:.3rem;" data-i18n="req_title">Send Federation Admin Request</h3>
+        <p class="sub" id="req-target-label">—</p>
+        <div style="margin:1rem 0;">
+            <label class="status-label" data-i18n="req_action_lbl">Action</label>
+            <select id="req-action" class="btn" style="width:100%;margin-top:.3rem;">
+                <option value="circuit_reset">circuit_reset — clear blacklist + reset checker scores</option>
+                <option value="query_events">query_events — read molecule_events (whitelisted types only)</option>
+            </select>
+        </div>
+        <div id="req-params-circuit" style="margin:1rem 0;">
+            <label class="status-label" data-i18n="req_worker_lbl">worker_id (optional, leave empty for all)</label>
+            <input id="req-param-worker" class="btn" style="width:100%;margin-top:.3rem;font-family:'JetBrains Mono',monospace;" placeholder="worker_id" />
+        </div>
+        <div id="req-params-events" style="display:none;margin:1rem 0;">
+            <label class="status-label" data-i18n="req_limit_lbl">Event limit (max 500)</label>
+            <input id="req-param-limit" class="btn" type="number" value="100" min="1" max="500" style="width:100%;margin-top:.3rem;" />
+        </div>
+        <div style="background:rgba(251,191,36,.08);border:1px solid var(--amber);border-radius:8px;padding:.8rem;margin:1rem 0;font-size:.82rem;color:var(--amber);">
+            <strong data-i18n="req_notice_title">Manual approve required.</strong>
+            <span data-i18n="req_notice_desc">The target pool's admin will see this request and must approve it manually. 24h TTL.</span>
+        </div>
+        <div style="display:flex;gap:.6rem;justify-content:flex-end;">
+            <button class="btn" onclick="closeReqModal()" data-i18n="btn_cancel">Cancel</button>
+            <button class="btn" id="req-send-btn" onclick="sendRequest()" style="border-color:var(--neon-green);color:var(--neon-green);" data-i18n="btn_send">Send</button>
+        </div>
+        <pre id="req-result" style="margin-top:.8rem;font-size:.75rem;color:var(--text2);white-space:pre-wrap;"></pre>
+    </div>
 </div>
 
 <script>
@@ -183,6 +230,21 @@ const I18N = {
         loading: "Loading...",
         no_events: "No events yet",
         err_network: "Network error",
+        tab_outbox: "Outbox",
+        outbox_sub: "Cross-pool admin requests you sent. Manual approve/reject on target side.",
+        col_target: "Target",
+        col_action: "Action",
+        col_result: "Result",
+        btn_actions: "Actions",
+        btn_cancel: "Cancel",
+        btn_send: "Send",
+        req_title: "Send Federation Admin Request",
+        req_action_lbl: "Action",
+        req_worker_lbl: "worker_id (optional, leave empty for all)",
+        req_limit_lbl: "Event limit (max 500)",
+        req_notice_title: "Manual approve required.",
+        req_notice_desc: "The target pool's admin will see this request and must approve it manually. 24h TTL.",
+        no_outbox: "No requests sent yet",
     },
     fr: {
         page_title: "Console Molécule",
@@ -216,6 +278,21 @@ const I18N = {
         loading: "Chargement...",
         no_events: "Aucun événement",
         err_network: "Erreur réseau",
+        tab_outbox: "Envoyées",
+        outbox_sub: "Requêtes admin cross-pool que vous avez envoyées. Approbation manuelle côté cible.",
+        col_target: "Cible",
+        col_action: "Action",
+        col_result: "Résultat",
+        btn_actions: "Actions",
+        btn_cancel: "Annuler",
+        btn_send: "Envoyer",
+        req_title: "Envoyer une requête admin fédérée",
+        req_action_lbl: "Action",
+        req_worker_lbl: "worker_id (optionnel, vide = tous)",
+        req_limit_lbl: "Limite événements (max 500)",
+        req_notice_title: "Approbation manuelle requise.",
+        req_notice_desc: "L'admin du pool cible verra cette requête et devra l'approuver manuellement. TTL 24h.",
+        no_outbox: "Aucune requête envoyée",
     }
 };
 let currentLang = localStorage.getItem("molecule_lang") || "en";
@@ -283,6 +360,7 @@ function renderPool(p) {
     const slashDisp = p.is_self
         ? p.slashings_pending
         : (p.slashings_pending_tier || "none");
+    const actionsBtn = p.is_self ? "" : `<div style="margin-top:.8rem;text-align:right;"><button class="btn" style="font-size:.75rem;padding:.3rem .6rem;border-color:var(--neon-green);color:var(--neon-green);" onclick="openReqModal('${escapeHtml(p.atom_id)}','${escapeHtml(p.name || '?')}')">${T("btn_actions")}</button></div>`;
     return `<div class="card-pool${selfClass}${slowClass}">
         <div class="pool-head">
             <span class="dot ${dotCls}"></span>
@@ -299,6 +377,7 @@ function renderPool(p) {
         <div class="info-row"><span class="label">${T("lbl_tvl")}</span>${tvl}</div>
         <div class="info-row"><span class="label">${T("lbl_rows")}</span><span class="value">${rowsDisp}</span></div>
         <div class="info-row"><span class="label">${T("lbl_slash")}</span><span class="value">${slashDisp}</span></div>
+        ${actionsBtn}
     </div>`;
 }
 
@@ -370,7 +449,101 @@ function showTab(tab) {
     document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
     document.getElementById("tab-pools").style.display = tab === "pools" ? "block" : "none";
     document.getElementById("tab-events").style.display = tab === "events" ? "block" : "none";
+    document.getElementById("tab-outbox").style.display = tab === "outbox" ? "block" : "none";
     if (tab === "events") refreshEvents();
+    if (tab === "outbox") refreshOutbox();
+}
+
+// ─── Phase 2 : Request/Approve modal ─────────────────────────────────────
+let _reqTargetAtom = null;
+function openReqModal(atom_id, name) {
+    _reqTargetAtom = atom_id;
+    document.getElementById("req-target-label").textContent = `${name} · ${fmtAtom(atom_id)}`;
+    document.getElementById("req-action").value = "circuit_reset";
+    document.getElementById("req-param-worker").value = "";
+    document.getElementById("req-param-limit").value = "100";
+    document.getElementById("req-result").textContent = "";
+    togglReqParams();
+    document.getElementById("req-modal").style.display = "flex";
+}
+function closeReqModal() {
+    document.getElementById("req-modal").style.display = "none";
+    _reqTargetAtom = null;
+}
+function togglReqParams() {
+    const a = document.getElementById("req-action").value;
+    document.getElementById("req-params-circuit").style.display = a === "circuit_reset" ? "block" : "none";
+    document.getElementById("req-params-events").style.display = a === "query_events" ? "block" : "none";
+}
+document.addEventListener("DOMContentLoaded", () => {
+    const sel = document.getElementById("req-action");
+    if (sel) sel.addEventListener("change", togglReqParams);
+});
+
+async function sendRequest() {
+    if (!_reqTargetAtom) return;
+    const action = document.getElementById("req-action").value;
+    const params = {};
+    if (action === "circuit_reset") {
+        const w = document.getElementById("req-param-worker").value.trim();
+        if (w) params.worker_id = w;
+    } else if (action === "query_events") {
+        params.limit = parseInt(document.getElementById("req-param-limit").value, 10) || 100;
+    }
+    const btn = document.getElementById("req-send-btn");
+    btn.disabled = true;
+    document.getElementById("req-result").textContent = T("loading");
+    try {
+        const r = await fetch("/v1/federation/admin/send", {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                target_atom_id: _reqTargetAtom,
+                action_type: action,
+                action_params: params,
+            }),
+        });
+        const data = await r.json();
+        document.getElementById("req-result").textContent = JSON.stringify(data, null, 2);
+        if (r.ok) {
+            setTimeout(() => { closeReqModal(); showTab("outbox"); }, 1200);
+        }
+    } catch (e) {
+        document.getElementById("req-result").textContent = T("err_network") + ": " + e.message;
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+async function refreshOutbox() {
+    const tbody = document.getElementById("outbox-body");
+    try {
+        const r = await fetch("/v1/federation/admin/outbox", { credentials: "include" });
+        if (r.status === 401) { window.location = "/admin/login"; return; }
+        const data = await r.json();
+        const rows = data.requests || [];
+        if (!rows.length) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text2);padding:1rem;">${T("no_outbox")}</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = rows.map(r => {
+            const when = r.created_at ? new Date(r.created_at).toLocaleString() : "—";
+            let statusCls = "status-ok";
+            if (r.status === "rejected" || r.status === "failed" || r.status === "expired") statusCls = "status-error";
+            else if (r.status === "pending") statusCls = "status-partial";
+            const result = r.execution_error
+                ? `<span class="status-error">${escapeHtml(r.execution_error)}</span>`
+                : (r.execution_result ? `<code style="font-size:.7rem;">${escapeHtml(JSON.stringify(r.execution_result).slice(0, 80))}</code>` : "—");
+            return `<tr>
+                <td>${escapeHtml(when)}</td>
+                <td><code style="font-size:.7rem;">${escapeHtml(fmtAtom(r.to_atom_id))}</code></td>
+                <td>${escapeHtml(r.action_type)}</td>
+                <td class="${statusCls}">${escapeHtml(r.status)}</td>
+                <td>${result}</td>
+            </tr>`;
+        }).join("");
+    } catch (e) { /* silent */ }
 }
 
 setLang(currentLang);

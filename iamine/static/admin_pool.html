@@ -278,6 +278,23 @@
         </div>
     </div>
 
+
+    <!-- FEDERATION ADMIN REQUESTS (Phase 2) -->
+    <div class="card">
+        <h3><span class="icon">⇆</span> <span data-i18n="section_fed_inbox">Federation Requests</span></h3>
+        <p class="sub" style="margin-bottom:0.75rem;" data-i18n="fed_inbox_desc">Cross-pool admin requests received. Each must be approved or rejected manually — nothing runs automatically. Signature Ed25519 of the peer is the only authority (email label is display-only).</p>
+        <div id="fed-inbox-toolbar" style="display:flex;gap:.5rem;margin-bottom:.75rem;">
+            <button class="btn" onclick="refreshFedInbox()" data-i18n="btn_refresh">Refresh</button>
+            <label style="font-size:.8rem;color:var(--text2);align-self:center;">
+                <input type="checkbox" id="fed-optin-toggle" onchange="toggleFedOptin(this)" style="vertical-align:middle;">
+                <span data-i18n="fed_optin_lbl">Accept incoming cross-pool admin requests (opt-in)</span>
+            </label>
+        </div>
+        <div id="fed-inbox-list">
+            <div style="text-align:center;color:var(--text2);padding:1rem;" data-i18n="loading">Loading...</div>
+        </div>
+    </div>
+
     <!-- RECOVERY / CIRCUIT BREAKER -->
     <div class="card">
         <h3><span class="icon">⚠</span> <span data-i18n="section_recovery">Recovery</span></h3>
@@ -294,6 +311,18 @@
 const I18N = {
     en: {
         section_recovery: 'Recovery',
+        section_fed_inbox: 'Federation Requests',
+        fed_inbox_desc: 'Cross-pool admin requests received. Each must be approved or rejected manually — nothing runs automatically. Signature Ed25519 of the peer is the only authority (email label is display-only).',
+        fed_optin_lbl: 'Accept incoming cross-pool admin requests (opt-in)',
+        fed_no_pending: 'No pending requests.',
+        fed_from: 'From', fed_action: 'Action', fed_params: 'Params', fed_expires: 'Expires',
+        fed_sig_ok: '✓ signature verified',
+        fed_admin_email_note: '(display-only label, not used for authorization)',
+        fed_btn_approve: 'Approve', fed_btn_reject: 'Reject', fed_btn_override: 'Approve with override',
+        fed_slashing_warn: '⚠ Slashing events pending for this target — approving will re-authorize workers that were penalized. Use override to force.',
+        fed_confirm_approve: 'Approve this request and execute the action locally?',
+        fed_confirm_override: 'Confirm override — pending slashing events will be bypassed. This is logged.',
+        fed_confirm_reject: 'Reject this request?',
         recovery_desc: 'If the pool gets stuck in a degraded state (workers wrongly blacklisted, stale checker scores), use the button below to reset the circuit. Clears in-memory blacklist + per-worker checker scores. Does not touch federation or data.',
         btn_circuit_reset: 'Reset circuit',
         confirm_circuit_reset: 'Reset the circuit? This clears the worker blacklist and resets checker scores.',
@@ -330,6 +359,18 @@ const I18N = {
     },
     fr: {
         section_recovery: 'Récupération',
+        section_fed_inbox: 'Requêtes fédération',
+        fed_inbox_desc: 'Requêtes admin cross-pool reçues. Chaque requête doit être approuvée ou rejetée manuellement — rien ne s\'exécute automatiquement. La signature Ed25519 du peer est la seule autorité (l\'email est un label d\'affichage).',
+        fed_optin_lbl: 'Accepter les requêtes admin cross-pool entrantes (opt-in)',
+        fed_no_pending: 'Aucune requête en attente.',
+        fed_from: 'De', fed_action: 'Action', fed_params: 'Paramètres', fed_expires: 'Expire',
+        fed_sig_ok: '✓ signature vérifiée',
+        fed_admin_email_note: '(label d\'affichage, non utilisé pour l\'autorisation)',
+        fed_btn_approve: 'Approuver', fed_btn_reject: 'Rejeter', fed_btn_override: 'Approuver avec override',
+        fed_slashing_warn: '⚠ Slashing events en attente pour cette cible — approuver réautorisera des workers pénalisés. Utilisez l\'override pour forcer.',
+        fed_confirm_approve: 'Approuver cette requête et exécuter l\'action localement ?',
+        fed_confirm_override: 'Confirmer l\'override — les slashing events en attente seront ignorés. Ceci est tracé.',
+        fed_confirm_reject: 'Rejeter cette requête ?',
         recovery_desc: 'Si le pool reste bloqué en état dégradé (workers blacklistés à tort, scores checker figés), utilisez le bouton ci-dessous pour réinitialiser le circuit. Vide la blacklist en mémoire + scores checker par worker. Ne touche pas à la fédération ni aux données.',
         btn_circuit_reset: 'Réinitialiser le circuit',
         confirm_circuit_reset: 'Réinitialiser le circuit ? Cela vide la blacklist et remet à zéro les scores checker.',
@@ -557,6 +598,109 @@ async function resetCircuit(){
         btn.disabled = false; btn.style.opacity = '1';
     }
 }
+
+// ── Phase 2 : Federation admin inbox ─────────────────────────────────────
+async function refreshFedInbox() {
+    const listEl = document.getElementById('fed-inbox-list');
+    if (!listEl) return;
+    try {
+        const r = await fetch('/v1/federation/admin/inbox', { credentials: 'include' });
+        if (r.status === 401) { window.location = '/admin/login'; return; }
+        const data = await r.json();
+        const rows = data.requests || [];
+        if (!rows.length) {
+            listEl.innerHTML = '<div style="text-align:center;color:var(--text2);padding:1rem;">' + getText('fed_no_pending') + '</div>';
+            return;
+        }
+        listEl.innerHTML = rows.map(renderFedRequest).join('');
+    } catch (e) {
+        listEl.innerHTML = '<div style="color:var(--red);padding:1rem;">Error: ' + (e.message || e) + '</div>';
+    }
+}
+
+function _escHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+
+function renderFedRequest(r) {
+    const fromAtom = (r.from_atom_id || '').slice(0, 16) + '…';
+    const email = r.from_admin_email
+        ? '<span style="color:var(--text2);font-size:.8rem;"> ' + _escHtml(r.from_admin_email) + ' <em>' + getText('fed_admin_email_note') + '</em></span>'
+        : '';
+    const params = r.action_params ? JSON.stringify(r.action_params) : '{}';
+    const expires = r.expires_at ? new Date(r.expires_at).toLocaleString() : '—';
+    const rid = _escHtml(r.request_id);
+    return '<div style="border:1px solid var(--border);border-radius:8px;padding:.8rem;margin-bottom:.6rem;background:var(--bg2);">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">' +
+            '<code style="font-family:\'JetBrains Mono\',monospace;font-size:.78rem;color:var(--neon-blue);">' + rid + '</code>' +
+            '<span style="font-size:.72rem;color:var(--neon-green);">' + getText('fed_sig_ok') + '</span>' +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:auto 1fr;gap:.35rem .8rem;font-size:.85rem;">' +
+            '<span style="color:var(--text2);">' + getText('fed_from') + '</span><span><code style="font-size:.78rem;">' + _escHtml(fromAtom) + '</code>' + email + '</span>' +
+            '<span style="color:var(--text2);">' + getText('fed_action') + '</span><span><strong>' + _escHtml(r.action_type) + '</strong></span>' +
+            '<span style="color:var(--text2);">' + getText('fed_params') + '</span><code style="font-size:.75rem;color:var(--text2);">' + _escHtml(params) + '</code>' +
+            '<span style="color:var(--text2);">' + getText('fed_expires') + '</span><span>' + _escHtml(expires) + '</span>' +
+        '</div>' +
+        '<div style="margin-top:.8rem;display:flex;gap:.5rem;flex-wrap:wrap;">' +
+            '<button class="btn" style="border-color:var(--neon-green);color:var(--neon-green);" onclick="decideRequest(\'' + rid + '\',\'approved\',false)">' + getText('fed_btn_approve') + '</button>' +
+            '<button class="btn" style="border-color:var(--red);color:var(--red);" onclick="decideRequest(\'' + rid + '\',\'rejected\',false)">' + getText('fed_btn_reject') + '</button>' +
+        '</div>' +
+        '<div id="fed-result-' + rid + '" style="margin-top:.6rem;font-size:.78rem;color:var(--text2);white-space:pre-wrap;"></div>' +
+    '</div>';
+}
+
+async function decideRequest(request_id, decision, override) {
+    const msg = decision === 'approved'
+        ? (override ? getText('fed_confirm_override') : getText('fed_confirm_approve'))
+        : getText('fed_confirm_reject');
+    if (!confirm(msg)) return;
+    const resultEl = document.getElementById('fed-result-' + request_id);
+    if (resultEl) resultEl.textContent = 'Loading...';
+    try {
+        const r = await fetch('/v1/federation/admin/decide', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ request_id, decision, override_slashing_block: !!override }),
+        });
+        const data = await r.json();
+        if (r.status === 409 && data.pending_count) {
+            if (resultEl) resultEl.innerHTML = '<div style="color:var(--amber);">' + getText('fed_slashing_warn') + '</div>'
+                + '<div style="margin-top:.4rem;">pending: ' + data.pending_count + '</div>'
+                + '<button class="btn" style="margin-top:.4rem;border-color:var(--amber);color:var(--amber);" onclick="decideRequest(\'' + request_id + '\',\'approved\',true)">' + getText('fed_btn_override') + '</button>';
+            return;
+        }
+        if (resultEl) resultEl.textContent = JSON.stringify(data, null, 2);
+        if (r.ok) setTimeout(refreshFedInbox, 1500);
+    } catch (e) {
+        if (resultEl) resultEl.textContent = 'Error: ' + (e.message || e);
+    }
+}
+
+async function toggleFedOptin(checkbox) {
+    const enabled = checkbox.checked;
+    try {
+        const r = await fetch('/admin/api/pool-settings', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: 'federation_admin_actions_enabled', value: enabled }),
+        });
+        if (!r.ok) checkbox.checked = !enabled;
+    } catch (e) { checkbox.checked = !enabled; }
+}
+
+async function loadFedOptinState() {
+    try {
+        const r = await fetch('/admin/api/pool-settings', { credentials: 'include' });
+        if (!r.ok) return;
+        const data = await r.json();
+        const cb = document.getElementById('fed-optin-toggle');
+        if (cb) cb.checked = !!data.federation_admin_actions_enabled;
+    } catch (e) { }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadFedOptinState();
+    refreshFedInbox();
+    setInterval(refreshFedInbox, 20000);
+});
 
 </script>
 

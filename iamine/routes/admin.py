@@ -1460,6 +1460,7 @@ POOL_OPERATOR_SETTABLE = {
     "accept_forwarding",        # pool_config — accept M7a cross-pool overflow jobs
     "publish_capabilities",     # pool_config — list this pool in /v1/federation/info capabilities
     "auto_push_updates",        # pool_config — push self_update to outdated workers
+    "federation_admin_actions_enabled",  # pool_config — Phase 2 cross-pool admin requests opt-in
 }
 
 
@@ -1604,6 +1605,7 @@ async def pool_settings_get(request: Request):
         "accept_forwarding": pool_cfg.get("accept_forwarding", "true") == "true",
         "publish_capabilities": pool_cfg.get("publish_capabilities", "true") == "true",
         "auto_push_updates": pool_cfg.get("auto_push_updates", "true") == "true",
+        "federation_admin_actions_enabled": pool_cfg.get("federation_admin_actions_enabled", "false") == "true",
     }
 
 
