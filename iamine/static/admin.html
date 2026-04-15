@@ -1181,7 +1181,58 @@ Piège : si l'adresse n'existe pas, tu rateras des alertes critiques. Vérifier 
 <!-- TAB: QUEUE                                 -->
 <!-- ═══════════════════════════════════════════ -->
 <div id="tab-federation" class="tab-content" style="display:none;">
-    <div id="fed-root" style="padding:1rem;">(chargement…)</div>
+    <div id="fed-phase2-root" style="padding:1rem;display:flex;flex-direction:column;gap:1.2rem;">
+
+        <!-- Phase 2 Opt-in + Inbox -->
+        <div class="card">
+            <h3 style="margin-bottom:.4rem;">Requêtes fédération (cross-pool)<span class="info-i" data-tip="Requêtes admin cross-pool entrantes.
+
+Chaque requête a été signée Ed25519 par un pool bondé avec le tien (trust≥3) puis vérifiée + nonce consommé + stockée en pending.
+
+Principe molecule-guardian : pas de master pool. Tu gardes veto absolu sur chaque action cross-pool. Rien n'est exécuté tant que tu ne cliques pas Approve. TTL 24h par requête.">i</span></h3>
+            <p class="sub" style="font-size:.85rem;color:var(--text2);margin-bottom:.8rem;">Phase 2 Console Molécule — 2 actions whitelistées : circuit_reset, query_events.</p>
+
+            <div style="display:flex;gap:.8rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap;">
+                <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.9rem;">
+                    <input type="checkbox" id="fed-optin-toggle" onchange="toggleFedOptin(this)" style="width:18px;height:18px;cursor:pointer;">
+                    <span>Accepter les requêtes admin cross-pool entrantes (opt-in)</span>
+                </label>
+                <span class="info-i" data-tip="Active la réception de requêtes admin cross-pool sur CE pool.
+
+OFF (défaut) : toutes les requêtes entrantes /v1/federation/admin/request retournent 403 'federation_admin_actions disabled'.
+
+ON : les peers bondés (trust≥3) peuvent envoyer des requêtes qui apparaissent ici en attente. Tu gardes souveraineté absolue : approve/reject manuel obligatoire sur chacune.
+
+Peut être désactivé à tout moment sans impact sur les requêtes déjà approuvées.">i</span>
+                <button class="btn" onclick="refreshFedInbox()" style="margin-left:auto;">Rafraîchir</button>
+            </div>
+
+            <div id="fed-inbox-list">
+                <div style="text-align:center;color:var(--text2);padding:1rem;">Chargement…</div>
+            </div>
+        </div>
+
+        <!-- Outbound requests -->
+        <div class="card">
+            <h3 style="margin-bottom:.4rem;">Requêtes sortantes<span class="info-i" data-tip="Requêtes admin cross-pool que TU as envoyées vers des peers.
+
+Cycle de vie :
+pending → en attente de décision côté cible
+approved → approuvée, exécution en cours
+rejected → rejetée par l'admin cible
+executed → approuvée ET exécutée avec succès
+failed → approuvée mais exécution a échoué
+executed_no_callback → exécutée côté cible, callback jamais reçu (split-brain réseau)
+expired → TTL 24h dépassé sans décision
+
+Pour envoyer une nouvelle requête : va sur /admin/molecule, clique Actions sur un peer bondé.">i</span></h3>
+            <div id="fed-outbox-list" style="margin-top:.6rem;">
+                <div style="text-align:center;color:var(--text2);padding:.8rem;">Chargement…</div>
+            </div>
+            <p style="font-size:.78rem;color:var(--text2);margin-top:.6rem;">Envoyer une requête → <a href="/admin/molecule" style="color:var(--neon-blue);">/admin/molecule</a> (bouton Actions sur peer card).</p>
+        </div>
+
+    </div>
 </div>
 
 <div id="tab-queue-tab" class="tab-content" style="display:none;">
@@ -2237,6 +2288,173 @@ async function testResend() {
         document.getElementById('resend-result').textContent = 'Erreur réseau';
     }
 }
+
+
+// ─── Phase 2 Federation Requests (admin.html) ──────────────────────────────
+function _fed_escHtml(x) { return String(x==null?'':x).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+function _fed_atom(a) { return (a||'').length>20 ? (a.slice(0,12)+'\u2026'+a.slice(-6)) : (a||''); }
+
+async function loadFederation() {
+    await loadFedOptinState();
+    await refreshFedInbox();
+    await refreshFedOutbox();
+}
+
+async function loadFedOptinState() {
+    try {
+        const r = await fetch('/admin/api/pool-settings', {credentials:'include'});
+        if (!r.ok) return;
+        const d = await r.json();
+        const cb = document.getElementById('fed-optin-toggle');
+        if (cb) cb.checked = !!d.federation_admin_actions_enabled;
+    } catch(e) {}
+}
+
+async function toggleFedOptin(cb) {
+    const v = cb.checked;
+    try {
+        const r = await fetch('/admin/api/pool-settings', {
+            method:'POST', credentials:'include',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({key:'federation_admin_actions_enabled', value:v}),
+        });
+        if (!r.ok) { cb.checked = !v; toast('Echec toggle opt-in','err'); return; }
+        toast(v?'Opt-in active':'Opt-in desactive');
+    } catch(e) { cb.checked=!v; toast('Erreur reseau','err'); }
+}
+
+async function refreshFedInbox() {
+    const el = document.getElementById('fed-inbox-list');
+    if (!el) return;
+    try {
+        const r = await fetch('/v1/federation/admin/inbox', {credentials:'include'});
+        if (r.status === 401) { window.location='/admin'; return; }
+        const d = await r.json();
+        const rows = d.requests || [];
+        if (!rows.length) {
+            el.innerHTML = '<div style="text-align:center;color:var(--text2);padding:1rem;">Aucune requete en attente.</div>';
+            return;
+        }
+        el.innerHTML = rows.map(_fed_renderReq).join('');
+    } catch(e) {
+        el.innerHTML = '<div style="color:var(--red);padding:1rem;">Erreur: '+_fed_escHtml(e.message||e)+'</div>';
+    }
+}
+
+function _fed_renderReq(r) {
+    const email = r.from_admin_email
+        ? '<span style="color:var(--text2);font-size:.78rem;margin-left:.4rem;">'+_fed_escHtml(r.from_admin_email)+' <em style="opacity:.7;">(label d\'affichage, non utilise pour l\'auth)</em></span>'
+        : '';
+    const params = r.action_params ? JSON.stringify(r.action_params) : '{}';
+    const expires = r.expires_at ? new Date(r.expires_at).toLocaleString('fr-FR') : '-';
+    const rid = _fed_escHtml(r.request_id);
+    return '<div style="border:1px solid var(--border);border-radius:8px;padding:.9rem;margin-bottom:.7rem;background:rgba(255,255,255,0.02);">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">'
+            + '<code style="font-family:\'JetBrains Mono\',monospace;font-size:.78rem;color:var(--neon-blue);">'+rid+'</code>'
+            + '<span style="font-size:.72rem;color:var(--neon-green);">\u2713 signature Ed25519 verifiee'
+                + '<span class="info-i" data-tip="La signature Ed25519 du pool emetteur a ete verifiee contre sa cle publique federation_peers. L\'email est un label d\'affichage, JAMAIS utilise pour l\'autorisation. Seule la cle publique + signature + nonce anti-replay font autorite.">i</span>'
+            + '</span>'
+        + '</div>'
+        + '<div style="display:grid;grid-template-columns:auto 1fr;gap:.4rem .8rem;font-size:.85rem;">'
+            + '<span style="color:var(--text2);">De</span><span><code style="font-size:.78rem;">'+_fed_escHtml(_fed_atom(r.from_atom_id))+'</code>'+email+'</span>'
+            + '<span style="color:var(--text2);">Action</span><span><strong>'+_fed_escHtml(r.action_type)+'</strong>'
+                + '<span class="info-i" data-tip="Whitelist stricte : circuit_reset (clear blacklist + reset scores), query_events (read molecule_events filtres). Ajouter une action requiert session molecule-guardian + token-guardian.">i</span>'
+            + '</span>'
+            + '<span style="color:var(--text2);">Parametres</span><code style="font-size:.75rem;color:var(--text2);">'+_fed_escHtml(params)+'</code>'
+            + '<span style="color:var(--text2);">Expire</span><span>'+_fed_escHtml(expires)+'</span>'
+        + '</div>'
+        + '<div style="margin-top:.9rem;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">'
+            + '<button class="btn" style="border-color:var(--neon-green);color:var(--neon-green);" onclick="decideFedRequest(\''+rid+'\',\'approved\',false)">Approuver</button>'
+            + '<span class="info-i" data-tip="Execute l\'action LOCALEMENT + envoie un callback signe a l\'emetteur.\n\nPour circuit_reset : vide worker_blacklist + reset checker_scores a 1.0.\nPour query_events : lit molecule_events filtres (whitelist + 7j + self) et les renvoie dans le callback signe.\n\nGARDE-FOU : si circuit_reset ET slashing_events pending -> 409, un bouton Override jaune apparaitra.">i</span>'
+            + '<button class="btn" style="border-color:var(--red);color:var(--red);" onclick="decideFedRequest(\''+rid+'\',\'rejected\',false)">Rejeter</button>'
+            + '<span class="info-i" data-tip="Rejette la requete sans execution. Un callback signe \'rejected\' est envoye a l\'emetteur. Aucun effet sur ton pool. A utiliser si la requete semble suspecte.">i</span>'
+        + '</div>'
+        + '<div id="fed-result-'+rid+'" style="margin-top:.6rem;font-size:.78rem;color:var(--text2);white-space:pre-wrap;"></div>'
+    + '</div>';
+}
+
+async function decideFedRequest(request_id, decision, override) {
+    const msg = decision==='approved'
+        ? (override ? 'Confirmer override \u2014 les slashing events en attente seront ignores. Ceci est trace.' : 'Approuver cette requete et executer l\'action localement ?')
+        : 'Rejeter cette requete ?';
+    if (!confirm(msg)) return;
+    const resEl = document.getElementById('fed-result-'+request_id);
+    if (resEl) resEl.textContent = 'Chargement\u2026';
+    try {
+        const r = await fetch('/v1/federation/admin/decide', {
+            method:'POST', credentials:'include',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({request_id, decision, override_slashing_block:!!override}),
+        });
+        const d = await r.json();
+        if (r.status === 409 && d.pending_count) {
+            if (resEl) resEl.innerHTML = '<div style="color:var(--amber,#fbbf24);">\u26a0 Slashing events en attente ('+d.pending_count+'). Approuver reautorisera des workers penalises.</div>'
+                + '<button class="btn" style="margin-top:.4rem;border-color:var(--amber,#fbbf24);color:var(--amber,#fbbf24);" onclick="decideFedRequest(\''+request_id+'\',\'approved\',true)">Approuver avec override</button>'
+                + '<span class="info-i" data-tip="Force l\'execution du circuit_reset MALGRE la presence de slashing_events pending. A utiliser en connaissance de cause : reautorise des workers penalises. L\'override est trace dans federation_admin_actions_log avec event_type=override_applied + snapshot complet des slashing_events ignores.">i</span>';
+            return;
+        }
+        if (resEl) resEl.textContent = JSON.stringify(d, null, 2);
+        if (r.ok) setTimeout(refreshFedInbox, 1500);
+    } catch(e) {
+        if (resEl) resEl.textContent = 'Erreur: '+(e.message||e);
+    }
+}
+
+async function refreshFedOutbox() {
+    const el = document.getElementById('fed-outbox-list');
+    if (!el) return;
+    try {
+        const r = await fetch('/v1/federation/admin/outbox', {credentials:'include'});
+        if (!r.ok) { el.innerHTML=''; return; }
+        const d = await r.json();
+        const rows = d.requests || [];
+        if (!rows.length) {
+            el.innerHTML = '<div style="text-align:center;color:var(--text2);padding:.8rem;font-size:.85rem;">Aucune requete envoyee.</div>';
+            return;
+        }
+        el.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:.82rem;">'
+            + '<thead><tr style="border-bottom:1px solid var(--border);text-align:left;color:var(--text2);">'
+            + '<th style="padding:.4rem .5rem;">Quand</th>'
+            + '<th>Cible</th>'
+            + '<th>Action</th>'
+            + '<th>Statut</th>'
+            + '<th>Resultat</th>'
+            + '</tr></thead><tbody>'
+            + rows.map(r=>{
+                const when = r.created_at ? new Date(r.created_at).toLocaleString('fr-FR') : '-';
+                let cls='';
+                if (['rejected','failed','expired'].includes(r.status)) cls='color:var(--red);';
+                else if (r.status==='pending') cls='color:var(--amber,#fbbf24);';
+                else if (['executed','approved'].includes(r.status)) cls='color:var(--neon-green);';
+                const result = r.execution_error
+                    ? '<span style="color:var(--red);">'+_fed_escHtml(r.execution_error)+'</span>'
+                    : (r.execution_result ? '<code style="font-size:.72rem;">'+_fed_escHtml(JSON.stringify(r.execution_result).slice(0,70))+'</code>' : '\u2014');
+                return '<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">'
+                    + '<td style="padding:.4rem .5rem;">'+_fed_escHtml(when)+'</td>'
+                    + '<td><code style="font-size:.72rem;">'+_fed_escHtml(_fed_atom(r.to_atom_id))+'</code></td>'
+                    + '<td>'+_fed_escHtml(r.action_type)+'</td>'
+                    + '<td style="'+cls+'">'+_fed_escHtml(r.status)+'</td>'
+                    + '<td>'+result+'</td>'
+                + '</tr>';
+            }).join('') + '</tbody></table>';
+    } catch(e) {}
+}
+
+function toast(msg, kind) {
+    const el = document.getElementById('notif-toast');
+    if (!el) return;
+    el.textContent = msg;
+    el.style.borderColor = kind==='err' ? 'var(--red)' : 'var(--neon-green)';
+    el.classList.add('visible');
+    setTimeout(()=>el.classList.remove('visible'), 2200);
+}
+
+// Auto-refresh inbox while on federation tab
+setInterval(() => {
+    const t = document.getElementById('tab-federation');
+    if (t && t.style.display !== 'none') refreshFedInbox();
+}, 20000);
+
 </script>
 </body>
 </html>
