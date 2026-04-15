@@ -43,11 +43,11 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install pyinstaller==6.10.0
 
-      - name: Install llama-cpp-python (compile from source if needed)
+      - name: Install llama-cpp-python (compile from source)
         shell: pwsh
         run: |
-          python -m pip install llama-cpp-python --verbose
-          python -c "import llama_cpp; print('llama_cpp_imported_ok'); print(getattr(llama_cpp, '__version__', 'unknown'))"
+          python -m pip install llama-cpp-python
+          python -c "import llama_cpp; print('llama_cpp_imported_ok', getattr(llama_cpp, '__version__', 'unknown'))"
 
       - name: Install iamine-ai
         shell: pwsh
@@ -56,16 +56,13 @@ jobs:
           if ([string]::IsNullOrEmpty($version)) {
             python -m pip install iamine-ai `
               --index-url https://iamine.org/pypi `
-              --extra-index-url https://pypi.org/simple `
-              --verbose
+              --extra-index-url https://pypi.org/simple
           } else {
             python -m pip install "iamine-ai==$version" `
               --index-url https://iamine.org/pypi `
-              --extra-index-url https://pypi.org/simple `
-              --verbose
+              --extra-index-url https://pypi.org/simple
           }
-          python -c "import iamine; print('iamine_imported_ok'); print(iamine.__version__)"
-          python -c "import llama_cpp; print('llama_cpp_still_ok')"
+          python -c "import iamine; print('iamine_imported_ok', iamine.__version__)"
 
       - name: Write entry-point stub
         shell: pwsh
@@ -79,29 +76,62 @@ jobs:
               main()
           '@
           $content | Out-File -Encoding ascii worker_entry.py
-          Get-Content worker_entry.py
 
-      - name: Build .exe with PyInstaller
+      - name: Collect llama_cpp DLL paths
+        id: dll
         shell: pwsh
         run: |
           $llamaPath = python -c "import llama_cpp, os; print(os.path.dirname(llama_cpp.__file__))"
           Write-Host "llama_cpp path: $llamaPath"
-          Get-ChildItem $llamaPath -Recurse -Include *.dll,*.so,*.dylib,*.metal -ErrorAction SilentlyContinue | Select-Object -First 20
+          $libDir = Join-Path $llamaPath "lib"
+          Write-Host "Listing $libDir :"
+          if (Test-Path $libDir) {
+            Get-ChildItem $libDir -Recurse
+          } else {
+            Write-Error "llama_cpp/lib directory missing — DLLs were not installed"
+            exit 1
+          }
+          # Build --add-binary args, one per DLL. Format on Windows: "src;dest"
+          $addBinaries = @()
+          foreach ($dll in Get-ChildItem $libDir -Filter *.dll) {
+            $addBinaries += "--add-binary"
+            $addBinaries += "$($dll.FullName);llama_cpp/lib"
+          }
+          Write-Host "Collected $($addBinaries.Count / 2) DLLs"
+          # Export as GITHUB_OUTPUT multi-line, one token per line
+          $out = $addBinaries -join "`n"
+          "add_binaries<<EOF`n$out`nEOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "llama_path=$llamaPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
-          pyinstaller `
-            --onefile `
-            --name cellule-worker `
-            --paths $llamaPath `
-            --collect-all iamine `
-            --collect-all llama_cpp `
-            --collect-submodules iamine `
-            --hidden-import=aiohttp `
-            --hidden-import=websockets `
-            --hidden-import=asyncpg `
-            --hidden-import=cryptography `
-            --hidden-import=llama_cpp `
-            --console `
-            worker_entry.py
+      - name: Build .exe with PyInstaller
+        shell: pwsh
+        run: |
+          # Reconstruct --add-binary arg list from the step output
+          $addBinariesRaw = @'
+          ${{ steps.dll.outputs.add_binaries }}
+          '@
+          $args = $addBinariesRaw -split "`n" | Where-Object { $_.Trim() -ne "" }
+          Write-Host "add-binary arg count:" $args.Count
+
+          $pyinstArgs = @(
+            "--onefile",
+            "--name", "cellule-worker",
+            "--paths", "${{ steps.dll.outputs.llama_path }}",
+            "--collect-all", "iamine",
+            "--collect-all", "llama_cpp",
+            "--collect-submodules", "iamine",
+            "--hidden-import=aiohttp",
+            "--hidden-import=websockets",
+            "--hidden-import=asyncpg",
+            "--hidden-import=cryptography",
+            "--hidden-import=llama_cpp",
+            "--console"
+          )
+          $pyinstArgs += $args
+          $pyinstArgs += "worker_entry.py"
+
+          Write-Host "Running: pyinstaller $($pyinstArgs -join ' ')"
+          & pyinstaller @pyinstArgs
           Get-ChildItem dist/
 
       - name: Smoke test .exe
@@ -119,7 +149,7 @@ jobs:
           $size = (Get-Item dist/cellule-worker.exe).Length / 1MB
           Write-Host ("cellule-worker.exe size: {0:N1} MB" -f $size)
           if ($size -lt 50) {
-            Write-Error "exe too small, llama_cpp DLLs probably missing"
+            Write-Error "exe too small ($size MB) - llama_cpp DLLs still missing"
             exit 1
           }
 
