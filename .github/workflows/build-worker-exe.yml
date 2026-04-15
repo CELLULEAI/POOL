@@ -66,10 +66,17 @@ jobs:
             Write-Host "Building llama-cpp-python CPU-only"
           }
           python -m pip install llama-cpp-python --verbose
-          python -c "import llama_cpp; print('llama_cpp_imported_ok', getattr(llama_cpp, '__version__', 'unknown'))"
+          if ($env:CPU_VARIANT -eq 'cuda') {
+            Write-Host "Skipping llama_cpp import test (CUDA build, no GPU on runner)"
+            python -c "import importlib.util; spec = importlib.util.find_spec('llama_cpp'); print('llama_cpp_module_found' if spec else 'llama_cpp_module_missing')"
+          } else {
+            python -c "import llama_cpp; print('llama_cpp_imported_ok', getattr(llama_cpp, '__version__', 'unknown'))"
+          }
 
       - name: Install iamine-ai (retry x3)
         shell: pwsh
+        env:
+          CPU_VARIANT: ${{ inputs.cpu_variant }}
         run: |
           $version = "${{ inputs.iamine_version }}"
           $installed = $false
@@ -95,10 +102,16 @@ jobs:
             Write-Error "iamine-ai install failed after 3 attempts"
             exit 1
           }
-          python -c "import iamine; print('iamine_imported_ok', iamine.__version__)"
+          if ($env:CPU_VARIANT -ne 'cuda') {
+            python -c "import iamine; print('iamine_imported_ok', iamine.__version__)"
+          } else {
+            python -c "import importlib.util; spec = importlib.util.find_spec('iamine'); print('iamine_module_found' if spec else 'iamine_module_missing')"
+          }
 
       - name: Build .exe (enum DLLs + PyInstaller in one step)
         shell: pwsh
+        env:
+          CPU_VARIANT: ${{ inputs.cpu_variant }}
         run: |
           # Entry-point stub
           $content = @'
@@ -112,7 +125,8 @@ jobs:
           $content | Out-File -Encoding ascii worker_entry.py
 
           # Locate llama_cpp DLLs
-          $llamaPath = python -c "import llama_cpp, os; print(os.path.dirname(llama_cpp.__file__))"
+          # Use find_spec to locate llama_cpp WITHOUT importing it (CUDA needs a GPU at import)
+          $llamaPath = python -c "import importlib.util, os; spec = importlib.util.find_spec('llama_cpp'); print(os.path.dirname(spec.origin))"
           Write-Host "llama_cpp path: $llamaPath"
           $libDir = Join-Path $llamaPath "lib"
           if (-not (Test-Path $libDir)) {
@@ -152,7 +166,8 @@ jobs:
           }
           Get-ChildItem dist/
 
-      - name: Smoke test .exe
+      - name: Smoke test .exe (skipped on CUDA - no GPU on runner)
+        if: inputs.cpu_variant != 'cuda'
         shell: pwsh
         run: |
           .\dist\cellule-worker.exe --help
@@ -166,8 +181,10 @@ jobs:
         run: |
           $size = (Get-Item dist/cellule-worker.exe).Length / 1MB
           Write-Host ("cellule-worker.exe size: {0:N1} MB" -f $size)
-          if ($size -lt 30) {
-            Write-Error "exe too small ($size MB, expected >=30) - DLLs missing"
+          $minSize = 30
+          if ("${{ inputs.cpu_variant }}" -eq 'cuda') { $minSize = 100 }
+          if ($size -lt $minSize) {
+            Write-Error "exe too small ($size MB, expected >=$minSize MB) - DLLs missing"
             exit 1
           }
 
