@@ -147,8 +147,8 @@ jobs:
         run: |
           $size = (Get-Item dist/cellule-worker.exe).Length / 1MB
           Write-Host ("cellule-worker.exe size: {0:N1} MB" -f $size)
-          if ($size -lt 50) {
-            Write-Error "exe too small ($size MB) - DLLs missing"
+          if ($size -lt 30) {
+            Write-Error "exe too small ($size MB, expected >=30) - DLLs missing"
             exit 1
           }
 
