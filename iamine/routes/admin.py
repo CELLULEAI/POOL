@@ -1352,3 +1352,41 @@ async def admin_push_update(request: Request):
             skipped.append({"worker_id": w.worker_id, "version": wv, "status": "up-to-date"})
 
     return {"ok": True, "pool_version": __version__, "pushed": updated, "skipped": skipped}
+
+
+@router.post("/v1/admin/circuit/reset")
+async def admin_circuit_reset(request: Request):
+    """Circuit breaker reset — admin-triggered recovery from degraded state.
+
+    Clears in-memory worker blacklist + per-worker checker scores.
+    Does NOT touch federation state, kill connections, or delete data.
+    """
+    admin = await _check_admin(request)
+    if not admin:
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+
+    pool = _pool()
+    cleared_bl = len(pool._blacklist)
+    pool._blacklist = set()
+
+    reset_scores = 0
+    try:
+        async with pool.store.pool.acquire() as conn:
+            await conn.execute("UPDATE pool_config SET value='[]' WHERE key='blacklist'")
+            reset_scores = await conn.fetchval(
+                "WITH u AS (UPDATE workers SET checker_score=1.0, checker_fails=0, "
+                "checker_total=0, checker_passed=0 RETURNING 1) SELECT COUNT(*) FROM u"
+            ) or 0
+    except Exception as e:
+        log.warning(f"[CIRCUIT_RESET] DB reset partial failure: {e}")
+
+    log.warning(
+        f"[CIRCUIT_RESET] admin={admin!r} cleared_blacklist={cleared_bl} "
+        f"reset_worker_scores={reset_scores}"
+    )
+    return {
+        "ok": True,
+        "cleared_blacklist": cleared_bl,
+        "reset_worker_scores": reset_scores,
+        "timestamp": __import__('datetime').datetime.utcnow().isoformat() + 'Z',
+    }
