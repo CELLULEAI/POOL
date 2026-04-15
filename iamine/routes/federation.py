@@ -2174,3 +2174,189 @@ async def recruitment_needs():
 
     local["federation"] = federation
     return local
+
+
+# ─── Molecule Console Phase 1 : peer/status (signed, trust>=3) ───────────────
+#
+# Exposes a MINIMAL operational card to bonded peers (trust >= 3 ONLY,
+# replication-bonded). Enforced strictly — guardian: no trust=2 fallback.
+#
+# Fields returned (design-validated by molecule-guardian + token-guardian 2026-04-15):
+#   - version             : iamine-ai version string
+#   - workers_online      : int (divulgation intentionnelle entre bonded peers)
+#   - uptime_sec          : int
+#   - federation_peers_bonded : int (count trust>=3 excluding self)
+#   - gossip_lag_sec      : int (max lag on memory/conv/episode sync; -1 if unknown)
+#   - circuit_slow        : bool (true if any bonded peer marked slow)
+#   - atom_id             : self atom_id (redundant but useful for debug)
+#   - ledger_tvl_tier     : "empty" | "<100" | "100-1k" | "1k-10k" | ">10k"
+#                           (token-guardian: self-censored tier, not exact value,
+#                           prevents routing asymmetry between competitor pools)
+#   - ledger_rows_tier    : "0" | "<1k" | "1k-10k" | ">10k"
+#   - slashings_pending_tier : "none" | "1-5" | ">5"
+#
+# EXCLUS explicitement : IPs, worker_ids, user data, ledger detail (amounts),
+# credit per-worker, slashing by worker, federation_settlements status='proposed',
+# bilateral settlement deltas between named pools.
+#
+# Signature envelope verified via enforce_fed_policy. Nonce consumed.
+
+@router.post("/v1/federation/peer/status")
+async def federation_peer_status(request: Request):
+    pool = _pool()
+    raw_body = await request.body()
+
+    try:
+        import json as _json
+        payload = _json.loads(raw_body.decode() or "{}")
+    except Exception as e:
+        return JSONResponse({"error": f"invalid json: {e}"}, status_code=400)
+
+    origin_atom_id = payload.get("origin_pool_id") or payload.get("origin_atom_id")
+    if not origin_atom_id:
+        return JSONResponse(
+            {"error": "missing field: origin_pool_id"}, status_code=400
+        )
+
+    # Resolve peer pubkey + trust from federation_peers
+    peer_pubkey = None
+    peer_trust = 0
+    if hasattr(pool.store, "pool") and pool.store.pool:
+        async with pool.store.pool.acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT pubkey, trust_level FROM federation_peers "
+                "WHERE atom_id = $1 AND revoked_at IS NULL",
+                origin_atom_id,
+            )
+            if row:
+                peer_pubkey = bytes(row["pubkey"]) if row["pubkey"] else None
+                peer_trust = int(row["trust_level"] or 0)
+
+    if peer_pubkey is None:
+        return JSONResponse(
+            {"error": "origin pool not bonded here"}, status_code=403
+        )
+
+    # STRICT trust>=3 gate — replication-bonded only (guardian invariant)
+    if peer_trust < 3:
+        return JSONResponse(
+            {"error": f"trust_level {peer_trust} < 3 required (replication-bonded)"},
+            status_code=403,
+        )
+
+    # Signature verification via enforce_fed_policy (M6)
+    reject, sig_ok = await fed.enforce_fed_policy(
+        pool, request,
+        method="POST", path="/v1/federation/peer/status",
+        body=raw_body,
+        peer_pubkey=peer_pubkey,
+        require_signature=True,
+    )
+    if reject:
+        return JSONResponse(
+            {"error": reject["error"]}, status_code=reject["status_code"]
+        )
+    if not sig_ok:
+        return JSONResponse({"error": "signature invalid"}, status_code=401)
+
+    # Gather operational state
+    import time as _time
+    from iamine import __version__
+
+    try:
+        uptime_sec = int(_time.time() - getattr(pool, "_start_time", _time.time()))
+    except Exception:
+        uptime_sec = 0
+
+    try:
+        workers_online = len(getattr(pool, "workers", {}) or {})
+    except Exception:
+        workers_online = 0
+
+    bonded_count = 0
+    gossip_lag_sec = -1
+    circuit_slow_any = False
+    tvl_exact = 0
+    rows_count = 0
+    slashings_pending = 0
+    self_atom_id = pool.federation_self.atom_id if pool.federation_self else ""
+
+    if hasattr(pool.store, "pool") and pool.store.pool:
+        try:
+            async with pool.store.pool.acquire() as conn:
+                bonded_count = await conn.fetchval(
+                    "SELECT COUNT(*) FROM federation_peers "
+                    "WHERE trust_level >= 3 AND revoked_at IS NULL AND atom_id <> $1",
+                    self_atom_id,
+                ) or 0
+
+                # Max lag across memory/conv/episode sync; NULL treated as unknown
+                lag_row = await conn.fetchrow(
+                    "SELECT EXTRACT(EPOCH FROM (now() - LEAST("
+                    "  COALESCE(last_sync_memory_ts, now()),"
+                    "  COALESCE(last_sync_conv_ts, now()),"
+                    "  COALESCE(last_sync_episode_ts, now())"
+                    ")))::int AS lag_sec, "
+                    "bool_or(circuit_slow) AS any_slow "
+                    "FROM federation_peers "
+                    "WHERE trust_level >= 3 AND revoked_at IS NULL"
+                )
+                if lag_row:
+                    gossip_lag_sec = int(lag_row["lag_sec"] or 0)
+                    circuit_slow_any = bool(lag_row["any_slow"])
+
+                # Economic tiers (token-guardian: self-censored, never exact to peers)
+                try:
+                    tvl_exact = int(await conn.fetchval(
+                        "SELECT COALESCE(SUM(pending_worker_attribution), 0)::bigint "
+                        "FROM revenue_ledger"
+                    ) or 0)
+                except Exception:
+                    tvl_exact = 0
+                try:
+                    rows_count = int(await conn.fetchval(
+                        "SELECT COUNT(*)::bigint FROM revenue_ledger"
+                    ) or 0)
+                except Exception:
+                    rows_count = 0
+                try:
+                    slashings_pending = int(await conn.fetchval(
+                        "SELECT COUNT(*)::bigint FROM slashing_events "
+                        "WHERE status = 'pending'"
+                    ) or 0)
+                except Exception:
+                    slashings_pending = 0
+        except Exception as e:
+            log.warning(f"peer/status operational gather partial: {e}")
+
+    def _tvl_tier(v: int) -> str:
+        if v <= 0: return "empty"
+        if v < 100: return "<100"
+        if v < 1_000: return "100-1k"
+        if v < 10_000: return "1k-10k"
+        return ">10k"
+
+    def _rows_tier(v: int) -> str:
+        if v == 0: return "0"
+        if v < 1_000: return "<1k"
+        if v < 10_000: return "1k-10k"
+        return ">10k"
+
+    def _slash_tier(v: int) -> str:
+        if v == 0: return "none"
+        if v <= 5: return "1-5"
+        return ">5"
+
+    return {
+        "ok": True,
+        "atom_id": self_atom_id,
+        "version": __version__,
+        "workers_online": int(workers_online),
+        "uptime_sec": int(uptime_sec),
+        "federation_peers_bonded": int(bonded_count),
+        "gossip_lag_sec": int(gossip_lag_sec),
+        "circuit_slow": bool(circuit_slow_any),
+        "ledger_tvl_tier": _tvl_tier(tvl_exact),
+        "ledger_rows_tier": _rows_tier(rows_count),
+        "slashings_pending_tier": _slash_tier(slashings_pending),
+    }

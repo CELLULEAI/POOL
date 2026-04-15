@@ -19,7 +19,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
 # CPU-only llama-cpp-python — no GPU flags
-RUN pip install --no-cache-dir     --index-url https://cellule.ai/pypi     --extra-index-url https://pypi.org/simple     iamine-ai==0.2.68
+RUN pip install --no-cache-dir     --index-url https://cellule.ai/pypi     --extra-index-url https://pypi.org/simple     iamine-ai==0.2.69
 
 # ============================================================
 # Stage 2 : runtime — slim image with just the venv + sys deps
