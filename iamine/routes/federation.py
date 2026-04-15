@@ -2808,14 +2808,13 @@ async def federation_admin_send(request: Request):
                     except Exception:
                         data = {'raw': txt}
                     return {'ok': True, 'request_id': request_id, 'target_response': data}
-                return JSONResponse(
-                    {'ok': False, 'error': f'target returned {resp.status}', 'detail': txt},
-                    status_code=502,
-                )
+                # 200 with ok:false — Cloudflare intercepts 5xx with HTML
+                return {'ok': False, 'error': f'target returned {resp.status}',
+                        'detail': txt, 'target_status': resp.status}
     except asyncio.TimeoutError:
-        return JSONResponse({'ok': False, 'error': 'timeout reaching target'}, status_code=504)
+        return {'ok': False, 'error': 'timeout reaching target', 'target_status': 0}
     except Exception as e:
-        return JSONResponse({'ok': False, 'error': f'request failed: {e}'}, status_code=502)
+        return {'ok': False, 'error': f'request failed: {e}', 'target_status': 0}
 
 
 @router.get('/v1/federation/admin/inbox')
