@@ -1681,7 +1681,89 @@ footer {
     text-align: center;
     margin-top: 2.5rem;
 }
-</style>
+
+        /* Hero install strip (Phase : CTA worker en avant) */
+        .hero-install-strip {
+            margin: 2rem auto 0;
+            max-width: 720px;
+            padding: 1.25rem 1.5rem;
+            background: linear-gradient(135deg, rgba(0,255,234,0.06), rgba(0,212,255,0.06));
+            border: 1px solid rgba(0,255,234,0.3);
+            border-radius: 14px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+        .hero-install-label {
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 0.6rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .hero-install-cmd {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: rgba(0,0,0,0.35);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 0.7rem 1rem;
+            margin-bottom: 0.7rem;
+            font-family: ui-monospace, "Cascadia Code", "JetBrains Mono", monospace;
+            font-size: 0.92rem;
+            color: #39ff14;
+            overflow-x: auto;
+        }
+        .hero-install-cmd code {
+            flex: 1;
+            text-align: left;
+            white-space: nowrap;
+            background: transparent;
+            color: inherit;
+            padding: 0;
+        }
+        .hero-install-copy {
+            flex-shrink: 0;
+            background: rgba(0,212,255,0.12);
+            border: 1px solid rgba(0,212,255,0.35);
+            color: #00d4ff;
+            padding: 0.3rem 0.7rem;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .hero-install-copy:hover { background: rgba(0,212,255,0.25); }
+        .hero-install-copy.ok { color: #00ff88; border-color: #00ff88; }
+        .hero-install-os {
+            display: flex;
+            gap: 1.2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            font-size: 0.88rem;
+        }
+        .hero-install-os a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            padding: 0.3rem 0.7rem;
+            border-radius: 6px;
+            transition: all 0.15s;
+        }
+        .hero-install-os a:hover {
+            color: #00ffea;
+            background: rgba(0,255,234,0.08);
+        }
+        .hero-install-os .hero-install-all {
+            color: #00d4ff;
+            font-weight: 600;
+        }
+        @media (max-width: 640px) {
+            .hero-install-cmd { font-size: 0.75rem; padding: 0.55rem 0.7rem; }
+            .hero-install-strip { padding: 1rem; }
+        }
+
+    </style>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
@@ -1728,8 +1810,21 @@ footer {
             </div>
         </div>
         <div class="hero-cta">
-            <a href="#" class="btn-primary" onclick="openTrialChat();return false;" data-i18n="cta_try">Try the AI</a>
-            <a href="#contribute" class="btn-secondary" data-i18n="cta_contribute">Start Contributing</a>
+            <a href="/docs/install-worker.html" class="btn-primary" data-i18n="cta_worker_install">&#x1F9EC; Install a Worker</a>
+            <a href="#" class="btn-secondary" onclick="openTrialChat();return false;" data-i18n="cta_try">&#x1F4AC; Try the AI</a>
+        </div>
+        <div class="hero-install-strip" id="hero-install-strip">
+            <div class="hero-install-label" data-i18n="hero_install_label">One command on Linux / macOS:</div>
+            <div class="hero-install-cmd">
+                <code id="hero-install-cmd-code">curl -sSL https://cellule.ai/install-worker.sh | bash</code>
+                <button class="hero-install-copy" id="hero-install-copy-btn" onclick="copyHeroInstall()" data-i18n="hero_install_copy">copy</button>
+            </div>
+            <div class="hero-install-os">
+                <a href="/docs/install-worker.html#windows" data-i18n="hero_os_win">&#x1FA9F; Windows</a>
+                <a href="/docs/install-worker.html#macos" data-i18n="hero_os_mac">&#x1F34E; macOS</a>
+                <a href="/docs/install-worker.html#linux" data-i18n="hero_os_linux">&#x1F427; Linux</a>
+                <a href="/docs/install-worker.html" class="hero-install-all" data-i18n="hero_install_all">full guide &rarr;</a>
+            </div>
         </div>
     </div>
 </section>
@@ -2477,7 +2572,14 @@ var L = {
         nav_token_v2: "Token",
             nav_login: "Login",
             nav_app: "Launch App",
-        hero_subtitle: "Decentralized AI, powered by the community. Share your compute power. Join the network.",
+        hero_subtitle: "Distributed LLM network. Your idle PC, a node in the molecule. One command to join.",
+        cta_worker_install: "\ud83e\uddec Install a Worker",
+        hero_install_label: "One command on Linux / macOS:",
+        hero_install_copy: "copy",
+        hero_os_win: "\ud83e\ude9f Windows",
+        hero_os_mac: "\ud83c\udf4e macOS",
+        hero_os_linux: "\ud83d\udc27 Linux",
+        hero_install_all: "full guide \u2192",
         stat_workers: "Workers Online",
         stat_tps: "Tokens / sec",
         stat_jobs: "Jobs Completed",
@@ -2698,7 +2800,14 @@ var L = {
         nav_token_v2: "Token",
             nav_login: "Connexion",
             nav_app: "Lancer l'app",
-        hero_subtitle: "IA décentralisée, propulsée par la communauté. Partagez votre puissance de calcul. Rejoignez le réseau.",
+        hero_subtitle: "Réseau LLM distribué. Ton PC inactif, un nœud de la molécule. Une seule commande pour rejoindre.",
+        cta_worker_install: "\ud83e\uddec Installer un Worker",
+        hero_install_label: "Une commande sur Linux / macOS :",
+        hero_install_copy: "copier",
+        hero_os_win: "\ud83e\ude9f Windows",
+        hero_os_mac: "\ud83c\udf4e macOS",
+        hero_os_linux: "\ud83d\udc27 Linux",
+        hero_install_all: "guide complet \u2192",
         stat_workers: "Workers en ligne",
         stat_tps: "Tokens / sec",
         stat_jobs: "Jobs termin\u00e9s",
@@ -4911,6 +5020,22 @@ function updateToolsApiKey() {
 }
 // Run on page load and after any auth change
 document.addEventListener('DOMContentLoaded', updateToolsApiKey);
+
+function copyHeroInstall() {
+    var code = document.getElementById('hero-install-cmd-code');
+    var btn = document.getElementById('hero-install-copy-btn');
+    if (!code || !btn) return;
+    navigator.clipboard.writeText(code.innerText).then(function() {
+        var orig = btn.textContent;
+        btn.textContent = 'copied!';
+        btn.classList.add('ok');
+        setTimeout(function() {
+            btn.textContent = orig;
+            btn.classList.remove('ok');
+        }, 1500);
+    });
+}
+
 </script>
 </body>
 </html>

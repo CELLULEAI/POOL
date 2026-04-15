@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta property="og:title" content="Cellule.ai — Run a Worker (Windows / macOS / Linux)">
+<meta property="og:description" content="Turn your idle PC into part of a distributed LLM network. Install a Cellule.ai worker in under 2 minutes on any OS.">
+<meta property="og:url" content="https://cellule.ai/docs/install-worker.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Cellule.ai">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Run a Cellule.ai worker — contribute your idle compute">
+<meta name="twitter:description" content="Install in one line on Linux/macOS, one .exe on Windows. Help the network grow.">
+<meta name="twitter:site" content="@moleculeiallm">
+<title>Cellule.ai — Install a Worker</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0a0a0f; color: #e0e0e0; font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif; line-height: 1.6; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 3rem 1.5rem; }
+h1 { font-size: 2.4rem; margin-bottom: 0.5rem; color: #00ffea; }
+h1 .emoji { font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
+h2 { font-size: 1.5rem; margin: 2.5rem 0 1rem; color: #8b5cf6; border-bottom: 1px solid rgba(139,92,246,.2); padding-bottom: .3rem; }
+h3 { font-size: 1.15rem; margin: 1.5rem 0 0.75rem; color: #00d4ff; }
+p { margin-bottom: 1rem; }
+code { background: rgba(255,255,255,0.08); padding: 0.2rem 0.4rem; border-radius: 4px; font-family: ui-monospace, monospace; font-size: 0.9em; color: #39ff14; }
+pre { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 1rem; overflow-x: auto; margin: 1rem 0; font-family: ui-monospace, monospace; font-size: 0.85rem; color: #e0e0e0; position: relative; }
+pre code { background: transparent; padding: 0; color: inherit; }
+.copy-btn { position: absolute; top: .5rem; right: .5rem; background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3); color: #00d4ff; padding: .25rem .6rem; border-radius: 4px; font-size: .72rem; cursor: pointer; font-family: inherit; }
+.copy-btn:hover { background: rgba(0,212,255,0.2); }
+.copy-btn.ok { color: #00ff88; border-color: #00ff88; }
+.os-tabs { display: flex; gap: .5rem; margin: 2rem 0 1rem; flex-wrap: wrap; }
+.os-tab { flex: 1; min-width: 160px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 1rem; cursor: pointer; transition: all .2s; text-align: center; color: inherit; text-decoration: none; }
+.os-tab:hover { border-color: #00d4ff; background: rgba(0,212,255,0.05); }
+.os-tab.active { border-color: #00ffea; background: rgba(0,255,234,0.08); }
+.os-tab .icon { font-size: 2rem; display: block; margin-bottom: .4rem; font-family: "Apple Color Emoji", "Segoe UI Emoji", sans-serif; }
+.os-tab .name { font-weight: 600; font-size: 1.05rem; }
+.os-tab .sub { color: rgba(255,255,255,0.5); font-size: .8rem; margin-top: .2rem; }
+.os-section { display: none; }
+.os-section.active { display: block; }
+.note { background: rgba(0, 212, 255, 0.08); border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 8px; padding: 1rem 1.25rem; margin: 1.5rem 0; font-size: .92rem; }
+.warn { background: rgba(255, 107, 0, 0.10); border: 1px solid rgba(255, 107, 0, 0.35); border-radius: 8px; padding: 1rem 1.25rem; margin: 1.5rem 0; font-size: .92rem; }
+.warn strong { color: #ff8b30; }
+.ok { background: rgba(0, 255, 136, 0.08); border: 1px solid rgba(0, 255, 136, 0.3); border-radius: 8px; padding: 1rem 1.25rem; margin: 1.5rem 0; font-size: .92rem; }
+.ok strong { color: #00ff88; }
+a { color: #00d4ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+ul, ol { margin: .5rem 0 1rem 2rem; }
+li { margin-bottom: .4rem; }
+.steps { list-style: none; counter-reset: step; padding: 0; }
+.steps li { counter-increment: step; margin-bottom: 1.5rem; padding-left: 3rem; position: relative; list-style: none; }
+.steps li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 2rem; height: 2rem; border-radius: 50%; background: #00ffea; color: #0a0a0f; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.95rem; }
+table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+th, td { padding: 0.5rem 0.7rem; border-bottom: 1px solid rgba(255,255,255,0.08); text-align: left; vertical-align: top; }
+th { color: #00d4ff; font-weight: 600; }
+.footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); opacity: 0.6; font-size: 0.85rem; }
+.hero-cta { background: linear-gradient(135deg, rgba(0,255,234,0.08), rgba(0,212,255,0.08)); border: 1px solid rgba(0,255,234,0.3); border-radius: 12px; padding: 1.5rem; margin: 1rem 0 2rem; text-align: center; }
+.hero-cta p { font-size: 1.05rem; color: rgba(255,255,255,0.85); margin: 0; }
+.hero-cta strong { color: #00ffea; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1><span class="emoji">&#x1F9EC;</span> Run a Cellule.ai worker</h1>
+<p style="font-size:1.1rem;color:rgba(255,255,255,0.75);">Turn your idle PC into a node of the distributed LLM network. One-liner install on Linux/macOS, one download on Windows.</p>
+
+<div class="hero-cta">
+<p><strong>Why ?</strong> Without workers, there is no network. Every CPU or GPU joining brings more capacity, lower latency, better model coverage. Your machine earns community credits ($IAMINE) proportional to the compute it actually delivers.</p>
+</div>
+
+<h2>Pick your OS</h2>
+
+<div class="os-tabs">
+    <a href="#linux" class="os-tab active" onclick="showOS('linux'); return false;">
+        <span class="icon">&#x1F427;</span>
+        <span class="name">Linux</span>
+        <span class="sub">One-line install</span>
+    </a>
+    <a href="#macos" class="os-tab" onclick="showOS('macos'); return false;">
+        <span class="icon">&#x1F34E;</span>
+        <span class="name">macOS</span>
+        <span class="sub">One-line install</span>
+    </a>
+    <a href="#windows" class="os-tab" onclick="showOS('windows'); return false;">
+        <span class="icon">&#x1FA9F;</span>
+        <span class="name">Windows</span>
+        <span class="sub">.exe or pip</span>
+    </a>
+</div>
+
+<!-- ═══════════════ LINUX ═══════════════ -->
+<div id="os-linux" class="os-section active">
+
+<h2>Linux</h2>
+
+<h3>Quickest: one command</h3>
+
+<pre><button class="copy-btn" onclick="copyCode(this)">copy</button><code>curl -sSL https://cellule.ai/install-worker.sh | bash</code></pre>
+
+<p>The installer detects your distro, checks Python 3.12+, creates a user-local venv at <code>~/.cellule-worker</code>, installs <code>iamine-ai</code>, and sets up a <code>systemd --user</code> service so the worker survives reboots.</p>
+
+<div class="note">
+<strong>No sudo needed</strong> if Python 3.12+ is already on your machine. The installer runs entirely in your home directory. It will print the package-manager command to install Python if missing.
+</div>
+
+<h3>What the installer does</h3>
+<ol class="steps">
+<li>Detects OS + architecture</li>
+<li>Verifies Python 3.12+ (suggests apt/dnf/pacman command if missing)</li>
+<li>Creates <code>~/.cellule-worker</code> venv</li>
+<li>Installs <code>iamine-ai</code> from <code>https://iamine.org/pypi</code></li>
+<li>Writes <code>~/.config/systemd/user/cellule-worker.service</code></li>
+<li>Enables linger + starts the service</li>
+</ol>
+
+<h3>Manual install (if you prefer)</h3>
+<pre><button class="copy-btn" onclick="copyCode(this)">copy</button><code>python3.12 -m venv ~/.cellule-worker
+source ~/.cellule-worker/bin/activate
+pip install --upgrade pip
+pip install iamine-ai -i https://iamine.org/pypi --extra-index-url https://pypi.org/simple
+python -m iamine worker --auto</code></pre>
+
+<h3>Manage the service</h3>
+<pre><button class="copy-btn" onclick="copyCode(this)">copy</button><code># Status
+systemctl --user status cellule-worker
+
+# Live logs
+journalctl --user -u cellule-worker -f
+
+# Restart
+systemctl --user restart cellule-worker
+
+# Stop + disable
+systemctl --user disable --now cellule-worker</code></pre>
+
+<h3>GPU acceleration (NVIDIA CUDA, AMD ROCm)</h3>
+<p>The default install ships CPU-only <code>llama-cpp-python</code>. For GPU, rebuild with the right flags:</p>
+<pre><button class="copy-btn" onclick="copyCode(this)">copy</button><code># NVIDIA CUDA
+CMAKE_ARGS="-DGGML_CUDA=on" ~/.cellule-worker/bin/pip install --force-reinstall --no-binary=:all: llama-cpp-python
+
+# AMD ROCm
+CMAKE_ARGS="-DGGML_HIPBLAS=on" ~/.cellule-worker/bin/pip install --force-reinstall --no-binary=:all: llama-cpp-python</code></pre>
+
+</div>
+
+<!-- ═══════════════ macOS ═══════════════ -->
+<div id="os-macos" class="os-section">
+
+<h2>macOS</h2>
+
+<h3>Quickest: one command</h3>
+
+<pre><button class="copy-btn" onclick="copyCode(this)">copy</button><code>curl -sSL https://cellule.ai/install-worker.sh | bash</code></pre>
+
+<p>Same installer as Linux — detects macOS, creates <code>~/.cellule-worker</code>, and installs a <code>launchd</code> agent at <code>~/Library/LaunchAgents/ai.cellule.worker.plist</code> so the worker auto-starts at login.</p>
+
+<div class="note">
+Apple Silicon (M1/M2/M3/M4) users get Metal GPU acceleration automatically on the default install — <code>llama-cpp-python</code> ships with Metal support on macOS.
+</div>
+
+<h3>Requirements</h3>
+<ul>
+    <li>macOS 12+ (Monterey or later)</li>
+    <li>Python 3.12+ — install with <code>brew install python@3.12</code> if missing</li>
+    <li>At least 8 GB RAM for the trial 2B model, 16+ GB recommended</li>
+</ul>
+
+<h3>Manual install</h3>
+<pre><button class="copy-btn" onclick="copyCode(this)">copy</button><code>brew install python@3.12
+python3.12 -m venv ~/.cellule-worker
+~/.cellule-worker/bin/pip install --upgrade pip
+~/.cellule-worker/bin/pip install iamine-ai -i https://iamine.org/pypi --extra-index-url https://pypi.org/simple
+~/.cellule-worker/bin/python -m iamine worker --auto</code></pre>
+
+<h3>Manage the agent</h3>
+<pre><button class="copy-btn" onclick="copyCode(this)">copy</button><code># Status
+launchctl list | grep cellule
+
+# Live logs
+tail -f ~/.cellule-worker/worker.log
+
+# Stop
+launchctl unload ~/Library/LaunchAgents/ai.cellule.worker.plist
+
+# Start again
+launchctl load ~/Library/LaunchAgents/ai.cellule.worker.plist</code></pre>
+
+</div>
+
+<!-- ═══════════════ WINDOWS ═══════════════ -->
+<div id="os-windows" class="os-section">
+
+<h2>Windows</h2>
+
+<h3>Option A: standalone <code>.exe</code> (coming soon)</h3>
+
+<p>We're building a signed, single-file <code>cellule-worker.exe</code> (~250 MB) that bundles Python + all dependencies. No install, no dependencies, double-click to start. Status: <strong style="color:#fbbf24;">in progress</strong> — see <a href="https://github.com/CELLULEAI/POOL/releases" target="_blank">GitHub Releases</a>.</p>
+
+<p>When ready, install will be:</p>
+<ol>
+    <li>Download <code>cellule-worker.exe</code> from GitHub Releases</li>
+    <li>Right-click &#x2192; Properties &#x2192; Unblock (if Windows SmartScreen prompts)</li>
+    <li>Double-click to run — worker registers with the network automatically</li>
+</ol>
+
+<h3>Option B: pip install (works today)</h3>
+
+<p>Open PowerShell (not cmd.exe) and run:</p>
+
+<pre><button class="copy-btn" onclick="copyCode(this)">copy</button><code># Install Python 3.12 first if missing — winget install Python.Python.3.12
+py -3.12 -m venv "$env:USERPROFILE\.cellule-worker"
+& "$env:USERPROFILE\.cellule-worker\Scripts\pip.exe" install --upgrade pip
+& "$env:USERPROFILE\.cellule-worker\Scripts\pip.exe" install iamine-ai -i https://iamine.org/pypi --extra-index-url https://pypi.org/simple
+& "$env:USERPROFILE\.cellule-worker\Scripts\python.exe" -m iamine worker --auto</code></pre>
+
+<h3>Auto-start at boot (Task Scheduler)</h3>
+
+<pre><button class="copy-btn" onclick="copyCode(this)">copy</button><code># Create a scheduled task that starts the worker at logon
+$action = New-ScheduledTaskAction -Execute "$env:USERPROFILE\.cellule-worker\Scripts\python.exe" -Argument "-m iamine worker --auto"
+$trigger = New-ScheduledTaskTrigger -AtLogon
+$settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 2)
+Register-ScheduledTask -TaskName "CelluleWorker" -Action $action -Trigger $trigger -Settings $settings</code></pre>
+
+<h3>Requirements</h3>
+<ul>
+    <li>Windows 10 / 11 (x64)</li>
+    <li>Python 3.12+ — install via <a href="https://learn.microsoft.com/en-us/windows/package-manager/winget/" target="_blank">winget</a>: <code>winget install Python.Python.3.12</code></li>
+    <li>Visual C++ Build Tools (if pip fails on <code>llama-cpp-python</code>)</li>
+    <li>At least 8 GB RAM for the trial 2B model, 16+ GB recommended</li>
+</ul>
+
+<h3>GPU acceleration (NVIDIA)</h3>
+<pre><button class="copy-btn" onclick="copyCode(this)">copy</button><code>$env:CMAKE_ARGS="-DGGML_CUDA=on"
+& "$env:USERPROFILE\.cellule-worker\Scripts\pip.exe" install --force-reinstall --no-binary=:all: llama-cpp-python</code></pre>
+
+</div>
+
+<!-- ═══════════════ COMMON ═══════════════ -->
+
+<h2>How the worker joins the network</h2>
+
+<ol class="steps">
+<li>The worker starts in <code>--auto</code> mode: it benches your hardware (CPU, GPU, RAM, tokens/s).</li>
+<li>It contacts the public federated pools on <code>cellule.ai</code> and picks the one where its capability fills a gap best (M12 placement).</li>
+<li>It downloads the assigned GGUF model (auto-picked by your hardware profile — 2B / 4B / 7B / 14B / 30B MoE).</li>
+<li>It handshakes Ed25519 and starts accepting jobs over WebSocket.</li>
+<li>Your credits (<code>$IAMINE</code>) accumulate in your account for every inference your worker completes.</li>
+</ol>
+
+<div class="ok">
+<strong>&#x2713; PREPROD / testnet.</strong> $IAMINE credits have no market value yet. Every inference you run today is building the history that will be honored when the economy goes on-chain. Early contributors are tracked in <code>worker_wallet_snapshots</code>.
+</div>
+
+<h2>Requirements by model</h2>
+
+<table>
+<thead><tr><th>Model</th><th>RAM</th><th>Disk</th><th>Speed target (CPU)</th><th>GPU</th></tr></thead>
+<tbody>
+<tr><td>Qwen 3.5 2B</td><td>4 GB+</td><td>1.5 GB</td><td>8+ t/s</td><td>optional</td></tr>
+<tr><td>Qwen 3.5 4B</td><td>6 GB+</td><td>2.5 GB</td><td>5+ t/s</td><td>optional</td></tr>
+<tr><td>Qwen3 30B A3B (MoE)</td><td>24 GB+</td><td>18 GB</td><td>not feasible CPU</td><td>recommended</td></tr>
+</tbody>
+</table>
+
+<p>Don't know your specs ? Run the worker in <code>--auto</code> and it picks the best fit. Too small ? It will refuse gracefully and tell you why.</p>
+
+<h2>Uninstall</h2>
+
+<h3>Linux</h3>
+<pre><button class="copy-btn" onclick="copyCode(this)">copy</button><code>systemctl --user disable --now cellule-worker
+rm -rf ~/.cellule-worker ~/.config/systemd/user/cellule-worker.service
+systemctl --user daemon-reload</code></pre>
+
+<h3>macOS</h3>
+<pre><button class="copy-btn" onclick="copyCode(this)">copy</button><code>launchctl unload ~/Library/LaunchAgents/ai.cellule.worker.plist
+rm -rf ~/.cellule-worker ~/Library/LaunchAgents/ai.cellule.worker.plist</code></pre>
+
+<h3>Windows</h3>
+<pre><button class="copy-btn" onclick="copyCode(this)">copy</button><code>Unregister-ScheduledTask -TaskName "CelluleWorker" -Confirm:$false
+Remove-Item -Recurse -Force "$env:USERPROFILE\.cellule-worker"</code></pre>
+
+<h2>Troubleshooting</h2>
+
+<h3><code>pip install iamine-ai</code> fails with <code>llama-cpp-python</code> build error</h3>
+<p>Install the C++ build chain:</p>
+<ul>
+    <li><strong>Linux</strong>: <code>sudo apt install build-essential cmake</code></li>
+    <li><strong>macOS</strong>: <code>xcode-select --install</code></li>
+    <li><strong>Windows</strong>: Install <a href="https://visualstudio.microsoft.com/visual-cpp-build-tools/" target="_blank">Visual C++ Build Tools</a> (choose "Desktop development with C++")</li>
+</ul>
+
+<h3>Worker doesn't appear in <a href="https://cellule.ai/status">/status</a></h3>
+<p>Check logs (see "Manage the service" above). Common causes: no network to <code>cellule.ai:443</code>, Python version too old, firewall blocking WebSocket.</p>
+
+<h3>Worker hogs my CPU</h3>
+<p>The worker only runs inferences when the network routes a job to it. Between jobs it's idle. You can cap CPU via systemd (<code>CPUQuota=50%</code>) or launchd (<code>Nice = 10</code>).</p>
+
+<h2>Security</h2>
+<ul>
+<li>The worker only <strong>receives</strong> inference requests over WebSocket — no inbound ports opened on your machine.</li>
+<li>All federation traffic is Ed25519-signed (see <a href="/docs/federation.html">federation docs</a>).</li>
+<li>Worker code is open-source under <strong>AGPL v3</strong>. Audit it: <a href="https://github.com/CELLULEAI/POOL" target="_blank">github.com/CELLULEAI/POOL</a>.</li>
+<li>The installer script writes only to <code>~/.cellule-worker</code> and the OS's user-service directory. No system-wide changes without your explicit permission.</li>
+</ul>
+
+<p style="margin-top:2rem;"><a href="/">&larr; Back to homepage</a> &middot; <a href="/docs/federation.html">Federation explained</a> &middot; <a href="/docs/pool-docker.html">Run your own pool</a> &middot; <a href="https://github.com/CELLULEAI/POOL" target="_blank">GitHub</a></p>
+
+<p class="footer">Cellule.ai &mdash; AI belongs to those who run it. Worker installer v0.2.72, LIVE 2026-04-15.</p>
+</div>
+
+<script>
+function showOS(os) {
+    document.querySelectorAll('.os-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.os-section').forEach(s => s.classList.remove('active'));
+    document.querySelector('.os-tab[href="#' + os + '"]').classList.add('active');
+    document.getElementById('os-' + os).classList.add('active');
+}
+function copyCode(btn) {
+    var pre = btn.parentElement;
+    var code = pre.querySelector('code').innerText;
+    navigator.clipboard.writeText(code).then(function() {
+        btn.textContent = 'copied';
+        btn.classList.add('ok');
+        setTimeout(function() { btn.textContent = 'copy'; btn.classList.remove('ok'); }, 1500);
+    });
+}
+// Auto-detect OS and jump to the right tab
+(function() {
+    var ua = navigator.userAgent.toLowerCase();
+    if (ua.indexOf('win') >= 0) showOS('windows');
+    else if (ua.indexOf('mac') >= 0) showOS('macos');
+    // Linux stays default
+    // Honor hash if present
+    var h = window.location.hash.replace('#','');
+    if (h && ['linux','macos','windows'].includes(h)) showOS(h);
+})();
+</script>
+</body>
+</html>
