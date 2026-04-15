@@ -199,16 +199,48 @@ launchctl load ~/Library/LaunchAgents/ai.cellule.worker.plist</code></pre>
 
 <h2>Windows</h2>
 
-<h3 data-i18n="option_a">Option A: standalone <code>.exe</code> (coming soon)</h3>
+<h3 data-i18n="option_a">Option A: standalone <code>.exe</code> <span style="color:#fbbf24;font-size:.85rem;">— PREPROD / BETA to test</span></h3>
 
-<p data-i18n="option_a_desc">We're building a signed, single-file <code>cellule-worker.exe</code> (~250 MB) that bundles Python + all dependencies. No install, no dependencies, double-click to start. Status: <strong style="color:#fbbf24;">in progress</strong> — see <a href="https://github.com/CELLULEAI/POOL/releases" target="_blank">GitHub Releases</a>.</p>
+<p data-i18n="option_a_desc">Two pre-built executables are published to GitHub Releases. They bundle Python + iamine + llama.cpp into a single double-clickable file. <strong style="color:#fbbf24;">PREPROD</strong> — please report any issue you hit.</p>
 
-<p data-i18n="when_ready">When ready, install will be:</p>
+<table style="width:100%;border-collapse:collapse;margin:1rem 0;font-size:.88rem;">
+<thead><tr style="border-bottom:1px solid rgba(255,255,255,0.15);">
+<th style="padding:.5rem;" data-i18n="col_variant">Variant</th>
+<th style="padding:.5rem;" data-i18n="col_for">For</th>
+<th style="padding:.5rem;" data-i18n="col_size">Size</th>
+<th style="padding:.5rem;" data-i18n="col_speed_typ">Typical speed</th>
+</tr></thead>
+<tbody>
+<tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+<td style="padding:.5rem;"><code>cellule-worker-cpu.exe</code></td>
+<td style="padding:.5rem;" data-i18n="cpu_for">Any Windows PC (no GPU required)</td>
+<td style="padding:.5rem;">~45 MB</td>
+<td style="padding:.5rem;" data-i18n="cpu_speed">5–15 t/s on modern CPUs (Qwen 2B–4B)</td>
+</tr>
+<tr>
+<td style="padding:.5rem;"><code>cellule-worker-cuda.exe</code></td>
+<td style="padding:.5rem;" data-i18n="cuda_for">Windows PC with NVIDIA GPU (CUDA 12+)</td>
+<td style="padding:.5rem;">~300–500 MB</td>
+<td style="padding:.5rem;" data-i18n="cuda_speed">50–200 t/s on NVIDIA RTX (Qwen 4B–14B)</td>
+</tr>
+</tbody>
+</table>
+
+<div class="warn" style="margin:1rem 0;">
+<strong data-i18n="which_q">Which one do I pick ?</strong><br>
+<span data-i18n="which_a">If you have an NVIDIA GPU (RTX 20xx / 30xx / 40xx / 50xx), use the <strong>CUDA</strong> build — 10× faster, helps the network more. Otherwise the <strong>CPU</strong> build works on any Windows 10/11 machine.</span>
+</div>
+
+<p data-i18n="when_ready">Installation steps (both variants):</p>
 <ol>
-    <li data-i18n="win_step1">Download <code>cellule-worker.exe</code> from GitHub Releases</li>
+    <li data-i18n="win_step1">Download the right <code>.exe</code> from <a href="https://github.com/CELLULEAI/POOL/releases" target="_blank">GitHub Releases</a>.</li>
     <li data-i18n="win_step2">Right-click &rarr; Properties &rarr; Unblock (if Windows SmartScreen prompts)</li>
-    <li data-i18n="win_step3">Double-click to run — worker registers with the network automatically</li>
+    <li data-i18n="win_step3">Double-click to run — the worker benches your hardware, picks a model, and joins the network automatically.</li>
 </ol>
+
+<div class="note" style="margin:1rem 0;">
+<strong data-i18n="preprod_note">PREPROD / BETA notice.</strong> <span data-i18n="preprod_body">These binaries are unsigned for now (SmartScreen will show a warning). Source is public and auditable on <a href="https://github.com/CELLULEAI/POOL" target="_blank">GitHub</a>. The CI workflow that builds them is at <code>.github/workflows/build-worker-exe.yml</code> — 100% reproducible. If you prefer, use Option B (pip) below to install from source yourself.</span>
+</div>
 
 <h3 data-i18n="option_b">Option B: pip install (works today)</h3>
 
@@ -353,10 +385,19 @@ var I18N = {
         mac_req1: "macOS 12+ (Monterey or later)",
         mac_req2: "Python 3.12+ \u2014 install with <code>brew install python@3.12</code> if missing",
         mac_req3: "At least 8 GB RAM for the trial 2B model, 16+ GB recommended",
-        option_a: "Option A: standalone <code>.exe</code> (coming soon)",
-        option_a_desc: "We're building a signed, single-file <code>cellule-worker.exe</code> (~250 MB) that bundles Python + all dependencies. No install, no dependencies, double-click to start. Status: <strong style=\"color:#fbbf24;\">in progress</strong> \u2014 see <a href=\"https://github.com/CELLULEAI/POOL/releases\" target=\"_blank\">GitHub Releases</a>.",
-        when_ready: "When ready, install will be:",
-        win_step1: "Download <code>cellule-worker.exe</code> from GitHub Releases",
+        option_a: "Option A: standalone <code>.exe</code> <span style=\"color:#fbbf24;font-size:.85rem;\">\u2014 PREPROD / BETA to test</span>",
+        option_a_desc: "Two pre-built executables are published to GitHub Releases. They bundle Python + iamine + llama.cpp into a single double-clickable file. <strong style=\"color:#fbbf24;\">PREPROD</strong> \u2014 please report any issue you hit.",
+        col_variant: "Variant", col_for: "For", col_size: "Size", col_speed_typ: "Typical speed",
+        cpu_for: "Any Windows PC (no GPU required)",
+        cpu_speed: "5\u201315 t/s on modern CPUs (Qwen 2B\u20134B)",
+        cuda_for: "Windows PC with NVIDIA GPU (CUDA 12+)",
+        cuda_speed: "50\u2013200 t/s on NVIDIA RTX (Qwen 4B\u201314B)",
+        which_q: "Which one do I pick ?",
+        which_a: "If you have an NVIDIA GPU (RTX 20xx / 30xx / 40xx / 50xx), use the <strong>CUDA</strong> build \u2014 10\u00d7 faster, helps the network more. Otherwise the <strong>CPU</strong> build works on any Windows 10/11 machine.",
+        when_ready: "Installation steps (both variants):",
+        win_step1: "Download the right <code>.exe</code> from <a href=\"https://github.com/CELLULEAI/POOL/releases\" target=\"_blank\">GitHub Releases</a>.",
+        preprod_note: "PREPROD / BETA notice.",
+        preprod_body: "These binaries are unsigned for now (SmartScreen will show a warning). Source is public and auditable on <a href=\"https://github.com/CELLULEAI/POOL\" target=\"_blank\">GitHub</a>. The CI workflow that builds them is at <code>.github/workflows/build-worker-exe.yml</code> \u2014 100% reproducible. If you prefer, use Option B (pip) below to install from source yourself.",
         win_step2: "Right-click &rarr; Properties &rarr; Unblock (if Windows SmartScreen prompts)",
         win_step3: "Double-click to run \u2014 worker registers with the network automatically",
         option_b: "Option B: pip install (works today)",
@@ -434,10 +475,19 @@ var I18N = {
         mac_req1: "macOS 12+ (Monterey ou plus r\u00e9cent)",
         mac_req2: "Python 3.12+ \u2014 installer avec <code>brew install python@3.12</code> si manquant",
         mac_req3: "Au moins 8 Go de RAM pour le mod\u00e8le trial 2B, 16+ Go recommand\u00e9",
-        option_a: "Option A : <code>.exe</code> autonome (bient\u00f4t)",
-        option_a_desc: "Un <code>cellule-worker.exe</code> sign\u00e9 et mono-fichier (~250 Mo) est en pr\u00e9paration. Il embarque Python + toutes les d\u00e9pendances. Pas d'installation, double-clic pour d\u00e9marrer. Statut : <strong style=\"color:#fbbf24;\">en cours</strong> \u2014 voir <a href=\"https://github.com/CELLULEAI/POOL/releases\" target=\"_blank\">GitHub Releases</a>.",
-        when_ready: "Quand disponible, l'installation sera :",
-        win_step1: "T\u00e9l\u00e9charger <code>cellule-worker.exe</code> depuis GitHub Releases",
+        option_a: "Option A : <code>.exe</code> autonome <span style=\"color:#fbbf24;font-size:.85rem;\">\u2014 PREPROD / BETA \u00e0 tester</span>",
+        option_a_desc: "Deux ex\u00e9cutables pr\u00e9-compil\u00e9s sont publi\u00e9s sur GitHub Releases. Ils embarquent Python + iamine + llama.cpp dans un seul fichier double-cliquable. <strong style=\"color:#fbbf24;\">PREPROD</strong> \u2014 signalez tout probl\u00e8me rencontr\u00e9.",
+        col_variant: "Variante", col_for: "Pour", col_size: "Taille", col_speed_typ: "Vitesse typique",
+        cpu_for: "Tout PC Windows (sans GPU requis)",
+        cpu_speed: "5\u201315 t/s sur CPU moderne (Qwen 2B\u20134B)",
+        cuda_for: "PC Windows avec GPU NVIDIA (CUDA 12+)",
+        cuda_speed: "50\u2013200 t/s sur NVIDIA RTX (Qwen 4B\u201314B)",
+        which_q: "Laquelle choisir ?",
+        which_a: "Si vous avez un GPU NVIDIA (RTX 20xx / 30xx / 40xx / 50xx), prenez la version <strong>CUDA</strong> \u2014 10\u00d7 plus rapide, plus utile au r\u00e9seau. Sinon la version <strong>CPU</strong> fonctionne sur tout Windows 10/11.",
+        when_ready: "\u00c9tapes d'installation (les deux variantes) :",
+        win_step1: "T\u00e9l\u00e9chargez le bon <code>.exe</code> depuis <a href=\"https://github.com/CELLULEAI/POOL/releases\" target=\"_blank\">GitHub Releases</a>.",
+        preprod_note: "Notice PREPROD / BETA.",
+        preprod_body: "Ces binaires ne sont pas encore sign\u00e9s (SmartScreen affichera un avertissement). Le code source est public et auditable sur <a href=\"https://github.com/CELLULEAI/POOL\" target=\"_blank\">GitHub</a>. Le workflow CI qui les construit est dans <code>.github/workflows/build-worker-exe.yml</code> \u2014 100% reproductible. Si vous pr\u00e9f\u00e9rez, utilisez l'Option B (pip) ci-dessous pour installer depuis le source.",
         win_step2: "Clic droit &rarr; Propri\u00e9t\u00e9s &rarr; D\u00e9bloquer (si SmartScreen le demande)",
         win_step3: "Double-cliquer pour lancer \u2014 le worker rejoint le r\u00e9seau automatiquement",
         option_b: "Option B : pip install (disponible d\u00e8s maintenant)",
