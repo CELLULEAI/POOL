@@ -4139,12 +4139,30 @@ Si l'utilisateur semble nouveau : oriente-le vers la doc ou le github plutot que
             return;
         }
 
-        // Check if response is JSON (pending/queue) instead of SSE stream
+        // Helper : extract assistant text from a non-streaming JSON response
+        function _extractContentFromJson(j) {
+            try {
+                if (j && j.choices && j.choices[0]) {
+                    var ch = j.choices[0];
+                    if (ch.message && typeof ch.message.content === 'string') return ch.message.content;
+                    if (ch.delta && typeof ch.delta.content === 'string') return ch.delta.content;
+                    if (typeof ch.text === 'string') return ch.text;
+                }
+            } catch(e) {}
+            return null;
+        }
+
+        // Determine response type without locking the stream
         var contentType = resp.headers.get('content-type') || '';
-        if (contentType.includes('application/json')) {
-            var jsonResp = await resp.json();
-            if (jsonResp.iamine && jsonResp.iamine.pending) {
-                // Retry after a short wait (worker was busy)
+        var isJsonResponse = contentType.includes('application/json');
+
+        if (isJsonResponse) {
+            // Body MUST be consumed via .json() — we cannot fall through to getReader
+            var jsonResp = null;
+            try { jsonResp = await resp.json(); } catch(e) { jsonResp = null; }
+
+            // Pending : retry once after 3s
+            if (jsonResp && jsonResp.iamine && jsonResp.iamine.pending) {
                 assistDiv.textContent = '⌛';
                 await new Promise(function(r) { setTimeout(r, 3000); });
                 resp = await fetch('/v1/chat/completions', {
@@ -4156,11 +4174,12 @@ Si l'utilisateur semble nouveau : oriente-le vers la doc ou le github plutot que
                         stream: true
                     })
                 });
-                // If still pending after retry, show message
-                var ct2 = resp.headers.get('content-type') || '';
-                if (ct2.includes('application/json')) {
-                    var j2 = await resp.json();
-                    if (j2.iamine && j2.iamine.pending) {
+                contentType = resp.headers.get('content-type') || '';
+                isJsonResponse = contentType.includes('application/json');
+                jsonResp = null;
+                if (isJsonResponse) {
+                    try { jsonResp = await resp.json(); } catch(e) { jsonResp = null; }
+                    if (jsonResp && jsonResp.iamine && jsonResp.iamine.pending) {
                         var busyMsg = {
                             en: 'All workers are busy, please try again in a moment.',
                             fr: "Tous les workers sont occupés, réessayez dans un instant."
@@ -4179,8 +4198,27 @@ Si l'utilisateur semble nouveau : oriente-le vers la doc ou le github plutot que
                     }
                 }
             }
+
+            // If we have a JSON answer here (non-stream complete), display it and return
+            if (isJsonResponse && jsonResp) {
+                var content = _extractContentFromJson(jsonResp);
+                if (content) {
+                    assistDiv.textContent = content;
+                    _trialHistory.push({role: 'assistant', content: content});
+                    return;
+                }
+                // Unknown JSON shape : surface error
+                assistDiv.textContent = (jsonResp.error && jsonResp.error.message) || JSON.stringify(jsonResp).slice(0, 300);
+                return;
+            }
+            // else : fell through to streaming path below (resp was reassigned)
         }
 
+        // Streaming SSE path
+        if (!resp.body) {
+            assistDiv.textContent = 'Stream unavailable';
+            return;
+        }
         var reader = resp.body.getReader();
         var decoder = new TextDecoder();
         var fullText = '';
