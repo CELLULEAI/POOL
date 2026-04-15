@@ -128,37 +128,21 @@ CREATE INDEX IF NOT EXISTS idx_admin_log_event   ON federation_admin_actions_log
 -- Si ce flag est FALSE, les 3 endpoints /v1/federation/admin/* retournent 403.
 -- L'operateur doit explicitement activer cette capacite pour son pool.
 
-INSERT INTO pool_config (key, value, description)
-VALUES (
-    'federation_admin_actions_enabled',
-    'false',
-    'Phase 2 molecule console : accepte les requests cross-pool (circuit_reset, query_events). OFF par defaut. Activer seulement si trust>=3 avec les peers federes.'
-)
+INSERT INTO pool_config (key, value)
+VALUES ('federation_admin_actions_enabled', 'false')
 ON CONFLICT (key) DO NOTHING;
 
 -- Cooldown par defaut (secondes) pour circuit_reset par pair emetteur
-INSERT INTO pool_config (key, value, description)
-VALUES (
-    'federation_admin_cooldown_circuit_reset_seconds',
-    '21600',
-    'Phase 2 : cooldown minimum entre 2 circuit_reset acceptes du meme pair emetteur. Defaut 21600s = 6h. Anti-abus token-guardian.'
-)
+INSERT INTO pool_config (key, value)
+VALUES ('federation_admin_cooldown_circuit_reset_seconds', '21600')
 ON CONFLICT (key) DO NOTHING;
 
 -- Whitelist event_types autorises dans query_events cross-pool (JSON list)
-INSERT INTO pool_config (key, value, description)
-VALUES (
-    'federation_admin_query_events_whitelist',
-    '["circuit_opened","circuit_closed","worker_joined","worker_left","peer_handshake","overview","peer_status"]',
-    'Phase 2 : event_types whitelistes pour query_events cross-pool. Les types sensibles economiquement (settlement_*, credits_*, worker_share_*) sont EXCLUS par defaut. Token-guardian validated.'
-)
+INSERT INTO pool_config (key, value)
+VALUES ('federation_admin_query_events_whitelist', '["circuit_opened","circuit_closed","worker_joined","worker_left","peer_handshake","overview","peer_status"]')
 ON CONFLICT (key) DO NOTHING;
 
 -- Rate limit pending par pair emetteur
-INSERT INTO pool_config (key, value, description)
-VALUES (
-    'federation_admin_max_pending_per_peer',
-    '10',
-    'Phase 2 : nombre maximum de requests pending simultanees par pair emetteur. 11e request -> 429.'
-)
+INSERT INTO pool_config (key, value)
+VALUES ('federation_admin_max_pending_per_peer', '10')
 ON CONFLICT (key) DO NOTHING;
