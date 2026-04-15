@@ -49,24 +49,39 @@ jobs:
           python -m pip install llama-cpp-python
           python -c "import llama_cpp; print('llama_cpp_imported_ok', getattr(llama_cpp, '__version__', 'unknown'))"
 
-      - name: Install iamine-ai
+      - name: Install iamine-ai (retry x3)
         shell: pwsh
         run: |
           $version = "${{ inputs.iamine_version }}"
-          if ([string]::IsNullOrEmpty($version)) {
-            python -m pip install iamine-ai `
-              --index-url https://iamine.org/pypi `
-              --extra-index-url https://pypi.org/simple
-          } else {
-            python -m pip install "iamine-ai==$version" `
-              --index-url https://iamine.org/pypi `
-              --extra-index-url https://pypi.org/simple
+          $installed = $false
+          for ($i = 1; $i -le 3; $i++) {
+            Write-Host "attempt $i/3 ..."
+            if ([string]::IsNullOrEmpty($version)) {
+              python -m pip install iamine-ai `
+                --index-url https://cellule.ai/pypi `
+                --extra-index-url https://pypi.org/simple
+            } else {
+              python -m pip install "iamine-ai==$version" `
+                --index-url https://cellule.ai/pypi `
+                --extra-index-url https://pypi.org/simple
+            }
+            if ($LASTEXITCODE -eq 0) {
+              $installed = $true
+              break
+            }
+            Write-Host "retry in 10s..."
+            Start-Sleep -Seconds 10
+          }
+          if (-not $installed) {
+            Write-Error "iamine-ai install failed after 3 attempts"
+            exit 1
           }
           python -c "import iamine; print('iamine_imported_ok', iamine.__version__)"
 
-      - name: Write entry-point stub
+      - name: Build .exe (enum DLLs + PyInstaller in one step)
         shell: pwsh
         run: |
+          # Entry-point stub
           $content = @'
           import sys
           from iamine.__main__ import main
@@ -77,46 +92,23 @@ jobs:
           '@
           $content | Out-File -Encoding ascii worker_entry.py
 
-      - name: Collect llama_cpp DLL paths
-        id: dll
-        shell: pwsh
-        run: |
+          # Locate llama_cpp DLLs
           $llamaPath = python -c "import llama_cpp, os; print(os.path.dirname(llama_cpp.__file__))"
           Write-Host "llama_cpp path: $llamaPath"
           $libDir = Join-Path $llamaPath "lib"
-          Write-Host "Listing $libDir :"
-          if (Test-Path $libDir) {
-            Get-ChildItem $libDir -Recurse
-          } else {
-            Write-Error "llama_cpp/lib directory missing — DLLs were not installed"
+          if (-not (Test-Path $libDir)) {
+            Write-Error "llama_cpp/lib missing"
             exit 1
           }
-          # Build --add-binary args, one per DLL. Format on Windows: "src;dest"
-          $addBinaries = @()
-          foreach ($dll in Get-ChildItem $libDir -Filter *.dll) {
-            $addBinaries += "--add-binary"
-            $addBinaries += "$($dll.FullName);llama_cpp/lib"
-          }
-          Write-Host "Collected $($addBinaries.Count / 2) DLLs"
-          # Export as GITHUB_OUTPUT multi-line, one token per line
-          $out = $addBinaries -join "`n"
-          "add_binaries<<EOF`n$out`nEOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          "llama_path=$llamaPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          $dlls = Get-ChildItem $libDir -Filter *.dll
+          Write-Host "Found $($dlls.Count) DLLs in $libDir :"
+          $dlls | ForEach-Object { Write-Host "  $($_.Name) $([math]::Round($_.Length / 1MB, 1)) MB" }
 
-      - name: Build .exe with PyInstaller
-        shell: pwsh
-        run: |
-          # Reconstruct --add-binary arg list from the step output
-          $addBinariesRaw = @'
-          ${{ steps.dll.outputs.add_binaries }}
-          '@
-          $args = $addBinariesRaw -split "`n" | Where-Object { $_.Trim() -ne "" }
-          Write-Host "add-binary arg count:" $args.Count
-
+          # Build PyInstaller args (one add-binary per DLL)
           $pyinstArgs = @(
             "--onefile",
             "--name", "cellule-worker",
-            "--paths", "${{ steps.dll.outputs.llama_path }}",
+            "--paths", $llamaPath,
             "--collect-all", "iamine",
             "--collect-all", "llama_cpp",
             "--collect-submodules", "iamine",
@@ -127,11 +119,18 @@ jobs:
             "--hidden-import=llama_cpp",
             "--console"
           )
-          $pyinstArgs += $args
+          foreach ($dll in $dlls) {
+            $pyinstArgs += "--add-binary"
+            $pyinstArgs += "$($dll.FullName);llama_cpp/lib"
+          }
           $pyinstArgs += "worker_entry.py"
 
-          Write-Host "Running: pyinstaller $($pyinstArgs -join ' ')"
+          Write-Host "pyinstaller arg count: $($pyinstArgs.Count)"
           & pyinstaller @pyinstArgs
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "pyinstaller failed exit $LASTEXITCODE"
+            exit 1
+          }
           Get-ChildItem dist/
 
       - name: Smoke test .exe
@@ -149,7 +148,7 @@ jobs:
           $size = (Get-Item dist/cellule-worker.exe).Length / 1MB
           Write-Host ("cellule-worker.exe size: {0:N1} MB" -f $size)
           if ($size -lt 50) {
-            Write-Error "exe too small ($size MB) - llama_cpp DLLs still missing"
+            Write-Error "exe too small ($size MB) - DLLs missing"
             exit 1
           }
 
