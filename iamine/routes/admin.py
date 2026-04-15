@@ -220,6 +220,23 @@ async def admin_setup(request: Request):
 
 # ─── GET /admin ──────────────────────────────────────────────────────────────
 
+@router.get("/admin/molecule")
+async def admin_molecule_page(request: Request):
+    """Molecule Console Phase 1 — cross-pool read-only dashboard."""
+    from fastapi.responses import FileResponse, HTMLResponse
+    admin_email = await _check_admin(request)
+    if not admin_email:
+        return HTMLResponse(LOGIN_PAGE_HTML)
+    static_dir = _static_dir()
+    molecule_file = static_dir / "admin_molecule.html"
+    if molecule_file.exists():
+        resp = FileResponse(str(molecule_file))
+        resp.set_cookie("admin_token", os.environ.get("ADMIN_PASSWORD"),
+                        httponly=False, max_age=86400, samesite="lax")
+        return resp
+    return {"error": "Molecule Console page not found"}
+
+
 @router.get("/admin")
 async def admin_page(request: Request):
     from fastapi.responses import FileResponse, HTMLResponse
@@ -1810,3 +1827,282 @@ async def admin_resend_test(request: Request):
                                       status_code=500)
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@router.post("/v1/admin/circuit/reset")
+async def admin_circuit_reset(request: Request):
+    """Circuit breaker reset — admin-triggered recovery from degraded state.
+
+    Clears:
+      - in-memory worker blacklist (pool._blacklist)
+      - DB-persisted blacklist (pool_config.blacklist)
+      - per-worker checker score/fails (workers.checker_score=1.0, fails=0)
+
+    Does NOT: touch federation state, kill connections, delete data.
+    """
+    admin = await _check_admin(request)
+    if not admin:
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+
+    pool = _pool()
+    cleared_bl = len(pool._blacklist)
+    pool._blacklist = set()
+
+    reset_scores = 0
+    try:
+        async with pool.store.pool.acquire() as conn:
+            await conn.execute("UPDATE pool_config SET value='[]' WHERE key='blacklist'")
+            reset_scores = await conn.fetchval(
+                "WITH u AS (UPDATE workers SET checker_score=1.0, checker_fails=0, "
+                "checker_total=0, checker_passed=0 RETURNING 1) SELECT COUNT(*) FROM u"
+            ) or 0
+    except Exception as e:
+        log.warning(f"[CIRCUIT_RESET] DB reset partial failure: {e}")
+
+    log.warning(
+        f"[CIRCUIT_RESET] admin={admin!r} cleared_blacklist={cleared_bl} "
+        f"reset_worker_scores={reset_scores}"
+    )
+    return {
+        "ok": True,
+        "cleared_blacklist": cleared_bl,
+        "reset_worker_scores": reset_scores,
+        "timestamp": __import__('datetime').datetime.utcnow().isoformat() + 'Z',
+    }
+
+
+# ─── Molecule Console Phase 1 : /v1/molecule/* ─────────────────────────────
+#
+# Read-only aggregator. Admin auth (admin_token). Fan-out to peers trust>=3
+# via signed /v1/federation/peer/status. No URL hardcoded — source of truth
+# is the federation_peers DB. Partial responses explicit (status + unreachable
+# fields) — molecule-guardian invariant.
+#
+# Security:
+#   - admin_token gate (local admin only, no cross-pool auth delegation)
+#   - Each outbound call is signed with THIS pool's federation key
+#   - Timeout 3s/peer prevents hung fan-outs
+#
+# Audit: each call is logged in molecule_events (EPHEMERAL-ACCEPTABLE, RF=1).
+
+@router.get("/v1/molecule/overview")
+async def molecule_overview(request: Request):
+    admin = await _check_admin(request)
+    if not admin:
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+
+    pool = _pool()
+    import time as _time
+    start_ts = _time.time()
+
+    from iamine import __version__
+    from ..core import federation as fed
+
+    # LOCAL pool state (exact values for the admin's own pool)
+    self_atom_id = pool.federation_self.atom_id if pool.federation_self else ""
+    self_name = pool.federation_self.name if pool.federation_self else "self"
+    try:
+        uptime_sec = int(_time.time() - getattr(pool, "_start_time", _time.time()))
+    except Exception:
+        uptime_sec = 0
+    workers_online = len(getattr(pool, "workers", {}) or {})
+
+    tvl_exact_local = 0
+    rows_local = 0
+    slashings_local = 0
+    peers_bonded = 0
+    peers_rows = []
+
+    if hasattr(pool.store, "pool") and pool.store.pool:
+        try:
+            async with pool.store.pool.acquire() as conn:
+                try:
+                    tvl_exact_local = int(await conn.fetchval(
+                        "SELECT COALESCE(SUM(pending_worker_attribution), 0)::bigint "
+                        "FROM revenue_ledger"
+                    ) or 0)
+                except Exception:
+                    tvl_exact_local = 0
+                try:
+                    rows_local = int(await conn.fetchval(
+                        "SELECT COUNT(*)::bigint FROM revenue_ledger"
+                    ) or 0)
+                except Exception:
+                    rows_local = 0
+                try:
+                    slashings_local = int(await conn.fetchval(
+                        "SELECT COUNT(*)::bigint FROM slashing_events WHERE status='pending'"
+                    ) or 0)
+                except Exception:
+                    slashings_local = 0
+
+                rows = await conn.fetch(
+                    "SELECT atom_id, name, url, trust_level FROM federation_peers "
+                    "WHERE trust_level >= 3 AND revoked_at IS NULL AND atom_id <> $1",
+                    self_atom_id,
+                )
+                peers_rows = [dict(r) for r in rows]
+                peers_bonded = len(peers_rows)
+        except Exception as e:
+            log.warning(f"molecule/overview local gather failed: {e}")
+
+    # FAN-OUT to bonded peers (trust>=3)
+    import asyncio, aiohttp
+    import json as _json
+    unreachable = []
+    peer_results: list[dict] = []
+
+    async def fetch_peer(peer_row: dict):
+        atom_id = peer_row["atom_id"]
+        url = peer_row["url"].rstrip("/") + "/v1/federation/peer/status"
+        body_bytes = _json.dumps({"origin_pool_id": self_atom_id}).encode()
+        try:
+            priv_raw = b""
+            if pool.federation_self and getattr(pool.federation_self, "privkey_path", None):
+                from pathlib import Path as _Path
+                try:
+                    p = _Path(pool.federation_self.privkey_path)
+                    if p.exists():
+                        priv_raw = p.read_bytes()
+                except Exception:
+                    priv_raw = b""
+            headers = fed.build_envelope_headers(
+                priv_raw=priv_raw,
+                atom_id=self_atom_id,
+                method="POST",
+                path="/v1/federation/peer/status",
+                body=body_bytes,
+            )
+            headers["Content-Type"] = "application/json"
+            timeout = aiohttp.ClientTimeout(total=3.0)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.post(url, data=body_bytes, headers=headers) as resp:
+                    if resp.status != 200:
+                        unreachable.append(atom_id)
+                        return None
+                    data = await resp.json()
+                    data["_name"] = peer_row.get("name", "?")
+                    return data
+        except Exception as e:
+            log.info(f"molecule/overview peer {atom_id[:12]} unreachable: {e}")
+            unreachable.append(atom_id)
+            return None
+
+    if peers_rows:
+        results = await asyncio.gather(
+            *(fetch_peer(p) for p in peers_rows), return_exceptions=False
+        )
+        peer_results = [r for r in results if r is not None]
+
+    def _tvl_tier(v: int) -> str:
+        if v <= 0:
+            return "empty"
+        if v < 100:
+            return "<100"
+        if v < 1_000:
+            return "100-1k"
+        if v < 10_000:
+            return "1k-10k"
+        return ">10k"
+
+    # Assemble response
+    pools_payload = []
+    pools_payload.append({
+        "atom_id": self_atom_id,
+        "name": self_name,
+        "is_self": True,
+        "reachable": True,
+        "version": __version__,
+        "workers_online": workers_online,
+        "uptime_sec": uptime_sec,
+        "federation_peers_bonded": peers_bonded,
+        "gossip_lag_sec": 0,
+        "circuit_slow": False,
+        "ledger_tvl_exact": tvl_exact_local,
+        "ledger_tvl_tier": _tvl_tier(tvl_exact_local),
+        "ledger_rows": rows_local,
+        "slashings_pending": slashings_local,
+    })
+    for p in peer_results:
+        pools_payload.append({
+            "atom_id": p.get("atom_id", ""),
+            "name": p.get("_name", ""),
+            "is_self": False,
+            "reachable": True,
+            "version": p.get("version", "?"),
+            "workers_online": int(p.get("workers_online", 0)),
+            "uptime_sec": int(p.get("uptime_sec", 0)),
+            "federation_peers_bonded": int(p.get("federation_peers_bonded", 0)),
+            "gossip_lag_sec": int(p.get("gossip_lag_sec", -1)),
+            "circuit_slow": bool(p.get("circuit_slow", False)),
+            "ledger_tvl_tier": p.get("ledger_tvl_tier", "empty"),
+            "ledger_rows_tier": p.get("ledger_rows_tier", "0"),
+            "slashings_pending_tier": p.get("slashings_pending_tier", "none"),
+        })
+
+    for peer_row in peers_rows:
+        if peer_row["atom_id"] in unreachable:
+            pools_payload.append({
+                "atom_id": peer_row["atom_id"],
+                "name": peer_row.get("name", ""),
+                "is_self": False,
+                "reachable": False,
+                "error": "timeout or unreachable",
+            })
+
+    status = "full" if not unreachable else "partial"
+    latency_ms = int((_time.time() - start_ts) * 1000)
+
+    # Audit log (EPHEMERAL-ACCEPTABLE local)
+    try:
+        if hasattr(pool.store, "pool") and pool.store.pool:
+            async with pool.store.pool.acquire() as conn:
+                await conn.execute(
+                    "INSERT INTO molecule_events (admin_email, query_type, target_atom_id, "
+                    "result_status, unreachable, summary, latency_ms) "
+                    "VALUES ($1, $2, NULL, $3, $4::jsonb, $5, $6)",
+                    admin, "overview", status,
+                    _json.dumps(unreachable),
+                    f"pools={len(pools_payload)} unreachable={len(unreachable)}",
+                    latency_ms,
+                )
+    except Exception as e:
+        log.warning(f"molecule_events log failed: {e}")
+
+    return {
+        "status": status,
+        "unreachable_peers": unreachable,
+        "pools": pools_payload,
+        "latency_ms": latency_ms,
+        "ts": __import__('datetime').datetime.utcnow().isoformat() + "Z",
+    }
+
+
+@router.get("/v1/molecule/events")
+async def molecule_events_list(request: Request):
+    """Return recent molecule_events (local audit trail)."""
+    admin = await _check_admin(request)
+    if not admin:
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+
+    pool = _pool()
+    limit = int(request.query_params.get("limit", "50") or 50)
+    limit = min(max(limit, 1), 500)
+
+    try:
+        async with pool.store.pool.acquire() as conn:
+            rows = await conn.fetch(
+                "SELECT id, ts, admin_email, query_type, target_atom_id, "
+                "result_status, unreachable, summary, latency_ms "
+                "FROM molecule_events ORDER BY ts DESC LIMIT $1",
+                limit,
+            )
+            out = []
+            for r in rows:
+                d = dict(r)
+                if d.get("ts"):
+                    d["ts"] = d["ts"].isoformat() + "Z"
+                out.append(d)
+        return {"events": out, "count": len(out)}
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=500)

@@ -1,6 +1,6 @@
 # Cellule.ai Pool — multi-stage Docker image
 # Usage:
-#   docker run -d --name iamine-pool -p 8080:8080 #     -e POOL_NAME=my-pool -e POOL_URL=http://my-public-url:8080 #     -e DB_HOST=iamine-pg -e DB_PASS=strong_pg_pass #     celluleai/pool:0.2.58
+#   docker run -d --name iamine-pool -p 8080:8080 #     -e POOL_NAME=my-pool -e POOL_URL=http://my-public-url:8080 #     -e DB_HOST=iamine-pg -e DB_PASS=strong_pg_pass #     celluleai/pool:0.2.70
 #
 # Recommended : use docker-compose.yml which spins up postgres pgvector
 # alongside automatically.
@@ -19,7 +19,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
 # CPU-only llama-cpp-python — no GPU flags
-RUN pip install --no-cache-dir     --index-url https://cellule.ai/pypi     --extra-index-url https://pypi.org/simple     iamine-ai==0.2.67
+RUN pip install --no-cache-dir     --index-url https://cellule.ai/pypi     --extra-index-url https://pypi.org/simple     iamine-ai==0.2.70
 
 # ============================================================
 # Stage 2 : runtime — slim image with just the venv + sys deps

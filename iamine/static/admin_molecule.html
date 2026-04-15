@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cellule.ai — Molecule Console</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0a; --bg2: #111111; --bg3: #1a1a1a;
+            --text: #f0f0f0; --text2: #888888; --border: #222222;
+            --neon-blue: #00d4ff; --neon-green: #00ff88;
+            --accent3: #ff6b00; --red: #ff4444; --violet: #a78bfa;
+            --amber: #fbbf24;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family:'Inter',sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+        nav {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 2rem; height: 64px; position: sticky; top: 0; z-index: 100;
+            background: rgba(10,10,10,0.92); backdrop-filter: blur(12px);
+            box-shadow: 0 1px 0 var(--border);
+        }
+        .logo {
+            font-size: 1.15rem; font-weight: 800; letter-spacing: 1px; text-decoration: none;
+            background: linear-gradient(135deg, var(--neon-blue), var(--neon-green));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .logo small { font-size: 0.65rem; color: var(--text2); margin-left: 0.6rem; font-weight: 600; letter-spacing: 2px; -webkit-text-fill-color: var(--text2); }
+        nav a { color: var(--text2); text-decoration: none; margin-left: 1.25rem; font-size: 0.85rem; font-weight: 500; transition: color .2s; }
+        nav a:hover { color: var(--neon-blue); }
+        .lang-switch { display: inline-flex; gap: 0; margin-left: 1.25rem; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        .lang-switch button { background: transparent; color: var(--text2); border: none; padding: .35rem .7rem; font-size: .75rem; font-weight: 600; cursor: pointer; letter-spacing: 1px; }
+        .lang-switch button.active { background: var(--neon-blue); color: var(--bg); }
+
+        .container { max-width: 1280px; margin: 0 auto; padding: 2rem; }
+        h2 {
+            font-size: 1.6rem; margin-bottom: .5rem; font-weight: 700;
+            background: linear-gradient(135deg, var(--neon-blue), var(--neon-green));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .sub { color: var(--text2); font-size: .9rem; margin-bottom: 1.5rem; }
+
+        .banner-partial {
+            display: none; background: rgba(255,107,0,.08); border: 1px solid var(--accent3);
+            border-radius: 10px; padding: .9rem 1rem; margin-bottom: 1rem;
+            color: var(--accent3); font-size: .85rem; font-weight: 500;
+        }
+        .banner-partial.visible { display: block; }
+        .banner-partial strong { color: #fff; }
+
+        .toolbar { display: flex; align-items: center; gap: .8rem; margin-bottom: 1rem; }
+        .btn { background: var(--bg2); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: .5rem 1rem; cursor: pointer; font-family: inherit; font-size: .85rem; transition: all .2s; }
+        .btn:hover { border-color: var(--neon-blue); color: var(--neon-blue); }
+        .btn:disabled { opacity: .5; cursor: not-allowed; }
+        .status-label { font-family: 'JetBrains Mono', monospace; font-size: .75rem; color: var(--text2); }
+        .tabs { display: flex; gap: .5rem; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border); }
+        .tab { background: transparent; border: none; color: var(--text2); padding: .6rem 1rem; cursor: pointer; font-family: inherit; font-size: .9rem; border-bottom: 2px solid transparent; transition: all .2s; }
+        .tab:hover { color: var(--text); }
+        .tab.active { color: var(--neon-blue); border-bottom-color: var(--neon-blue); }
+
+        .grid-pools { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem; }
+        .card-pool {
+            background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 1.2rem;
+            position: relative; transition: border-color .2s;
+        }
+        .card-pool:hover { border-color: var(--neon-blue); }
+        .card-pool.self { border-color: var(--neon-green); background: linear-gradient(180deg, rgba(0,255,136,.04) 0%, var(--bg2) 100%); }
+        .card-pool.unreachable { border-color: var(--red); opacity: .6; }
+        .card-pool.slow { border-color: var(--amber); }
+        .pool-head { display: flex; align-items: center; gap: .6rem; margin-bottom: .8rem; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .dot.green { background: var(--neon-green); box-shadow: 0 0 10px rgba(0,255,136,.5); }
+        .dot.red { background: var(--red); box-shadow: 0 0 10px rgba(255,68,68,.5); }
+        .dot.amber { background: var(--amber); }
+        .pool-name { font-weight: 700; font-size: 1rem; }
+        .pool-tag { font-size: .65rem; padding: .15rem .45rem; border-radius: 4px; background: var(--bg3); color: var(--text2); font-weight: 600; letter-spacing: 1px; }
+        .pool-tag.self { background: rgba(0,255,136,.15); color: var(--neon-green); }
+        .pool-version { color: var(--text2); font-family: 'JetBrains Mono', monospace; font-size: .75rem; margin-left: auto; }
+        .pool-atom { color: var(--text2); font-family: 'JetBrains Mono', monospace; font-size: .7rem; margin-bottom: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .info-row { display: flex; justify-content: space-between; padding: .3rem 0; font-size: .85rem; }
+        .info-row .label { color: var(--text2); }
+        .info-row .value { font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+        .info-row .value.warn { color: var(--amber); }
+        .info-row .value.err { color: var(--red); }
+
+        .events-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+        .events-table th { text-align: left; padding: .6rem .8rem; color: var(--text2); font-weight: 600; border-bottom: 1px solid var(--border); font-size: .75rem; letter-spacing: 1px; text-transform: uppercase; }
+        .events-table td { padding: .6rem .8rem; border-bottom: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; }
+        .events-table td.status-ok { color: var(--neon-green); }
+        .events-table td.status-partial { color: var(--amber); }
+        .events-table td.status-error { color: var(--red); }
+
+        .foot { margin-top: 2.5rem; text-align: center; color: var(--text2); font-size: .75rem; font-family: 'JetBrains Mono', monospace; }
+    </style>
+</head>
+<body>
+<nav>
+    <a href="/admin" class="logo">CELLULE<span>.AI</span><small>MOLECULE</small></a>
+    <div>
+        <a href="/admin">← Pool Admin</a>
+        <a href="https://cellule.ai" target="_blank" data-i18n="nav_site">Site</a>
+        <a href="/admin/logout" data-i18n="nav_logout">Logout</a>
+        <span class="lang-switch">
+            <button onclick="setLang('en')" id="lang-en" class="active">EN</button>
+            <button onclick="setLang('fr')" id="lang-fr">FR</button>
+        </span>
+    </div>
+</nav>
+
+<div class="container">
+    <h2 data-i18n="page_title">Molecule Console</h2>
+    <p class="sub" data-i18n="page_sub">Cross-pool read-only view of the federated network. Pools you are bonded to at trust-3 (replication-bonded).</p>
+
+    <div id="banner-partial" class="banner-partial">
+        <strong data-i18n="partial_title">Partial response.</strong>
+        <span data-i18n="partial_desc">Some peers did not respond within 3s.</span>
+        <span id="partial-list"></span>
+    </div>
+
+    <div class="toolbar">
+        <button class="btn" id="btn-refresh" onclick="refreshOverview()" data-i18n="btn_refresh">Refresh</button>
+        <span class="status-label" id="status-label">—</span>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" data-tab="pools" onclick="showTab('pools')" data-i18n="tab_pools">Pools</button>
+        <button class="tab" data-tab="events" onclick="showTab('events')" data-i18n="tab_events">Events</button>
+    </div>
+
+    <div id="tab-pools">
+        <div id="grid-pools" class="grid-pools"></div>
+    </div>
+
+    <div id="tab-events" style="display:none;">
+        <table class="events-table" id="events-table">
+            <thead><tr>
+                <th data-i18n="col_ts">When</th>
+                <th data-i18n="col_admin">Admin</th>
+                <th data-i18n="col_query">Query</th>
+                <th data-i18n="col_status">Status</th>
+                <th data-i18n="col_summary">Summary</th>
+                <th data-i18n="col_latency">Latency</th>
+            </tr></thead>
+            <tbody id="events-body"><tr><td colspan="6" style="text-align:center;color:var(--text2);padding:1rem;">—</td></tr></tbody>
+        </table>
+    </div>
+
+    <p class="foot">Cellule.ai Molecule Console · Phase 1 read-only · EPHEMERAL-ACCEPTABLE local audit</p>
+</div>
+
+<script>
+const I18N = {
+    en: {
+        page_title: "Molecule Console",
+        page_sub: "Cross-pool read-only view of the federated network. Pools you are bonded to at trust-3 (replication-bonded).",
+        partial_title: "Partial response.",
+        partial_desc: "Some peers did not respond within 3s:",
+        btn_refresh: "Refresh",
+        tab_pools: "Pools",
+        tab_events: "Events",
+        self_tag: "SELF",
+        peer_tag: "PEER",
+        unreach_tag: "UNREACHABLE",
+        lbl_workers: "Workers online",
+        lbl_uptime: "Uptime",
+        lbl_bonded: "Bonded peers",
+        lbl_gossip: "Gossip lag",
+        lbl_circuit: "Circuit",
+        lbl_tvl: "TVL (ledger)",
+        lbl_rows: "Ledger rows",
+        lbl_slash: "Slashings pending",
+        circuit_ok: "OK",
+        circuit_slow: "SLOW",
+        col_ts: "When",
+        col_admin: "Admin",
+        col_query: "Query",
+        col_status: "Status",
+        col_summary: "Summary",
+        col_latency: "Latency",
+        nav_logout: "Logout",
+        nav_site: "Site",
+        loading: "Loading...",
+        no_events: "No events yet",
+        err_network: "Network error",
+    },
+    fr: {
+        page_title: "Console Molécule",
+        page_sub: "Vue read-only cross-pool du réseau fédéré. Pools bondés au trust-3 (replication-bonded).",
+        partial_title: "Réponse partielle.",
+        partial_desc: "Certains peers n'ont pas répondu dans les 3s :",
+        btn_refresh: "Rafraîchir",
+        tab_pools: "Pools",
+        tab_events: "Événements",
+        self_tag: "SOI",
+        peer_tag: "PAIR",
+        unreach_tag: "INJOIGNABLE",
+        lbl_workers: "Workers en ligne",
+        lbl_uptime: "Uptime",
+        lbl_bonded: "Pairs bondés",
+        lbl_gossip: "Gossip lag",
+        lbl_circuit: "Circuit",
+        lbl_tvl: "TVL (ledger)",
+        lbl_rows: "Lignes ledger",
+        lbl_slash: "Slashings en attente",
+        circuit_ok: "OK",
+        circuit_slow: "LENT",
+        col_ts: "Quand",
+        col_admin: "Admin",
+        col_query: "Requête",
+        col_status: "Statut",
+        col_summary: "Résumé",
+        col_latency: "Latence",
+        nav_logout: "Déconnexion",
+        nav_site: "Site",
+        loading: "Chargement...",
+        no_events: "Aucun événement",
+        err_network: "Erreur réseau",
+    }
+};
+let currentLang = localStorage.getItem("molecule_lang") || "en";
+function T(k) { return (I18N[currentLang] && I18N[currentLang][k]) || (I18N.en[k] || k); }
+function setLang(l) {
+    currentLang = l;
+    localStorage.setItem("molecule_lang", l);
+    document.documentElement.lang = l;
+    document.querySelectorAll("[data-i18n]").forEach(e => {
+        const k = e.getAttribute("data-i18n");
+        if (I18N[l] && I18N[l][k]) e.textContent = I18N[l][k];
+    });
+    document.getElementById("lang-en").classList.toggle("active", l === "en");
+    document.getElementById("lang-fr").classList.toggle("active", l === "fr");
+    // Re-render current data if already loaded
+    if (window._lastOverview) renderOverview(window._lastOverview);
+    if (window._lastEvents) renderEvents(window._lastEvents);
+}
+
+function fmtUptime(sec) {
+    if (!sec || sec < 0) return "—";
+    const d = Math.floor(sec / 86400);
+    const h = Math.floor((sec % 86400) / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    if (d > 0) return `${d}d ${h}h`;
+    if (h > 0) return `${h}h ${m}m`;
+    return `${m}m`;
+}
+function fmtGossip(sec) {
+    if (sec < 0) return "—";
+    if (sec < 60) return `${sec}s`;
+    if (sec < 3600) return `${Math.round(sec/60)}m`;
+    return `${Math.round(sec/3600)}h`;
+}
+function fmtAtom(a) {
+    if (!a) return "";
+    return a.length > 20 ? a.slice(0, 12) + "…" + a.slice(-6) : a;
+}
+function escapeHtml(s) { return String(s || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]); }
+
+function renderPool(p) {
+    if (!p.reachable) {
+        return `<div class="card-pool unreachable">
+            <div class="pool-head">
+                <span class="dot red"></span>
+                <span class="pool-name">${escapeHtml(p.name || "?")}</span>
+                <span class="pool-tag">${T("unreach_tag")}</span>
+            </div>
+            <div class="pool-atom">${escapeHtml(fmtAtom(p.atom_id))}</div>
+            <div class="info-row"><span class="label">${T("lbl_workers")}</span><span class="value err">—</span></div>
+        </div>`;
+    }
+    const selfClass = p.is_self ? " self" : "";
+    const slowClass = p.circuit_slow ? " slow" : "";
+    const dotCls = p.circuit_slow ? "amber" : "green";
+    const tagCls = p.is_self ? "self" : "";
+    const tagLbl = p.is_self ? T("self_tag") : T("peer_tag");
+    const circuit = p.circuit_slow ? `<span class="value warn">${T("circuit_slow")}</span>` : `<span class="value">${T("circuit_ok")}</span>`;
+    const tvl = p.is_self
+        ? `<span class="value">${p.ledger_tvl_exact} $IAMINE</span>`
+        : `<span class="value">${p.ledger_tvl_tier || "empty"}</span>`;
+    const rowsDisp = p.is_self
+        ? p.ledger_rows
+        : (p.ledger_rows_tier || "0");
+    const slashDisp = p.is_self
+        ? p.slashings_pending
+        : (p.slashings_pending_tier || "none");
+    return `<div class="card-pool${selfClass}${slowClass}">
+        <div class="pool-head">
+            <span class="dot ${dotCls}"></span>
+            <span class="pool-name">${escapeHtml(p.name || "?")}</span>
+            <span class="pool-tag ${tagCls}">${tagLbl}</span>
+            <span class="pool-version">v${escapeHtml(p.version || "?")}</span>
+        </div>
+        <div class="pool-atom">${escapeHtml(fmtAtom(p.atom_id))}</div>
+        <div class="info-row"><span class="label">${T("lbl_workers")}</span><span class="value">${p.workers_online}</span></div>
+        <div class="info-row"><span class="label">${T("lbl_uptime")}</span><span class="value">${fmtUptime(p.uptime_sec)}</span></div>
+        <div class="info-row"><span class="label">${T("lbl_bonded")}</span><span class="value">${p.federation_peers_bonded}</span></div>
+        <div class="info-row"><span class="label">${T("lbl_gossip")}</span><span class="value">${fmtGossip(p.gossip_lag_sec)}</span></div>
+        <div class="info-row"><span class="label">${T("lbl_circuit")}</span>${circuit}</div>
+        <div class="info-row"><span class="label">${T("lbl_tvl")}</span>${tvl}</div>
+        <div class="info-row"><span class="label">${T("lbl_rows")}</span><span class="value">${rowsDisp}</span></div>
+        <div class="info-row"><span class="label">${T("lbl_slash")}</span><span class="value">${slashDisp}</span></div>
+    </div>`;
+}
+
+function renderOverview(data) {
+    window._lastOverview = data;
+    const banner = document.getElementById("banner-partial");
+    const partialList = document.getElementById("partial-list");
+    if (data.status === "partial") {
+        banner.classList.add("visible");
+        partialList.textContent = " " + (data.unreachable_peers || []).map(fmtAtom).join(", ");
+    } else {
+        banner.classList.remove("visible");
+        partialList.textContent = "";
+    }
+    document.getElementById("status-label").textContent =
+        `${data.pools ? data.pools.length : 0} pools · ${data.status} · ${data.latency_ms}ms · ${new Date(data.ts).toLocaleTimeString()}`;
+    const grid = document.getElementById("grid-pools");
+    grid.innerHTML = (data.pools || []).map(renderPool).join("");
+}
+
+async function refreshOverview() {
+    const btn = document.getElementById("btn-refresh");
+    btn.disabled = true;
+    document.getElementById("status-label").textContent = T("loading");
+    try {
+        const r = await fetch("/v1/molecule/overview", { credentials: "include" });
+        if (r.status === 401) { window.location = "/admin/login"; return; }
+        const data = await r.json();
+        renderOverview(data);
+    } catch (e) {
+        document.getElementById("status-label").textContent = T("err_network") + ": " + e.message;
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function renderEvents(data) {
+    window._lastEvents = data;
+    const tbody = document.getElementById("events-body");
+    const events = (data && data.events) || [];
+    if (!events.length) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text2);padding:1rem;">${T("no_events")}</td></tr>`;
+        return;
+    }
+    tbody.innerHTML = events.map(e => {
+        const cls = e.result_status === "ok" ? "status-ok" : (e.result_status === "partial" ? "status-partial" : "status-error");
+        const when = e.ts ? new Date(e.ts).toLocaleString() : "—";
+        return `<tr>
+            <td>${escapeHtml(when)}</td>
+            <td>${escapeHtml(e.admin_email || "")}</td>
+            <td>${escapeHtml(e.query_type || "")}</td>
+            <td class="${cls}">${escapeHtml(e.result_status || "")}</td>
+            <td>${escapeHtml(e.summary || "")}</td>
+            <td>${e.latency_ms != null ? e.latency_ms + "ms" : "—"}</td>
+        </tr>`;
+    }).join("");
+}
+
+async function refreshEvents() {
+    try {
+        const r = await fetch("/v1/molecule/events?limit=50", { credentials: "include" });
+        if (r.status === 401) { window.location = "/admin/login"; return; }
+        const data = await r.json();
+        renderEvents(data);
+    } catch (e) { /* silent */ }
+}
+
+function showTab(tab) {
+    document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
+    document.getElementById("tab-pools").style.display = tab === "pools" ? "block" : "none";
+    document.getElementById("tab-events").style.display = tab === "events" ? "block" : "none";
+    if (tab === "events") refreshEvents();
+}
+
+setLang(currentLang);
+refreshOverview();
+setInterval(refreshOverview, 30000);
+</script>
+</body>
+</html>

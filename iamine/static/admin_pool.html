@@ -278,6 +278,14 @@
         </div>
     </div>
 
+    <!-- RECOVERY / CIRCUIT BREAKER -->
+    <div class="card">
+        <h3><span class="icon">⚠</span> <span data-i18n="section_recovery">Recovery</span></h3>
+        <p style="color:var(--text2);font-size:0.85rem;margin-bottom:0.75rem;" data-i18n="recovery_desc">If the pool gets stuck in a degraded state (workers wrongly blacklisted, stale checker scores), use the button below to reset the circuit. Clears in-memory blacklist + per-worker checker scores. Does not touch federation or data.</p>
+        <button id="circuit-reset-btn" class="btn btn-danger" onclick="resetCircuit()" data-i18n="btn_circuit_reset">Reset circuit</button>
+        <div id="circuit-reset-result" style="margin-top:0.75rem;font-size:0.85rem;color:var(--text2);"></div>
+    </div>
+
     <div class="foot">Cellule.ai · Pool Operator · v<span id="ver">?</span></div>
 </div>
 
@@ -285,6 +293,12 @@
 // ── i18n ──────────────────────────────────────────────────
 const I18N = {
     en: {
+        section_recovery: 'Recovery',
+        recovery_desc: 'If the pool gets stuck in a degraded state (workers wrongly blacklisted, stale checker scores), use the button below to reset the circuit. Clears in-memory blacklist + per-worker checker scores. Does not touch federation or data.',
+        btn_circuit_reset: 'Reset circuit',
+        confirm_circuit_reset: 'Reset the circuit? This clears the worker blacklist and resets checker scores.',
+        circuit_reset_ok: 'Circuit reset: cleared {bl} blacklisted, reset {sc} worker scores.',
+        circuit_reset_fail: 'Circuit reset failed',
         nav_site: "Site", nav_api: "API", nav_logout: "Logout",
         page_title: "Pool Administration",
         page_sub: "Local settings for your federated pool. Protocol-level parameters are managed by the network.",
@@ -315,6 +329,12 @@ const I18N = {
         time_never: "never"
     },
     fr: {
+        section_recovery: 'Récupération',
+        recovery_desc: 'Si le pool reste bloqué en état dégradé (workers blacklistés à tort, scores checker figés), utilisez le bouton ci-dessous pour réinitialiser le circuit. Vide la blacklist en mémoire + scores checker par worker. Ne touche pas à la fédération ni aux données.',
+        btn_circuit_reset: 'Réinitialiser le circuit',
+        confirm_circuit_reset: 'Réinitialiser le circuit ? Cela vide la blacklist et remet à zéro les scores checker.',
+        circuit_reset_ok: 'Circuit réinitialisé : {bl} blacklisté(s) effacé(s), {sc} score(s) worker réinitialisé(s).',
+        circuit_reset_fail: 'Échec réinitialisation circuit',
         nav_site: "Site", nav_api: "API", nav_logout: "Déconnexion",
         page_title: "Administration du Pool",
         page_sub: "Réglages locaux de votre pool fédéré. Les paramètres du protocole sont gérés par le réseau.",
@@ -511,6 +531,33 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(loadOverview, 10000);
     setInterval(loadActivity, 15000);
 });
+
+async function resetCircuit(){
+    const confirmMsg = getText('confirm_circuit_reset');
+    if(!confirm(confirmMsg)) return;
+    const btn = document.getElementById('circuit-reset-btn');
+    const out = document.getElementById('circuit-reset-result');
+    btn.disabled = true; btn.style.opacity = '0.5';
+    out.textContent = '…';
+    try {
+        const r = await fetch('/v1/admin/circuit/reset', {method: 'POST'});
+        const j = await r.json();
+        if(r.ok && j.ok){
+            out.style.color = 'var(--neon-green, #0f8)';
+            out.textContent = getText('circuit_reset_ok').replace('{bl}', j.cleared_blacklist).replace('{sc}', j.reset_worker_scores);
+            if(typeof refreshAll === 'function') refreshAll();
+        } else {
+            out.style.color = 'var(--red, #f44)';
+            out.textContent = (j.error || getText('circuit_reset_fail'));
+        }
+    } catch(e) {
+        out.style.color = 'var(--red, #f44)';
+        out.textContent = getText('circuit_reset_fail') + ': ' + e.message;
+    } finally {
+        btn.disabled = false; btn.style.opacity = '1';
+    }
+}
+
 </script>
 
 </body>
