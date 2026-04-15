@@ -1193,17 +1193,32 @@ Principe molecule-guardian : pas de master pool. Tu gardes veto absolu sur chaqu
             <p class="sub" style="font-size:.85rem;color:var(--text2);margin-bottom:.8rem;">Phase 2 Console Molécule — 2 actions whitelistées : circuit_reset, query_events.</p>
 
             <div style="display:flex;gap:.8rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap;">
-                <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.9rem;">
-                    <input type="checkbox" id="fed-optin-toggle" onchange="toggleFedOptin(this)" style="width:18px;height:18px;cursor:pointer;">
-                    <span>Accepter les requêtes admin cross-pool entrantes (opt-in)</span>
-                </label>
-                <span class="info-i" data-tip="Active la réception de requêtes admin cross-pool sur CE pool.
+                <div style="display:flex;flex-direction:column;gap:.5rem;">
+                    <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.9rem;">
+                        <input type="checkbox" id="fed-query-toggle" onchange="toggleFedFlag(this, '"'"'federation_admin_query_enabled'"'"')" style="width:18px;height:18px;cursor:pointer;">
+                        <span>Requêtes <strong style="color:var(--neon-green);">LECTURE</strong> (query_events)</span>
+                        <span class="info-i" data-tip="Accepter les requêtes admin cross-pool en LECTURE SEULE (query_events).
 
-OFF (défaut) : toutes les requêtes entrantes /v1/federation/admin/request retournent 403 'federation_admin_actions disabled'.
+Recommandé ON pour cohérence communautaire.
 
-ON : les peers bondés (trust≥3) peuvent envoyer des requêtes qui apparaissent ici en attente. Tu gardes souveraineté absolue : approve/reject manuel obligatoire sur chacune.
+Effet si ON : les peers bondés (trust≥3) peuvent interroger tes molecule_events (filtrés : whitelist types + target=self + fenêtre 7j).
 
-Peut être désactivé à tout moment sans impact sur les requêtes déjà approuvées.">i</span>
+Pas d'impact économique : aucun flux monetaire, pas de modification revenue_ledger/slashing. Les pools upgradés héritent de leur valeur antérieure (invariant 13 token-guardian). Les nouvelles installs ont ON par défaut.">i</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.9rem;">
+                        <input type="checkbox" id="fed-writes-toggle" onchange="toggleFedFlag(this, '"'"'federation_admin_writes_enabled'"'"')" style="width:18px;height:18px;cursor:pointer;">
+                        <span>Requêtes <strong style="color:var(--amber,#fbbf24);">ÉCRITURE</strong> (circuit_reset)</span>
+                        <span class="info-i" data-tip="Accepter les requêtes admin cross-pool en ÉCRITURE (circuit_reset + futures actions).
+
+OFF par défaut — wallet guard.
+
+Effet si ON : les peers bondés (trust≥3) peuvent demander un circuit_reset (clear blacklist + reset checker_scores). Tu gardes l'approve manuel obligatoire + slashing block + cooldown 6h.
+
+Risque potentiel : wash checker attack (2 admins collusoires contournant M10 slashing). Pour cette raison, OFF par défaut.
+
+Pré-requis Phase 2.2 (invariant 12 token-guardian) : admin Ed25519 key distincte de la pool key avant activation élargie.">i</span>
+                    </label>
+                </div>
                 <button class="btn" onclick="refreshFedInbox()" style="margin-left:auto;">Rafraîchir</button>
             </div>
 
@@ -2305,21 +2320,24 @@ async function loadFedOptinState() {
         const r = await fetch('/admin/api/pool-settings', {credentials:'include'});
         if (!r.ok) return;
         const d = await r.json();
-        const cb = document.getElementById('fed-optin-toggle');
-        if (cb) cb.checked = !!d.federation_admin_actions_enabled;
+        const q = document.getElementById('fed-query-toggle');
+        const w = document.getElementById('fed-writes-toggle');
+        if (q) q.checked = !!d.federation_admin_query_enabled;
+        if (w) w.checked = !!d.federation_admin_writes_enabled;
     } catch(e) {}
 }
 
-async function toggleFedOptin(cb) {
+async function toggleFedFlag(cb, key) {
     const v = cb.checked;
     try {
         const r = await fetch('/admin/api/pool-settings', {
             method:'POST', credentials:'include',
             headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({key:'federation_admin_actions_enabled', value:v}),
+            body: JSON.stringify({key:key, value:v}),
         });
-        if (!r.ok) { cb.checked = !v; toast('Echec toggle opt-in','err'); return; }
-        toast(v?'Opt-in active':'Opt-in desactive');
+        if (!r.ok) { cb.checked = !v; toast('Echec toggle '+key,'err'); return; }
+        const label = key.includes('query') ? 'Lecture' : 'Ecriture';
+        toast(label + ' : ' + (v?'ON':'OFF'));
     } catch(e) { cb.checked=!v; toast('Erreur reseau','err'); }
 }
 

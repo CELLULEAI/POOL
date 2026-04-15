@@ -59,9 +59,57 @@ async def _config_get(pool, key: str, default=None):
         return default
 
 
-async def is_enabled(pool) -> bool:
-    val = await _config_get(pool, "federation_admin_actions_enabled", "false")
+async def is_query_enabled(pool) -> bool:
+    """Phase 2.1 : read-only actions (query_events). Default TRUE (token-guardian invariant 11).
+
+    Migration 024 copies the legacy federation_admin_actions_enabled value to query_enabled
+    for existing pools (invariant 13 conservative). New installs get TRUE.
+    """
+    val = await _config_get(pool, "federation_admin_query_enabled", None)
+    if val is None:
+        val = await _config_get(pool, "federation_admin_actions_enabled", "false")
     return str(val).lower() == "true"
+
+
+async def is_writes_enabled(pool) -> bool:
+    """Phase 2.1 : write actions (circuit_reset + future). Default FALSE (token-guardian invariant 11).
+
+    Affects revenue_ledger/slashing/settlement indirectly -> opt-in OFF preserves wallet integrity.
+    Invariant 12 (not yet enforced): federation_admin_identities must contain a distinct admin
+    Ed25519 key before writes can be enabled. Gate planned for Phase 2.2.
+    """
+    val = await _config_get(pool, "federation_admin_writes_enabled", None)
+    if val is None:
+        val = await _config_get(pool, "federation_admin_actions_enabled", "false")
+    return str(val).lower() == "true"
+
+
+async def is_enabled(pool) -> bool:
+    """Backward-compat alias. Returns True if EITHER query OR writes enabled.
+
+    Do not use in new code. Routes must dispatch via action_type using is_action_enabled().
+    """
+    return (await is_query_enabled(pool)) or (await is_writes_enabled(pool))
+
+
+READ_ACTIONS = {"query_events"}
+WRITE_ACTIONS = {"circuit_reset"}
+
+
+def action_is_write(action_type: str) -> bool:
+    return action_type in WRITE_ACTIONS
+
+
+async def is_action_enabled(pool, action_type: str) -> bool:
+    """Gate check : is the given action_type currently accepted on this pool ?
+
+    Token-guardian invariant 11 enforcement point.
+    """
+    if action_type in READ_ACTIONS:
+        return await is_query_enabled(pool)
+    if action_type in WRITE_ACTIONS:
+        return await is_writes_enabled(pool)
+    return False
 
 
 async def get_cooldown(pool, action_type: str) -> int:

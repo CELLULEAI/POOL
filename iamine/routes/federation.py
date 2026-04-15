@@ -2433,12 +2433,6 @@ async def federation_admin_request(request: Request):
     pool = _pool()
     raw_body = await request.body()
 
-    if not await fadm.is_enabled(pool):
-        return JSONResponse(
-            {'error': 'federation_admin_actions disabled on this pool'},
-            status_code=403,
-        )
-
     try:
         import json as _json
         payload = _json.loads(raw_body.decode() or '{}')
@@ -2457,6 +2451,16 @@ async def federation_admin_request(request: Request):
         return JSONResponse(
             {'error': f'action_type not whitelisted: {action_type}'},
             status_code=400,
+        )
+
+    # Phase 2.1 : gate by action kind (read vs write), not a single global flag
+    # Token-guardian invariant 11 : read-only accepted by default, writes opt-in OFF
+    if not await fadm.is_action_enabled(pool, action_type):
+        kind = 'write' if fadm.action_is_write(action_type) else 'query'
+        return JSONResponse(
+            {'error': f'federation_admin_{kind}_actions disabled on this pool',
+             'action_type': action_type, 'kind': kind},
+            status_code=403,
         )
 
     # Resolve peer pubkey + trust (authoritative identity source)

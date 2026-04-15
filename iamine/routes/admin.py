@@ -1460,7 +1460,9 @@ POOL_OPERATOR_SETTABLE = {
     "accept_forwarding",        # pool_config — accept M7a cross-pool overflow jobs
     "publish_capabilities",     # pool_config — list this pool in /v1/federation/info capabilities
     "auto_push_updates",        # pool_config — push self_update to outdated workers
-    "federation_admin_actions_enabled",  # pool_config — Phase 2 cross-pool admin requests opt-in
+    "federation_admin_actions_enabled",       # pool_config — Phase 2 legacy opt-in (alias backward-compat)
+    "federation_admin_query_enabled",          # pool_config — Phase 2.1 read-only actions (ON by default)
+    "federation_admin_writes_enabled",         # pool_config — Phase 2.1 write actions (OFF by default, wallet guard)
 }
 
 
@@ -1606,6 +1608,14 @@ async def pool_settings_get(request: Request):
         "publish_capabilities": pool_cfg.get("publish_capabilities", "true") == "true",
         "auto_push_updates": pool_cfg.get("auto_push_updates", "true") == "true",
         "federation_admin_actions_enabled": pool_cfg.get("federation_admin_actions_enabled", "false") == "true",
+        "federation_admin_query_enabled": pool_cfg.get(
+            "federation_admin_query_enabled",
+            pool_cfg.get("federation_admin_actions_enabled", "true"),
+        ) == "true",
+        "federation_admin_writes_enabled": pool_cfg.get(
+            "federation_admin_writes_enabled",
+            pool_cfg.get("federation_admin_actions_enabled", "false"),
+        ) == "true",
     }
 
 

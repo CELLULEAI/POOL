@@ -347,9 +347,17 @@ Nothing runs until you click Approve. 24h TTL per request.">i</span></h3>
         <p class="sub" style="margin-bottom:0.75rem;" data-i18n="fed_inbox_desc">Cross-pool admin requests received. Each must be approved or rejected manually — nothing runs automatically. Signature Ed25519 of the peer is the only authority (email label is display-only).</p>
         <div id="fed-inbox-toolbar" style="display:flex;gap:.5rem;margin-bottom:.75rem;">
             <button class="btn" onclick="refreshFedInbox()" data-i18n="btn_refresh">Refresh</button>
-            <label style="font-size:.8rem;color:var(--text2);align-self:center;">
-                <input type="checkbox" id="fed-optin-toggle" onchange="toggleFedOptin(this)" style="vertical-align:middle;">
-                <span data-i18n="fed_optin_lbl">Accept incoming cross-pool admin requests (opt-in)</span><span class="info-i" data-tip-fr="Active la réception de requêtes admin cross-pool sur CE pool.
+            <div style="display:flex;flex-direction:column;gap:.3rem;font-size:.82rem;color:var(--text2);align-self:center;">
+                <label style="cursor:pointer;">
+                    <input type="checkbox" id="fed-query-toggle" onchange="toggleFedFlag(this,'"'"'federation_admin_query_enabled'"'"')" style="vertical-align:middle;">
+                    <span>Accept <strong style="color:var(--neon-green);">read</strong> requests (query_events)</span>
+                </label>
+                <label style="cursor:pointer;">
+                    <input type="checkbox" id="fed-writes-toggle" onchange="toggleFedFlag(this,'"'"'federation_admin_writes_enabled'"'"')" style="vertical-align:middle;">
+                    <span>Accept <strong style="color:var(--amber,#fbbf24);">write</strong> requests (circuit_reset)</span>
+                </label>
+            </div>
+            <span style="display:none;"><span class="info-i" data-tip-fr="Active la réception de requêtes admin cross-pool sur CE pool.
 
 OFF (défaut) : toutes les requêtes entrantes /v1/federation/admin/request retournent 403 'federation_admin_actions disabled'.
 
@@ -910,13 +918,13 @@ You own the decision. An economic dispute may arise post-override.\">i</span>';
     }
 }
 
-async function toggleFedOptin(checkbox) {
+async function toggleFedFlag(checkbox, key) {
     const enabled = checkbox.checked;
     try {
         const r = await fetch('/admin/api/pool-settings', {
             method: 'POST', credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ key: 'federation_admin_actions_enabled', value: enabled }),
+            body: JSON.stringify({ key: key, value: enabled }),
         });
         if (!r.ok) checkbox.checked = !enabled;
     } catch (e) { checkbox.checked = !enabled; }
@@ -927,8 +935,10 @@ async function loadFedOptinState() {
         const r = await fetch('/admin/api/pool-settings', { credentials: 'include' });
         if (!r.ok) return;
         const data = await r.json();
-        const cb = document.getElementById('fed-optin-toggle');
-        if (cb) cb.checked = !!data.federation_admin_actions_enabled;
+        const q = document.getElementById('fed-query-toggle');
+        const w = document.getElementById('fed-writes-toggle');
+        if (q) q.checked = !!data.federation_admin_query_enabled;
+        if (w) w.checked = !!data.federation_admin_writes_enabled;
     } catch (e) { }
 }
 
