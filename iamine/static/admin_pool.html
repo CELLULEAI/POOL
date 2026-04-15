@@ -152,7 +152,51 @@
         .trust-1 { background: rgba(255,107,0,0.15); color: var(--accent3); }
 
         .foot { text-align: center; color: var(--text2); font-size: 0.7rem; padding: 2rem 0 1rem; letter-spacing: 2px; text-transform: uppercase; }
-    </style>
+            /* Phase 2 tooltips detailed */
+        .info-i {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: rgba(0,212,255,0.12);
+            color: var(--neon-blue);
+            font-size: 11px; font-weight: 700;
+            cursor: help;
+            margin-left: 0.5rem;
+            position: relative;
+            user-select: none;
+            font-family: serif; font-style: italic;
+            transition: background 0.2s;
+            vertical-align: middle;
+        }
+        .info-i:hover { background: rgba(0,212,255,0.25); }
+        .info-i::after {
+            content: attr(data-tip);
+            position: absolute;
+            top: 50%;
+            left: calc(100% + 10px);
+            transform: translateY(-50%);
+            min-width: 320px; max-width: 440px;
+            padding: 12px 14px;
+            background: rgba(15,15,25,0.98);
+            border: 1px solid rgba(0,212,255,0.4);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: 'Inter',-apple-system,sans-serif;
+            font-size: 0.78rem; font-style: normal; font-weight: 400;
+            line-height: 1.5;
+            text-align: left;
+            white-space: pre-line;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6), 0 0 30px rgba(0,212,255,0.15);
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.18s, visibility 0.18s;
+            z-index: 10000;
+            pointer-events: none;
+        }
+        .info-i:hover::after { opacity: 1; visibility: visible; }
+        .info-i.right::after { left: auto; right: calc(100% + 10px); transform: translateY(-50%); }
+        .info-i.below::after { top: calc(100% + 8px); left: 50%; transform: translateX(-50%); }
+
+        </style>
 </head>
 <body>
 
@@ -281,13 +325,49 @@
 
     <!-- FEDERATION ADMIN REQUESTS (Phase 2) -->
     <div class="card">
-        <h3><span class="icon">⇆</span> <span data-i18n="section_fed_inbox">Federation Requests</span></h3>
+        <h3><span class="icon">⇆</span> <span data-i18n="section_fed_inbox">Federation Requests</span><span class="info-i" data-tip-fr="Requêtes admin cross-pool entrantes.
+
+Chaque requête a été signée Ed25519 par un pool bondé avec le tien (trust≥3) puis vérifiée + nonce consommé + stockée en pending.
+
+Principe molecule-guardian : pas de master pool. Tu gardes veto absolu sur chaque action cross-pool.
+
+Rien n'est exécuté tant que tu ne cliques pas Approve. TTL 24h par requête." data-tip-en="Incoming cross-pool admin requests.
+
+Each request was Ed25519-signed by a pool bonded with yours (trust>=3) then verified + nonce consumed + stored pending.
+
+Molecule-guardian principle: no master pool. You keep absolute veto over every cross-pool action.
+
+Nothing runs until you click Approve. 24h TTL per request." data-tip="Incoming cross-pool admin requests.
+
+Each request was Ed25519-signed by a pool bonded with yours (trust>=3) then verified + nonce consumed + stored pending.
+
+Molecule-guardian principle: no master pool. You keep absolute veto over every cross-pool action.
+
+Nothing runs until you click Approve. 24h TTL per request.">i</span></h3>
         <p class="sub" style="margin-bottom:0.75rem;" data-i18n="fed_inbox_desc">Cross-pool admin requests received. Each must be approved or rejected manually — nothing runs automatically. Signature Ed25519 of the peer is the only authority (email label is display-only).</p>
         <div id="fed-inbox-toolbar" style="display:flex;gap:.5rem;margin-bottom:.75rem;">
             <button class="btn" onclick="refreshFedInbox()" data-i18n="btn_refresh">Refresh</button>
             <label style="font-size:.8rem;color:var(--text2);align-self:center;">
                 <input type="checkbox" id="fed-optin-toggle" onchange="toggleFedOptin(this)" style="vertical-align:middle;">
-                <span data-i18n="fed_optin_lbl">Accept incoming cross-pool admin requests (opt-in)</span>
+                <span data-i18n="fed_optin_lbl">Accept incoming cross-pool admin requests (opt-in)</span><span class="info-i" data-tip-fr="Active la réception de requêtes admin cross-pool sur CE pool.
+
+OFF (défaut) : toutes les requêtes entrantes /v1/federation/admin/request retournent 403 'federation_admin_actions disabled'.
+
+ON : les peers bondés (trust≥3) peuvent envoyer des requêtes qui apparaissent ici en attente. Tu gardes souveraineté absolue : approve/reject manuel obligatoire sur chacune.
+
+Peut être désactivé à tout moment sans impact sur les requêtes déjà approuvées." data-tip-en="Enable reception of cross-pool admin requests on THIS pool.
+
+OFF (default): all incoming /v1/federation/admin/request return 403 'federation_admin_actions disabled'.
+
+ON: bonded peers (trust>=3) can send requests that appear here as pending. You keep absolute sovereignty: manual approve/reject required for each.
+
+Can be disabled anytime without impact on already-approved requests." data-tip="Enable reception of cross-pool admin requests on THIS pool.
+
+OFF (default): all incoming /v1/federation/admin/request return 403 'federation_admin_actions disabled'.
+
+ON: bonded peers (trust>=3) can send requests that appear here as pending. You keep absolute sovereignty: manual approve/reject required for each.
+
+Can be disabled anytime without impact on already-approved requests.">i</span>
             </label>
         </div>
         <div id="fed-inbox-list">
@@ -631,17 +711,149 @@ function renderFedRequest(r) {
     return '<div style="border:1px solid var(--border);border-radius:8px;padding:.8rem;margin-bottom:.6rem;background:var(--bg2);">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">' +
             '<code style="font-family:\'JetBrains Mono\',monospace;font-size:.78rem;color:var(--neon-blue);">' + rid + '</code>' +
-            '<span style="font-size:.72rem;color:var(--neon-green);">' + getText('fed_sig_ok') + '</span>' +
+            '<span style="font-size:.72rem;color:var(--neon-green);" title="">' + getText('fed_sig_ok') + '</span><span class="info-i" data-tip-fr=\"La signature Ed25519 du pool émetteur a été vérifiée cryptographiquement contre sa clé publique enregistrée dans federation_peers.
+
+IMPORTANT : l'email affiché est un label d'affichage (display-only), JAMAIS utilisé pour l'autorisation.
+
+Seule l'identité cryptographique (pool atom_id = sha256(pubkey) + signature de l'enveloppe) fait autorité.
+
+Le nonce anti-replay a été consommé — cette requête ne peut pas être rejouée.\" data-tip-en=\"Emitter pool's Ed25519 signature has been cryptographically verified against its public key in federation_peers.
+
+IMPORTANT: the email shown is a display-only label, NEVER used for authorization.
+
+Only cryptographic identity (pool atom_id = sha256(pubkey) + envelope signature) is authoritative.
+
+Anti-replay nonce was consumed — this request cannot be replayed.\" data-tip=\"Emitter pool's Ed25519 signature has been cryptographically verified against its public key in federation_peers.
+
+IMPORTANT: the email shown is a display-only label, NEVER used for authorization.
+
+Only cryptographic identity (pool atom_id = sha256(pubkey) + envelope signature) is authoritative.
+
+Anti-replay nonce was consumed — this request cannot be replayed.\">i</span>' +
         '</div>' +
         '<div style="display:grid;grid-template-columns:auto 1fr;gap:.35rem .8rem;font-size:.85rem;">' +
-            '<span style="color:var(--text2);">' + getText('fed_from') + '</span><span><code style="font-size:.78rem;">' + _escHtml(fromAtom) + '</code>' + email + '</span>' +
-            '<span style="color:var(--text2);">' + getText('fed_action') + '</span><span><strong>' + _escHtml(r.action_type) + '</strong></span>' +
-            '<span style="color:var(--text2);">' + getText('fed_params') + '</span><code style="font-size:.75rem;color:var(--text2);">' + _escHtml(params) + '</code>' +
-            '<span style="color:var(--text2);">' + getText('fed_expires') + '</span><span>' + _escHtml(expires) + '</span>' +
+            '<span style="color:var(--text2);">' + getText('fed_from') + ' <span class="info-i" data-tip-fr=\"Identifiant du pool émetteur = sha256(pubkey Ed25519).
+
+Les 16 premiers caractères sont affichés pour lisibilité. La signature de l'enveloppe + correspondance avec federation_peers.pubkey est ce qui compte pour l'auth.
+
+L'email en italique est un label cosmétique fourni par l'émetteur, JAMAIS utilisé pour décider si on accepte la requête.\" data-tip-en=\"Emitter pool identifier = sha256(Ed25519 pubkey).
+
+First 16 chars shown for readability. Envelope signature + match with federation_peers.pubkey is what matters for auth.
+
+Italic email is a cosmetic label provided by emitter, NEVER used to decide whether to accept the request.\" data-tip=\"Emitter pool identifier = sha256(Ed25519 pubkey).
+
+First 16 chars shown for readability. Envelope signature + match with federation_peers.pubkey is what matters for auth.
+
+Italic email is a cosmetic label provided by emitter, NEVER used to decide whether to accept the request.\">i</span></span><span><code style="font-size:.78rem;">' + _escHtml(fromAtom) + '</code>' + email + '</span>' +
+            '<span style="color:var(--text2);">' + getText('fed_action') + ' <span class="info-i" data-tip-fr=\"Type d'action demandée. Whitelist stricte en code :
+
+• circuit_reset : clear blacklist + reset checker_scores
+• query_events : read molecule_events filtrés
+
+Ajouter une nouvelle action whitelistée requiert une session molecule-guardian + token-guardian (invariant load-bearing).\" data-tip-en=\"Requested action type. Strict whitelist in code:
+
+• circuit_reset: clear blacklist + reset checker_scores
+• query_events: read filtered molecule_events
+
+Adding a new whitelisted action requires molecule-guardian + token-guardian session (load-bearing invariant).\" data-tip=\"Requested action type. Strict whitelist in code:
+
+• circuit_reset: clear blacklist + reset checker_scores
+• query_events: read filtered molecule_events
+
+Adding a new whitelisted action requires molecule-guardian + token-guardian session (load-bearing invariant).\">i</span></span><span><strong>' + _escHtml(r.action_type) + '</strong></span>' +
+            '<span style="color:var(--text2);">' + getText('fed_params') + ' <span class="info-i" data-tip-fr=\"Paramètres JSON de l'action.
+
+circuit_reset :
+  { worker_id?: string }  — si absent, reset tous les workers
+
+query_events :
+  { event_types?: string[], limit?: int }
+  event_types intersecté avec la whitelist pool_config
+  limit plafonné à 500\" data-tip-en=\"JSON action params.
+
+circuit_reset:
+  { worker_id?: string }  — if absent, reset all workers
+
+query_events:
+  { event_types?: string[], limit?: int }
+  event_types intersected with pool_config whitelist
+  limit capped at 500\" data-tip=\"JSON action params.
+
+circuit_reset:
+  { worker_id?: string }  — if absent, reset all workers
+
+query_events:
+  { event_types?: string[], limit?: int }
+  event_types intersected with pool_config whitelist
+  limit capped at 500\">i</span></span><code style="font-size:.75rem;color:var(--text2);">' + _escHtml(params) + '</code>' +
+            '<span style="color:var(--text2);">' + getText('fed_expires') + ' <span class="info-i" data-tip-fr=\"TTL 24h absolu depuis la réception.
+
+Après cette date, la requête passe automatiquement à status=expired lors du prochain sweep (ou à la prochaine consultation). Aucune action ne peut plus être prise dessus.
+
+L'émetteur peut renvoyer une nouvelle requête (nouveau request_id) après expiration, sous réserve du cooldown 6h pour circuit_reset.\" data-tip-en=\"Absolute 24h TTL from reception.
+
+After this date, request automatically becomes status=expired on next sweep (or on next read). No action can be taken on it anymore.
+
+Emitter can send a new request (new request_id) after expiration, subject to 6h circuit_reset cooldown.\" data-tip=\"Absolute 24h TTL from reception.
+
+After this date, request automatically becomes status=expired on next sweep (or on next read). No action can be taken on it anymore.
+
+Emitter can send a new request (new request_id) after expiration, subject to 6h circuit_reset cooldown.\">i</span></span><span>' + _escHtml(expires) + '</span>' +
         '</div>' +
         '<div style="margin-top:.8rem;display:flex;gap:.5rem;flex-wrap:wrap;">' +
-            '<button class="btn" style="border-color:var(--neon-green);color:var(--neon-green);" onclick="decideRequest(\'' + rid + '\',\'approved\',false)">' + getText('fed_btn_approve') + '</button>' +
-            '<button class="btn" style="border-color:var(--red);color:var(--red);" onclick="decideRequest(\'' + rid + '\',\'rejected\',false)">' + getText('fed_btn_reject') + '</button>' +
+            '<button class="btn" style="border-color:var(--neon-green);color:var(--neon-green);" onclick="decideRequest(\'' + rid + '\',\'approved\',false)">' + getText('fed_btn_approve') + '</button>' + '<span class="info-i" data-tip-fr=\"Exécute l\'action LOCALEMENT + envoie un callback signé à l\'émetteur.
+
+Pour circuit_reset :
+• Vide worker_blacklist local
+• Reset checker_scores à 1.0
+• Trace dans federation_admin_actions_log (side=target, event_type=executed)
+
+Pour query_events :
+• Lit molecule_events filtrés (whitelist + 7j + self)
+• Renvoie jusqu\'à 500 events dans le callback signé
+
+GARDE-FOU : si circuit_reset ET slashing_events pending → 409 retourné, un bouton Override jaune apparaîtra.\" data-tip-en=\"Executes action LOCALLY + sends signed callback to emitter.
+
+For circuit_reset:
+• Clears local worker_blacklist
+• Resets checker_scores to 1.0
+• Logs in federation_admin_actions_log (side=target, event_type=executed)
+
+For query_events:
+• Reads filtered molecule_events (whitelist + 7d + self)
+• Returns up to 500 events in signed callback
+
+GUARD: if circuit_reset AND slashing_events pending → 409 returned, a yellow Override button appears.\" data-tip=\"Executes action LOCALLY + sends signed callback to emitter.
+
+For circuit_reset:
+• Clears local worker_blacklist
+• Resets checker_scores to 1.0
+• Logs in federation_admin_actions_log (side=target, event_type=executed)
+
+For query_events:
+• Reads filtered molecule_events (whitelist + 7d + self)
+• Returns up to 500 events in signed callback
+
+GUARD: if circuit_reset AND slashing_events pending → 409 returned, a yellow Override button appears.\">i</span>' +
+            '<button class="btn" style="border-color:var(--red);color:var(--red);" onclick="decideRequest(\'' + rid + '\',\'rejected\',false)">' + getText('fed_btn_reject') + '</button>' + '<span class="info-i" data-tip-fr=\"Rejette la requête sans exécution.
+
+Un callback signé \'rejected\' est envoyé à l\'émetteur.
+La ligne est marquée status=rejected dans federation_admin_requests.
+Event \'rejected\' tracé dans federation_admin_actions_log.
+
+Aucun effet sur ton pool. Utilise ce bouton si la requête semble suspecte (timing, params, contexte).\" data-tip-en=\"Rejects request without execution.
+
+Signed \'rejected\' callback sent to emitter.
+Row marked status=rejected in federation_admin_requests.
+Event \'rejected\' logged in federation_admin_actions_log.
+
+No effect on your pool. Use this button if request seems suspicious (timing, params, context).\" data-tip=\"Rejects request without execution.
+
+Signed \'rejected\' callback sent to emitter.
+Row marked status=rejected in federation_admin_requests.
+Event \'rejected\' logged in federation_admin_actions_log.
+
+No effect on your pool. Use this button if request seems suspicious (timing, params, context).\">i</span>' +
         '</div>' +
         '<div id="fed-result-' + rid + '" style="margin-top:.6rem;font-size:.78rem;color:var(--text2);white-space:pre-wrap;"></div>' +
     '</div>';
@@ -664,7 +876,31 @@ async function decideRequest(request_id, decision, override) {
         if (r.status === 409 && data.pending_count) {
             if (resultEl) resultEl.innerHTML = '<div style="color:var(--amber);">' + getText('fed_slashing_warn') + '</div>'
                 + '<div style="margin-top:.4rem;">pending: ' + data.pending_count + '</div>'
-                + '<button class="btn" style="margin-top:.4rem;border-color:var(--amber);color:var(--amber);" onclick="decideRequest(\'' + request_id + '\',\'approved\',true)">' + getText('fed_btn_override') + '</button>';
+                + '<button class="btn" style="margin-top:.4rem;border-color:var(--amber);color:var(--amber);" onclick="decideRequest(\'' + request_id + '\',\'approved\',true)">' + getText('fed_btn_override') + '</button>' + '<span class="info-i" data-tip-fr=\"Force l\'exécution du circuit_reset MALGRÉ la présence de slashing_events pending.
+
+À UTILISER EN CONNAISSANCE DE CAUSE :
+• Réautorise des workers qui ont été pénalisés pour un motif (mauvaise qualité, triche supposée, etc.)
+• Court-circuite temporairement le signal économique du slashing
+• L\'override est TRACÉ dans federation_admin_actions_log avec event_type=override_applied + snapshot complet des slashing_events ignorés
+• slashing_block_override=true est flag dans la ligne request pour audit futur
+
+Tu es responsable de la décision. Un dispute économique peut émerger post-override.\" data-tip-en=\"Forces circuit_reset execution DESPITE pending slashing_events.
+
+USE WITH FULL AWARENESS:
+• Re-authorizes workers that were penalized for a reason (bad quality, suspected fraud, etc.)
+• Temporarily bypasses the slashing economic signal
+• Override is LOGGED in federation_admin_actions_log with event_type=override_applied + full snapshot of bypassed slashing_events
+• slashing_block_override=true flagged in the request row for future audit
+
+You own the decision. An economic dispute may arise post-override.\" data-tip=\"Forces circuit_reset execution DESPITE pending slashing_events.
+
+USE WITH FULL AWARENESS:
+• Re-authorizes workers that were penalized for a reason (bad quality, suspected fraud, etc.)
+• Temporarily bypasses the slashing economic signal
+• Override is LOGGED in federation_admin_actions_log with event_type=override_applied + full snapshot of bypassed slashing_events
+• slashing_block_override=true flagged in the request row for future audit
+
+You own the decision. An economic dispute may arise post-override.\">i</span>';
             return;
         }
         if (resultEl) resultEl.textContent = JSON.stringify(data, null, 2);
@@ -701,6 +937,26 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshFedInbox();
     setInterval(refreshFedInbox, 20000);
 });
+
+
+// Phase 2 tooltip i18n sync
+function _syncTooltipsAll(lang) {
+    const cur = lang || (typeof lang_current !== 'undefined' ? lang_current : (document.documentElement.lang || 'en'));
+    document.querySelectorAll('[data-tip-en]').forEach(e => {
+        const v = e.getAttribute('data-tip-' + cur) || e.getAttribute('data-tip-en');
+        if (v) e.setAttribute('data-tip', v);
+    });
+}
+(function(){
+    const origSetLang = window.setLang;
+    if (typeof origSetLang === 'function') {
+        window.setLang = function(l){ origSetLang(l); _syncTooltipsAll(l); };
+    }
+    const mo = new MutationObserver(() => _syncTooltipsAll());
+    const inbox = document.getElementById('fed-inbox-list');
+    if (inbox) mo.observe(inbox, {childList: true, subtree: true});
+    document.addEventListener('DOMContentLoaded', () => _syncTooltipsAll());
+})();
 
 </script>
 

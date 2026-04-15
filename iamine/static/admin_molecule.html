@@ -92,7 +92,51 @@
         .events-table td.status-error { color: var(--red); }
 
         .foot { margin-top: 2.5rem; text-align: center; color: var(--text2); font-size: .75rem; font-family: 'JetBrains Mono', monospace; }
-    </style>
+            /* Phase 2 tooltips detailed */
+        .info-i {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: rgba(0,212,255,0.12);
+            color: var(--neon-blue);
+            font-size: 11px; font-weight: 700;
+            cursor: help;
+            margin-left: 0.5rem;
+            position: relative;
+            user-select: none;
+            font-family: serif; font-style: italic;
+            transition: background 0.2s;
+            vertical-align: middle;
+        }
+        .info-i:hover { background: rgba(0,212,255,0.25); }
+        .info-i::after {
+            content: attr(data-tip);
+            position: absolute;
+            top: 50%;
+            left: calc(100% + 10px);
+            transform: translateY(-50%);
+            min-width: 320px; max-width: 440px;
+            padding: 12px 14px;
+            background: rgba(15,15,25,0.98);
+            border: 1px solid rgba(0,212,255,0.4);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: 'Inter',-apple-system,sans-serif;
+            font-size: 0.78rem; font-style: normal; font-weight: 400;
+            line-height: 1.5;
+            text-align: left;
+            white-space: pre-line;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6), 0 0 30px rgba(0,212,255,0.15);
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.18s, visibility 0.18s;
+            z-index: 10000;
+            pointer-events: none;
+        }
+        .info-i:hover::after { opacity: 1; visibility: visible; }
+        .info-i.right::after { left: auto; right: calc(100% + 10px); transform: translateY(-50%); }
+        .info-i.below::after { top: calc(100% + 8px); left: 50%; transform: translateX(-50%); }
+
+        </style>
 </head>
 <body>
 <nav>
@@ -154,7 +198,31 @@
                 <th data-i18n="col_ts">When</th>
                 <th data-i18n="col_target">Target</th>
                 <th data-i18n="col_action">Action</th>
-                <th data-i18n="col_status">Status</th>
+                <th data-i18n="col_status">Status<span class="info-i below" data-tip-fr="Cycle de vie d'une requête outbound :
+
+pending → en attente de décision côté cible
+approved → approuvée, exécution en cours
+rejected → rejetée par l'admin cible
+executed → approuvée ET exécutée avec succès
+failed → approuvée mais exécution a échoué
+executed_no_callback → exécutée côté cible, callback jamais reçu (split-brain réseau) — à investiguer manuellement
+expired → TTL 24h dépassé sans décision" data-tip-en="Outbound request lifecycle:
+
+pending → awaiting target-side decision
+approved → approved, executing
+rejected → rejected by target admin
+executed → approved AND executed successfully
+failed → approved but execution failed
+executed_no_callback → executed target-side, callback never received (network split-brain) — investigate manually
+expired → 24h TTL reached without decision" data-tip="Outbound request lifecycle:
+
+pending → awaiting target-side decision
+approved → approved, executing
+rejected → rejected by target admin
+executed → approved AND executed successfully
+failed → approved but execution failed
+executed_no_callback → executed target-side, callback never received (network split-brain) — investigate manually
+expired → 24h TTL reached without decision">i</span></th>
                 <th data-i18n="col_result">Result</th>
             </tr></thead>
             <tbody id="outbox-body"><tr><td colspan="5" style="text-align:center;color:var(--text2);padding:1rem;">—</td></tr></tbody>
@@ -170,7 +238,44 @@
         <h3 style="color:var(--neon-blue);margin-bottom:.3rem;" data-i18n="req_title">Send Federation Admin Request</h3>
         <p class="sub" id="req-target-label">—</p>
         <div style="margin:1rem 0;">
-            <label class="status-label" data-i18n="req_action_lbl">Action</label>
+            <label class="status-label" data-i18n="req_action_lbl">Action</label><span class="info-i" data-tip-fr-circuit="circuit_reset — sur le pool cible :
+• Vide la worker_blacklist (workers injustement bannis)
+• Reset tous les checker_scores à 1.0 (réautorise workers pénalisés)
+
+GARDE-FOU token-guardian : si le pool cible a des slashing_events pending/contested, l'approve retourne 409 avec le count. L'admin local peut alors forcer via un bouton Override (tracé dans federation_admin_actions_log avec event_type=override_applied + snapshot des events ignorés).
+
+COOLDOWN : 6h minimum par pair émetteur entre 2 circuit_reset acceptés (anti-abus).
+RATE LIMIT : 10 pending max par pair." data-tip-en-circuit="circuit_reset — on target pool:
+• Clears worker_blacklist (wrongly banned workers)
+• Resets all checker_scores to 1.0 (re-authorizes penalized workers)
+
+TOKEN-GUARDIAN GUARD: if target pool has pending/contested slashing_events, approve returns 409 with count. Local admin can then force via an Override button (logged in federation_admin_actions_log with event_type=override_applied + snapshot of ignored events).
+
+COOLDOWN: min 6h per emitting peer between 2 accepted circuit_resets.
+RATE LIMIT: max 10 pending per peer." data-tip-fr-events="query_events — lecture de molecule_events du pool cible.
+
+FILTRES OBLIGATOIRES (token-guardian) :
+• Whitelist event_types : circuit_opened, circuit_closed, worker_joined, worker_left, peer_handshake, overview, peer_status
+• target_atom_id = self ou NULL (tu ne peux PAS voir les events d'un tiers via ce peer)
+• Fenêtre 7 jours maximum
+• Limite 500 events par requête
+
+Event_types sensibles économiquement (settlement_*, credits_*, worker_share_*) sont EXCLUS par défaut. Changer la whitelist requiert une session guardian." data-tip-en-events="query_events — read molecule_events from target pool.
+
+MANDATORY FILTERS (token-guardian):
+• Whitelist event_types: circuit_opened, circuit_closed, worker_joined, worker_left, peer_handshake, overview, peer_status
+• target_atom_id = self or NULL (you CANNOT see a third party's events via this peer)
+• 7-day window maximum
+• 500 events per request limit
+
+Economically sensitive event_types (settlement_*, credits_*, worker_share_*) are EXCLUDED by default. Changing the whitelist requires a guardian session." data-tip="circuit_reset — on target pool:
+• Clears worker_blacklist (wrongly banned workers)
+• Resets all checker_scores to 1.0 (re-authorizes penalized workers)
+
+TOKEN-GUARDIAN GUARD: if target pool has pending/contested slashing_events, approve returns 409 with count. Local admin can then force via an Override button (logged in federation_admin_actions_log with event_type=override_applied + snapshot of ignored events).
+
+COOLDOWN: min 6h per emitting peer between 2 accepted circuit_resets.
+RATE LIMIT: max 10 pending per peer." id="tip-action-desc">i</span>
             <select id="req-action" class="btn" style="width:100%;margin-top:.3rem;">
                 <option value="circuit_reset">circuit_reset — clear blacklist + reset checker scores</option>
                 <option value="query_events">query_events — read molecule_events (whitelisted types only)</option>
@@ -185,7 +290,25 @@
             <input id="req-param-limit" class="btn" type="number" value="100" min="1" max="500" style="width:100%;margin-top:.3rem;" />
         </div>
         <div style="background:rgba(251,191,36,.08);border:1px solid var(--amber);border-radius:8px;padding:.8rem;margin:1rem 0;font-size:.82rem;color:var(--amber);">
-            <strong data-i18n="req_notice_title">Manual approve required.</strong>
+            <strong data-i18n="req_notice_title">Manual approve required.</strong><span class="info-i" data-tip-fr="Approbation manuelle obligatoire.
+
+Le pool cible reçoit ta requête en status=pending et l'affiche dans son onglet 'Federation Requests' (page /admin/pool). Son admin humain clique Approve ou Reject.
+
+Pas d'approve automatique, pas de whitelist, pas de quorum (différés en Phase 2.1 / Phase 3).
+
+Si aucune décision sous 24h, la requête passe à status=expired." data-tip-en="Manual approve required.
+
+The target pool receives your request as status=pending and displays it in its 'Federation Requests' tab (/admin/pool). Its human admin clicks Approve or Reject.
+
+No auto-approve, no whitelist, no quorum (deferred to Phase 2.1 / Phase 3).
+
+If no decision within 24h, request goes to status=expired." data-tip="Manual approve required.
+
+The target pool receives your request as status=pending and displays it in its 'Federation Requests' tab (/admin/pool). Its human admin clicks Approve or Reject.
+
+No auto-approve, no whitelist, no quorum (deferred to Phase 2.1 / Phase 3).
+
+If no decision within 24h, request goes to status=expired.">i</span>
             <span data-i18n="req_notice_desc">The target pool's admin will see this request and must approve it manually. 24h TTL.</span>
         </div>
         <div style="display:flex;gap:.6rem;justify-content:flex-end;">
@@ -339,7 +462,19 @@ function renderPool(p) {
             <div class="pool-head">
                 <span class="dot red"></span>
                 <span class="pool-name">${escapeHtml(p.name || "?")}</span>
-                <span class="pool-tag">${T("unreach_tag")}</span>
+                <span class="pool-tag">${T("unreach_tag")}</span><span class="info-i" data-tip-fr="Ce peer n'a pas répondu dans les 3s du fan-out.
+
+Le fan-out reste partiel explicite (bandeau orange en haut) — aucun masquage silencieux. Le peer peut être offline, en maintenance, ou injoignable réseau.
+
+Retry automatique toutes les 30s." data-tip-en="This peer did not reply within the 3s fan-out window.
+
+Fan-out stays explicitly partial (orange banner above) — no silent hiding. The peer may be offline, under maintenance, or network-unreachable.
+
+Auto-retry every 30s." data-tip="This peer did not reply within the 3s fan-out window.
+
+Fan-out stays explicitly partial (orange banner above) — no silent hiding. The peer may be offline, under maintenance, or network-unreachable.
+
+Auto-retry every 30s.">i</span>
             </div>
             <div class="pool-atom">${escapeHtml(fmtAtom(p.atom_id))}</div>
             <div class="info-row"><span class="label">${T("lbl_workers")}</span><span class="value err">—</span></div>
@@ -360,12 +495,64 @@ function renderPool(p) {
     const slashDisp = p.is_self
         ? p.slashings_pending
         : (p.slashings_pending_tier || "none");
-    const actionsBtn = p.is_self ? "" : `<div style="margin-top:.8rem;text-align:right;"><button class="btn" style="font-size:.75rem;padding:.3rem .6rem;border-color:var(--neon-green);color:var(--neon-green);" onclick="openReqModal('${escapeHtml(p.atom_id)}','${escapeHtml(p.name || '?')}')">${T("btn_actions")}</button></div>`;
+    const actionsBtn = p.is_self ? "" : `<div style="margin-top:.8rem;text-align:right;"><button class="btn" style="font-size:.75rem;padding:.3rem .6rem;border-color:var(--neon-green);color:var(--neon-green);" onclick="openReqModal('${escapeHtml(p.atom_id)}','${escapeHtml(p.name || '?')}')">${T("btn_actions")}</button><span class="info-i right" data-tip-fr="Envoie une requête admin cross-pool vers ce peer.
+
+Flux :
+1. Tu choisis l'action (circuit_reset ou query_events)
+2. La requête est signée Ed25519 avec la clé de TON pool
+3. Elle arrive chez le peer cible en status=pending
+4. L'admin humain du peer cible doit l'approuver ou la rejeter MANUELLEMENT dans son UI
+5. Un callback signé te revient avec le résultat
+
+Rien ne s'exécute automatiquement. TTL 24h." data-tip-en="Send a cross-pool admin request to this peer.
+
+Flow:
+1. Choose action (circuit_reset or query_events)
+2. Request is Ed25519-signed with YOUR pool's key
+3. Arrives at target peer as status=pending
+4. Target peer's human admin must MANUALLY approve or reject in their UI
+5. A signed callback comes back with the result
+
+Nothing runs automatically. TTL 24h." data-tip="Send a cross-pool admin request to this peer.
+
+Flow:
+1. Choose action (circuit_reset or query_events)
+2. Request is Ed25519-signed with YOUR pool's key
+3. Arrives at target peer as status=pending
+4. Target peer's human admin must MANUALLY approve or reject in their UI
+5. A signed callback comes back with the result
+
+Nothing runs automatically. TTL 24h.">i</span></div>`;
     return `<div class="card-pool${selfClass}${slowClass}">
         <div class="pool-head">
             <span class="dot ${dotCls}"></span>
             <span class="pool-name">${escapeHtml(p.name || "?")}</span>
-            <span class="pool-tag ${tagCls}">${tagLbl}</span>
+            <span class="pool-tag ${tagCls}">${tagLbl}</span><span class="info-i" data-tip-fr-self="Ton pool. Les valeurs sont EXACTES (TVL, lignes ledger, slashings).
+
+Sur les peers, les mêmes valeurs sont affichées en tier (intervalle) pour éviter l'asymétrie compétitive entre pools fédérés." data-tip-en-self="Your own pool. Values are EXACT (TVL, ledger rows, slashings).
+
+On peer pools, the same metrics are shown as tier ranges to prevent competitive asymmetry between federated pools." data-tip-fr-peer="Pool distant bondé avec le tien au trust≥3 (replication-bonded).
+
+Les métriques sont self-censurées en tiers par le peer :
+• TVL : empty / <100 / 100-1k / 1k-10k / >10k
+• Rows ledger : 0 / <1k / 1k-10k / >10k
+• Slashings pending : none / 1-5 / >5
+
+Token-guardian : évite qu'un pool puisse profiler les revenus exacts d'un concurrent via fan-out signé." data-tip-en-peer="Remote pool bonded with yours at trust>=3 (replication-bonded).
+
+Metrics are self-censored to tiers by the peer:
+• TVL: empty / <100 / 100-1k / 1k-10k / >10k
+• Ledger rows: 0 / <1k / 1k-10k / >10k
+• Slashings pending: none / 1-5 / >5
+
+Token-guardian: prevents a pool from profiling a competitor's exact revenue via signed fan-out." data-tip="Remote pool bonded with yours at trust>=3 (replication-bonded).
+
+Metrics are self-censored to tiers by the peer:
+• TVL: empty / <100 / 100-1k / 1k-10k / >10k
+• Ledger rows: 0 / <1k / 1k-10k / >10k
+• Slashings pending: none / 1-5 / >5
+
+Token-guardian: prevents a pool from profiling a competitor's exact revenue via signed fan-out.">i</span>
             <span class="pool-version">v${escapeHtml(p.version || "?")}</span>
         </div>
         <div class="pool-atom">${escapeHtml(fmtAtom(p.atom_id))}</div>
@@ -546,9 +733,58 @@ async function refreshOutbox() {
     } catch (e) { /* silent */ }
 }
 
+
+// // tooltip i18n sync (Phase 2)
+function _syncTooltips(l) {
+    document.querySelectorAll('[data-tip-en]').forEach(e => {
+        const v = e.getAttribute('data-tip-' + l) || e.getAttribute('data-tip-en');
+        if (v) e.setAttribute('data-tip', v);
+    });
+}
+const _origSetLang = typeof setLang === 'function' ? setLang : null;
+if (_origSetLang) {
+    window.setLang = function(l) { _origSetLang(l); _syncTooltips(l); };
+}
+document.addEventListener('DOMContentLoaded', () => _syncTooltips(typeof currentLang !== 'undefined' ? currentLang : 'en'));
+
 setLang(currentLang);
 refreshOverview();
 setInterval(refreshOverview, 30000);
+
+// Phase 2 : dynamic tooltip context (self/peer, action selector)
+function _syncDynamicTooltips(lang) {
+    const cur = lang || (typeof currentLang !== 'undefined' ? currentLang : 'en');
+    document.querySelectorAll('.card-pool').forEach(card => {
+        const isSelf = card.classList.contains('self');
+        const kind = isSelf ? 'self' : 'peer';
+        const info = card.querySelector('.pool-head .info-i[data-tip-fr-' + kind + ']');
+        if (info) {
+            const v = info.getAttribute('data-tip-' + cur + '-' + kind) || info.getAttribute('data-tip-en-' + kind);
+            if (v) info.setAttribute('data-tip', v);
+        }
+    });
+    const sel = document.getElementById('req-action');
+    const tip = document.getElementById('tip-action-desc');
+    if (sel && tip) {
+        const kind = sel.value === 'query_events' ? 'events' : 'circuit';
+        const v = tip.getAttribute('data-tip-' + cur + '-' + kind) || tip.getAttribute('data-tip-en-' + kind);
+        if (v) tip.setAttribute('data-tip', v);
+    }
+}
+(function(){
+    const origRender = window.renderOverview;
+    if (typeof origRender === 'function') {
+        window.renderOverview = function(d){ origRender(d); _syncDynamicTooltips(); };
+    }
+    const sel = document.getElementById('req-action');
+    if (sel) sel.addEventListener('change', () => _syncDynamicTooltips());
+    const origSetLang = window.setLang;
+    if (typeof origSetLang === 'function') {
+        window.setLang = function(l){ origSetLang(l); _syncDynamicTooltips(l); };
+    }
+    document.addEventListener('DOMContentLoaded', () => _syncDynamicTooltips());
+})();
+
 </script>
 </body>
 </html>
