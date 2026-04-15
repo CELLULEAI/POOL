@@ -1497,7 +1497,15 @@ async def molecule_overview(request: Request):
         url = peer_row["url"].rstrip("/") + "/v1/federation/peer/status"
         body_bytes = _json.dumps({"origin_pool_id": self_atom_id}).encode()
         try:
-            priv_raw = pool.federation_self.privkey if pool.federation_self else b""
+            priv_raw = b""
+            if pool.federation_self and getattr(pool.federation_self, "privkey_path", None):
+                from pathlib import Path as _Path
+                try:
+                    p = _Path(pool.federation_self.privkey_path)
+                    if p.exists():
+                        priv_raw = p.read_bytes()
+                except Exception:
+                    priv_raw = b""
             headers = fed.build_envelope_headers(
                 priv_raw=priv_raw,
                 atom_id=self_atom_id,
