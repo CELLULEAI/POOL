@@ -43,10 +43,29 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install pyinstaller==6.10.0
 
+      - name: Install CUDA Toolkit (if cuda variant)
+        if: inputs.cpu_variant == 'cuda'
+        uses: Jimver/cuda-toolkit@v0.2.19
+        with:
+          cuda: '12.5.0'
+          method: 'network'
+          sub-packages: '["nvcc", "cudart", "cublas", "cublas_dev", "thrust", "curand", "curand_dev", "visual_studio_integration"]'
+
       - name: Install llama-cpp-python (compile from source)
         shell: pwsh
+        env:
+          CPU_VARIANT: ${{ inputs.cpu_variant }}
         run: |
-          python -m pip install llama-cpp-python
+          if ($env:CPU_VARIANT -eq 'cuda') {
+            Write-Host "Building llama-cpp-python with CUDA support"
+            $env:CMAKE_ARGS = "-DGGML_CUDA=on -DCMAKE_GENERATOR_TOOLSET="cuda=$env:CUDA_PATH""
+            $env:FORCE_CMAKE = "1"
+            Write-Host "CMAKE_ARGS=$env:CMAKE_ARGS"
+            Write-Host "CUDA_PATH=$env:CUDA_PATH"
+          } else {
+            Write-Host "Building llama-cpp-python CPU-only"
+          }
+          python -m pip install llama-cpp-python --verbose
           python -c "import llama_cpp; print('llama_cpp_imported_ok', getattr(llama_cpp, '__version__', 'unknown'))"
 
       - name: Install iamine-ai (retry x3)
