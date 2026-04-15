@@ -226,9 +226,12 @@ launchctl load ~/Library/LaunchAgents/ai.cellule.worker.plist</code></pre>
 </tbody>
 </table>
 
+<div class="ok" style="margin:1rem 0;">
+<strong data-i18n="no_gpu_cta">No GPU ? No problem.</strong> <span data-i18n="no_gpu_body">The <strong>CPU</strong> build runs on any Windows 10/11 machine — the network needs contributors of all kinds, not just gaming rigs. Your idle office laptop, your old desktop, your mini PC : all of them can serve inferences on Qwen 2B/4B at honest speed. Every worker strengthens the molecule.</span>
+</div>
+
 <div class="warn" style="margin:1rem 0;">
-<strong data-i18n="which_q">Which one do I pick ?</strong><br>
-<span data-i18n="which_a">If you have an NVIDIA GPU (RTX 20xx / 30xx / 40xx / 50xx), use the <strong>CUDA</strong> build — 10× faster, helps the network more. Otherwise the <strong>CPU</strong> build works on any Windows 10/11 machine.</span>
+<strong data-i18n="which_q">Got an NVIDIA GPU ?</strong> <span data-i18n="which_a">If you have an NVIDIA RTX (20xx / 30xx / 40xx / 50xx), download the <strong>CUDA</strong> build instead — 5–10× faster, can serve bigger models (Qwen 14B+), more useful to the network. Both are community contributions, pick what matches your hardware.</span>
 </div>
 
 <p data-i18n="when_ready">Installation steps (both variants):</p>
@@ -392,8 +395,10 @@ var I18N = {
         cpu_speed: "5\u201315 t/s on modern CPUs (Qwen 2B\u20134B)",
         cuda_for: "Windows PC with NVIDIA GPU (CUDA 12+)",
         cuda_speed: "50\u2013200 t/s on NVIDIA RTX (Qwen 4B\u201314B)",
-        which_q: "Which one do I pick ?",
-        which_a: "If you have an NVIDIA GPU (RTX 20xx / 30xx / 40xx / 50xx), use the <strong>CUDA</strong> build \u2014 10\u00d7 faster, helps the network more. Otherwise the <strong>CPU</strong> build works on any Windows 10/11 machine.",
+        no_gpu_cta: "No GPU ? No problem.",
+        no_gpu_body: "The <strong>CPU</strong> build runs on any Windows 10/11 machine \u2014 the network needs contributors of all kinds, not just gaming rigs. Your idle office laptop, your old desktop, your mini PC : all of them can serve inferences on Qwen 2B/4B at honest speed. Every worker strengthens the molecule.",
+        which_q: "Got an NVIDIA GPU ?",
+        which_a: "If you have an NVIDIA RTX (20xx / 30xx / 40xx / 50xx), download the <strong>CUDA</strong> build instead \u2014 5\u201310\u00d7 faster, can serve bigger models (Qwen 14B+), more useful to the network. Both are community contributions, pick what matches your hardware.",
         when_ready: "Installation steps (both variants):",
         win_step1: "Download the right <code>.exe</code> from <a href=\"https://github.com/CELLULEAI/POOL/releases\" target=\"_blank\">GitHub Releases</a>.",
         preprod_note: "PREPROD / BETA notice.",
@@ -482,8 +487,10 @@ var I18N = {
         cpu_speed: "5\u201315 t/s sur CPU moderne (Qwen 2B\u20134B)",
         cuda_for: "PC Windows avec GPU NVIDIA (CUDA 12+)",
         cuda_speed: "50\u2013200 t/s sur NVIDIA RTX (Qwen 4B\u201314B)",
-        which_q: "Laquelle choisir ?",
-        which_a: "Si vous avez un GPU NVIDIA (RTX 20xx / 30xx / 40xx / 50xx), prenez la version <strong>CUDA</strong> \u2014 10\u00d7 plus rapide, plus utile au r\u00e9seau. Sinon la version <strong>CPU</strong> fonctionne sur tout Windows 10/11.",
+        no_gpu_cta: "Pas de GPU ? Pas de souci.",
+        no_gpu_body: "La version <strong>CPU</strong> tourne sur n'importe quel Windows 10/11 \u2014 le r\u00e9seau a besoin de contributeurs de toutes sortes, pas seulement des PC gamer. Ton laptop pro inactif, ton vieux desktop, ton mini-PC : tous peuvent servir des inf\u00e9rences Qwen 2B/4B \u00e0 vitesse honn\u00eate. Chaque worker renforce la mol\u00e9cule.",
+        which_q: "Tu as un GPU NVIDIA ?",
+        which_a: "Si tu as un NVIDIA RTX (20xx / 30xx / 40xx / 50xx), prends plut\u00f4t la version <strong>CUDA</strong> \u2014 5\u201310\u00d7 plus rapide, capable de servir des mod\u00e8les plus gros (Qwen 14B+), plus utile au r\u00e9seau. Les deux sont des contributions communautaires, choisis selon ton hardware.",
         when_ready: "\u00c9tapes d'installation (les deux variantes) :",
         win_step1: "T\u00e9l\u00e9chargez le bon <code>.exe</code> depuis <a href=\"https://github.com/CELLULEAI/POOL/releases\" target=\"_blank\">GitHub Releases</a>.",
         preprod_note: "Notice PREPROD / BETA.",
