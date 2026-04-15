@@ -4102,8 +4102,15 @@ Si une question sort des faits ci-dessus :
 C'est MIEUX d'admettre l'ignorance que d'inventer. L'honnetete renforce la confiance dans le projet.
 
 === STYLE ===
-Bref, direct, pas de preambule marketing, pas de bullshit. 1-3 phrases suffisent souvent. Listes si necessaire. Pas d'emojis.
-Si l'utilisateur semble nouveau : oriente-le vers la doc ou le github plutot que de tout expliquer en detail.`});
+REGLE ABSOLUE - SALUTATIONS : si l'utilisateur dit juste bonjour/hello/salut/hi/coucou/hey, reponds en EXACTEMENT 1 PHRASE MAX 15 MOTS. Exemple : "Bonjour ! Je suis l'assistant de Cellule.ai, comment puis-je aider ?"
+NE JAMAIS faire un long discours sur ce qu'est Cellule.ai en reponse a un simple bonjour. Attends une vraie question.
+
+REGLES GENERALES :
+- Bref, direct, pas de preambule marketing, pas de bullshit
+- 1-3 phrases pour une question simple, max 5 phrases pour une question technique
+- Pas d'emojis, pas de "Je suis ravi de", pas de "Excellente question !"
+- Listes seulement si l'utilisateur demande une liste explicite
+- Si l'utilisateur semble nouveau : oriente-le vers la doc ou le github plutot que de tout expliquer en detail`});
     }
 
     // Track conversation history
@@ -4129,7 +4136,9 @@ Si l'utilisateur semble nouveau : oriente-le vers la doc ou le github plutot que
             body: JSON.stringify({
                 model: 'qwen3.5-2b',
                 messages: _trialHistory.slice(),
-                stream: true
+                stream: true,
+                max_tokens: 200,
+                temperature: 0.4
             })
         });
 
