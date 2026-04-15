@@ -1,0 +1,143 @@
+name: Build Windows Worker .exe
+
+# Triggers:
+#   - manual dispatch (workflow_dispatch) - anytime
+#   - tag push matching "v*-worker" (e.g. v0.2.72-worker)
+on:
+  workflow_dispatch:
+    inputs:
+      iamine_version:
+        description: 'iamine-ai version to bundle (blank = latest from cellule.ai pypi)'
+        required: false
+        default: ''
+      cpu_variant:
+        description: 'CPU variant (cpu, cuda)'
+        required: true
+        default: 'cpu'
+        type: choice
+        options:
+          - cpu
+          - cuda
+  push:
+    tags:
+      - 'v*-worker'
+
+permissions:
+  contents: write  # needed to create GitHub Releases
+
+jobs:
+  build:
+    name: Build cellule-worker.exe (${{ inputs.cpu_variant || 'cpu' }})
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Upgrade pip + install tools
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install pyinstaller==6.10.0
+
+      - name: Install iamine-ai
+        shell: pwsh
+        run: |
+          $version = "${{ inputs.iamine_version }}"
+          if ([string]::IsNullOrEmpty($version)) {
+            python -m pip install iamine-ai `
+              --index-url https://iamine.org/pypi `
+              --extra-index-url https://pypi.org/simple
+          } else {
+            python -m pip install "iamine-ai==$version" `
+              --index-url https://iamine.org/pypi `
+              --extra-index-url https://pypi.org/simple
+          }
+          python -c "import iamine; print('installed iamine', iamine.__version__)"
+
+      - name: Write entry-point stub
+        shell: pwsh
+        run: |
+          @'
+          """PyInstaller entry point for cellule-worker.exe.
+
+          Runs the iamine worker in --auto mode by default. Accepts any
+          additional iamine CLI args passed on the command line.
+          """
+          import sys
+          from iamine.__main__ import main
+
+          if __name__ == "__main__":
+              if len(sys.argv) == 1:
+                  sys.argv += ["worker", "--auto"]
+              main()
+          '@ | Out-File -Encoding ascii worker_entry.py
+          Get-Content worker_entry.py
+
+      - name: Build .exe with PyInstaller
+        shell: pwsh
+        run: |
+          pyinstaller `
+            --onefile `
+            --name cellule-worker `
+            --icon NONE `
+            --collect-all iamine `
+            --collect-all llama_cpp `
+            --collect-submodules iamine `
+            --hidden-import=aiohttp `
+            --hidden-import=websockets `
+            --hidden-import=asyncpg `
+            --hidden-import=cryptography `
+            --console `
+            worker_entry.py
+          Get-ChildItem dist/
+
+      - name: Smoke test .exe
+        shell: pwsh
+        run: |
+          .\dist\cellule-worker.exe --help
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "cellule-worker.exe --help failed with exit $LASTEXITCODE"
+            exit 1
+          }
+
+      - name: Report size
+        shell: pwsh
+        run: |
+          $size = (Get-Item dist/cellule-worker.exe).Length / 1MB
+          Write-Host ("cellule-worker.exe size: {0:N1} MB" -f $size)
+
+      - name: Upload artifact (always, even without a tag)
+        uses: actions/upload-artifact@v4
+        with:
+          name: cellule-worker-${{ inputs.cpu_variant || 'cpu' }}-windows
+          path: dist/cellule-worker.exe
+          retention-days: 30
+
+      - name: Create GitHub Release (only on tag push)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Cellule Worker ${{ github.ref_name }}
+          body: |
+            Standalone Windows worker executable.
+
+            **Install** : download `cellule-worker.exe`, double-click to start.
+            If Windows SmartScreen warns : right-click &rarr; Properties &rarr; Unblock.
+
+            **Variant** : ${{ inputs.cpu_variant || 'cpu' }}
+            **iamine-ai bundled** : `${{ inputs.iamine_version || 'latest from cellule.ai/pypi' }}`
+            **Size** : see artifact metadata
+
+            Source : https://github.com/CELLULEAI/POOL
+            Docs : https://cellule.ai/docs/install-worker.html
+          files: dist/cellule-worker.exe
+          fail_on_unmatched_files: true
+          draft: false
+          prerelease: false
