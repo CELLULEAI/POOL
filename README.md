@@ -54,9 +54,34 @@ Interactive SVG diagrams (EN/FR) covering the 4 layers — atom, pool, federatio
 - **Sub-agents** — auto-review, security audit, test generation, documentation (parallel pipeline)
 
 ### Federation
-- **Ed25519-signed protocol** — pools communicate via cryptographic envelopes
+- **Ed25519-signed protocol** — every cross-pool message is cryptographically signed, nonce-protected, and trust-gated
+- **No master pool** — each pool is sovereign. Cross-pool admin actions require explicit manual approval from the target pool's admin
+- **Read-by-default / write-opt-in** — Phase 2.1 split: `query_events` (read-only) enabled by default, `circuit_reset` (write) OFF by default to protect worker economic state
 - **Auto-migration** — workers failover to the best pool in ~35 seconds
 - **RAID-like resilience** — lose a pool, lose no data
+- **Instant kill switch** — `touch /etc/iamine/fed_disable` stops all federation traffic immediately
+
+→ Full explanation : **[cellule.ai/docs/federation.html](https://cellule.ai/docs/federation.html)**
+
+#### Cross-pool admin actions (Phase 2.1)
+
+As a pool operator, two toggles in `/admin` → Federation tab control what peer pools can ask yours to do:
+
+| Type | Example | Default | Why |
+|------|---------|---------|-----|
+| **READ** | `query_events` (read filtered molecule event log) | **ON** | No economic impact. Helps the community see network health. |
+| **WRITE** | `circuit_reset` (clear blacklist + reset worker scores) | **OFF** | Can indirectly affect wallets / slashing. Opt-in only. |
+
+Every request is:
+
+1. Ed25519-verified (signature + nonce anti-replay)
+2. Trust-gated (peer must be bonded at trust≥3)
+3. Rate-limited (10 pending per peer, 6h cooldown between approved writes)
+4. **Manually approved** by the target pool admin — no auto-execution, ever
+5. Logged append-only on both sides
+
+Every design choice is made with the future on-chain economy in mind: we protect wallets today so the system holds when real value flows tomorrow. Validated by project's economic guardian (token-guardian) with 13 load-bearing invariants.
+
 
 ### Agent Memory (M13)
 - **4-tier memory system** — observations, episodes, semantic facts, procedural patterns
