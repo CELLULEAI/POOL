@@ -1758,6 +1758,27 @@ footer {
             color: #00d4ff;
             font-weight: 600;
         }
+
+        /* News banner under hero install strip */
+        .hero-news {
+            margin: 1rem auto 0;
+            max-width: 720px;
+            padding: 0.8rem 1rem;
+            background: rgba(251, 191, 36, 0.08);
+            border: 1px solid rgba(251, 191, 36, 0.35);
+            border-radius: 10px;
+            font-size: 0.88rem;
+            color: rgba(255,255,255,0.85);
+            text-align: center;
+        }
+        .hero-news strong { color: #fbbf24; }
+        .hero-news a {
+            color: #00d4ff;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .hero-news a:hover { text-decoration: underline; }
+
         @media (max-width: 640px) {
             .hero-install-cmd { font-size: 0.75rem; padding: 0.55rem 0.7rem; }
             .hero-install-strip { padding: 1rem; }
@@ -1825,6 +1846,11 @@ footer {
                 <a href="/docs/install-worker.html#linux" data-i18n="hero_os_linux">&#x1F427; Linux</a>
                 <a href="/docs/install-worker.html" class="hero-install-all" data-i18n="hero_install_all">full guide &rarr;</a>
             </div>
+        </div>
+        <div class="hero-news">
+            <strong data-i18n="news_tag">NEWS</strong>
+            <span data-i18n="news_body">Windows <code>.exe</code> CPU (45 MB) and CUDA (455 MB) now available in PREPROD. Tested or broken? </span>
+            <a href="https://github.com/CELLULEAI/POOL/issues/new" target="_blank" data-i18n="news_feedback">share your feedback →</a>
         </div>
     </div>
 </section>
@@ -2597,6 +2623,9 @@ var L = {
         hero_os_mac: "\ud83c\udf4e macOS",
         hero_os_linux: "\ud83d\udc27 Linux",
         hero_install_all: "full guide \u2192",
+        news_tag: "NEWS",
+        news_body: "Windows <code>.exe</code> CPU (45 MB) and CUDA (455 MB) now available in PREPROD. Working or broken?",
+        news_feedback: "share your feedback \u2192",
         stat_workers: "Workers Online",
         stat_tps: "Tokens / sec",
         stat_jobs: "Jobs Completed",
@@ -2825,6 +2854,9 @@ var L = {
         hero_os_mac: "\ud83c\udf4e macOS",
         hero_os_linux: "\ud83d\udc27 Linux",
         hero_install_all: "guide complet \u2192",
+        news_tag: "NOUVEAU",
+        news_body: "Les <code>.exe</code> Windows CPU (45 Mo) et CUDA (455 Mo) sont dispo en PREPROD. \u00c7a marche ou \u00e7a casse chez toi ?",
+        news_feedback: "envoie ton retour \u2192",
         stat_workers: "Workers en ligne",
         stat_tps: "Tokens / sec",
         stat_jobs: "Jobs termin\u00e9s",
