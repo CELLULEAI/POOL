@@ -8,13 +8,14 @@ on:
         required: false
         default: ""
       cpu_variant:
-        description: "Variant (used when triggered manually). Tag push builds both."
+        description: "Variant (used when triggered manually). Tag push builds all 3."
         required: true
         default: "cpu"
         type: choice
         options:
           - cpu
           - cuda
+          - proxy
   push:
     tags:
       - "v*-worker"
@@ -30,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        variant: ${{ startsWith(github.ref, 'refs/tags/v') && fromJson('["cpu","cuda"]') || fromJson(format('["{0}"]', inputs.cpu_variant || 'cpu')) }}
+        variant: ${{ startsWith(github.ref, 'refs/tags/v') && fromJson('["cpu","cuda","proxy"]') || fromJson(format('["{0}"]', inputs.cpu_variant || 'cpu')) }}
 
     steps:
       - name: Checkout repo
@@ -56,6 +57,7 @@ jobs:
           sub-packages: '["nvcc", "cudart", "cublas", "cublas_dev", "thrust", "curand", "curand_dev", "visual_studio_integration"]'
 
       - name: Install llama-cpp-python (compile from source)
+        if: matrix.variant != 'proxy'
         shell: pwsh
         env:
           CPU_VARIANT: ${{ matrix.variant }}
@@ -102,7 +104,26 @@ jobs:
         env:
           CPU_VARIANT: ${{ matrix.variant }}
         run: |
-          $content = @'
+          # Entry stub : worker --auto by default, or proxy if variant=proxy
+          if ($env:CPU_VARIANT -eq 'proxy') {
+            $content = @'
+          import sys
+          from iamine.__main__ import main
+          if __name__ == "__main__":
+              if len(sys.argv) == 1:
+                  print("Cellule Proxy - bring your own LLM to the network")
+                  print("")
+                  print("Usage:")
+                  print("  cellule-proxy --upstream http://localhost:8000 --model my-model-name")
+                  print("")
+                  print("Full guide: https://cellule.ai/docs/proxy-mode.html")
+                  sys.exit(0)
+              sys.argv = [sys.argv[0], "proxy"] + sys.argv[1:]
+              main()
+          '@
+            $exeName = "cellule-proxy"
+          } else {
+            $content = @'
           import sys
           from iamine.__main__ import main
           if __name__ == "__main__":
@@ -110,34 +131,39 @@ jobs:
                   sys.argv += ["worker", "--auto"]
               main()
           '@
+            $exeName = "cellule-worker-$env:CPU_VARIANT"
+          }
           $content | Out-File -Encoding ascii worker_entry.py
 
-          $llamaPath = python -c "import importlib.util, os; spec = importlib.util.find_spec('llama_cpp'); print(os.path.dirname(spec.origin))"
-          Write-Host "llama_cpp path: $llamaPath"
-          $libDir = Join-Path $llamaPath "lib"
-          if (-not (Test-Path $libDir)) { Write-Error "llama_cpp/lib missing"; exit 1 }
-          $dlls = Get-ChildItem $libDir -Filter *.dll
-          Write-Host "Found $($dlls.Count) DLLs"
-
-          $exeName = "cellule-worker-$env:CPU_VARIANT"
           $pyinstArgs = @(
             "--onefile",
             "--name", $exeName,
-            "--paths", $llamaPath,
             "--collect-all", "iamine",
-            "--collect-all", "llama_cpp",
             "--collect-submodules", "iamine",
             "--hidden-import=aiohttp",
             "--hidden-import=websockets",
             "--hidden-import=asyncpg",
             "--hidden-import=cryptography",
-            "--hidden-import=llama_cpp",
             "--console"
           )
-          foreach ($dll in $dlls) {
-            $pyinstArgs += "--add-binary"
-            $pyinstArgs += "$($dll.FullName);llama_cpp/lib"
+
+          # Bundle llama_cpp DLLs only for worker variants (proxy does not need them)
+          if ($env:CPU_VARIANT -ne 'proxy') {
+            $llamaPath = python -c "import importlib.util, os; spec = importlib.util.find_spec('llama_cpp'); print(os.path.dirname(spec.origin))"
+            Write-Host "llama_cpp path: $llamaPath"
+            $libDir = Join-Path $llamaPath "lib"
+            if (-not (Test-Path $libDir)) { Write-Error "llama_cpp/lib missing"; exit 1 }
+            $dlls = Get-ChildItem $libDir -Filter *.dll
+            Write-Host "Found $($dlls.Count) DLLs"
+            $pyinstArgs += @("--paths", $llamaPath, "--collect-all", "llama_cpp", "--hidden-import=llama_cpp")
+            foreach ($dll in $dlls) {
+              $pyinstArgs += "--add-binary"
+              $pyinstArgs += "$($dll.FullName);llama_cpp/lib"
+            }
+          } else {
+            Write-Host "Proxy variant : skipping llama_cpp bundling"
           }
+
           $pyinstArgs += "worker_entry.py"
           & pyinstaller @pyinstArgs
           if ($LASTEXITCODE -ne 0) { Write-Error "pyinstaller failed"; exit 1 }
@@ -149,27 +175,39 @@ jobs:
         env:
           CPU_VARIANT: ${{ matrix.variant }}
         run: |
-          $exe = "dist/cellule-worker-$env:CPU_VARIANT.exe"
-          & $exe --help
-          if ($LASTEXITCODE -ne 0) { Write-Error "exe --help failed"; exit 1 }
+          if ($env:CPU_VARIANT -eq 'proxy') {
+            $exe = "dist/cellule-proxy.exe"
+            # Proxy with no args prints usage and exits 0 -> OK smoke test
+            & $exe
+            if ($LASTEXITCODE -ne 0) { Write-Error "proxy smoke failed"; exit 1 }
+          } else {
+            $exe = "dist/cellule-worker-$env:CPU_VARIANT.exe"
+            & $exe --help
+            if ($LASTEXITCODE -ne 0) { Write-Error "exe --help failed"; exit 1 }
+          }
 
       - name: Report size + fail if too small
         shell: pwsh
         env:
           CPU_VARIANT: ${{ matrix.variant }}
         run: |
-          $exe = "dist/cellule-worker-$env:CPU_VARIANT.exe"
+          if ($env:CPU_VARIANT -eq 'proxy') {
+            $exe = "dist/cellule-proxy.exe"
+            $minSize = 10
+          } else {
+            $exe = "dist/cellule-worker-$env:CPU_VARIANT.exe"
+            $minSize = 30
+            if ($env:CPU_VARIANT -eq 'cuda') { $minSize = 100 }
+          }
           $size = (Get-Item $exe).Length / 1MB
           Write-Host ("{0} size: {1:N1} MB" -f $exe, $size)
-          $minSize = 30
-          if ($env:CPU_VARIANT -eq 'cuda') { $minSize = 100 }
           if ($size -lt $minSize) { Write-Error "exe too small ($size MB, need >=$minSize)"; exit 1 }
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: cellule-worker-${{ matrix.variant }}-windows
-          path: dist/cellule-worker-${{ matrix.variant }}.exe
+          name: cellule-${{ matrix.variant == 'proxy' && 'proxy' || format('worker-{0}', matrix.variant) }}-windows
+          path: dist/cellule-${{ matrix.variant == 'proxy' && 'proxy' || format('worker-{0}', matrix.variant) }}.exe
           retention-days: 30
 
       - name: Attach to GitHub Release (only on tag push)
@@ -182,14 +220,15 @@ jobs:
 
             - `cellule-worker-cpu.exe` (~45 MB) : any Windows 10/11 PC, no GPU required
             - `cellule-worker-cuda.exe` (~455 MB) : NVIDIA GPU (CUDA 12.5 runtime bundled)
+            - `cellule-proxy.exe` (~15-25 MB) : you already run your own LLM (llama-server / Ollama / vLLM), plug it in
 
             Install : download the right file, right-click &rarr; Properties &rarr; Unblock,
-            double-click to start. Worker auto-joins the network.
+            double-click to start. Worker variants auto-join. Proxy expects --upstream URL.
 
             Source : https://github.com/CELLULEAI/POOL
             Docs   : https://cellule.ai/docs/install-worker.html
             Feedback : please open an issue for any bug or success story.
-          files: dist/cellule-worker-${{ matrix.variant }}.exe
+          files: dist/cellule-${{ matrix.variant == 'proxy' && 'proxy' || format('worker-{0}', matrix.variant) }}.exe
           fail_on_unmatched_files: true
           draft: false
           prerelease: true
