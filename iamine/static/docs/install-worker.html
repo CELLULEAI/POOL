@@ -425,7 +425,7 @@ Remove-Item -Recurse -Force "$env:USERPROFILE\.cellule-worker"</code></pre>
     <li data-i18n="ts1_win"><strong>Windows</strong>: Install <a href="https://visualstudio.microsoft.com/visual-cpp-build-tools/" target="_blank">Visual C++ Build Tools</a> (choose "Desktop development with C++")</li>
 </ul>
 
-<h3 data-i18n="ts2_title">Worker doesn't appear in /status</h3>
+<h3 data-i18n="ts2_title">Worker doesn't appear in <a href="https://cellule.ai/v1/status">/v1/status</a></h3>
 <p data-i18n="ts2_body">Check logs (see "Manage the service" above). Common causes: no network to <code>cellule.ai:443</code>, Python version too old, firewall blocking WebSocket.</p>
 
 <h3 data-i18n="ts3_title">Worker hogs my CPU</h3>
@@ -541,7 +541,7 @@ var I18N = {
         ts1_linux: "<strong>Linux</strong>: <code>sudo apt install build-essential cmake</code>",
         ts1_mac: "<strong>macOS</strong>: <code>xcode-select --install</code>",
         ts1_win: "<strong>Windows</strong>: Install <a href=\"https://visualstudio.microsoft.com/visual-cpp-build-tools/\" target=\"_blank\">Visual C++ Build Tools</a> (choose \"Desktop development with C++\")",
-        ts2_title: "Worker doesn't appear in <a href=\"https://cellule.ai/status\">/status</a>",
+        ts2_title: "Worker doesn't appear in <a href=\"https://cellule.ai/v1/status\">/v1/status</a>",
         ts2_body: "Check logs (see \"Manage the service\" above). Common causes: no network to <code>cellule.ai:443</code>, Python version too old, firewall blocking WebSocket.",
         ts3_title: "Worker hogs my CPU",
         ts3_body: "The worker only runs inferences when the network routes a job to it. Between jobs it's idle. You can cap CPU via systemd (<code>CPUQuota=50%</code>) or launchd (<code>Nice = 10</code>).",
@@ -600,6 +600,7 @@ var I18N = {
         dl_note: "Télécharge le ZIP de la variante voulue, clic droit → Propriétés → Débloquer (SmartScreen), extrait le dossier où tu veux, puis double-clic sur le <code>.exe</code> à l\'intérieur. <a href=\"https://github.com/CELLULEAI/POOL/releases/tag/v0.2.86-worker\" target=\"_blank\" style=\"color:#00d4ff;\">Voir la release complète</a>.",
         exe_behavior_title: "Fonctionnement du worker Windows",
         exe_behavior_p1: "Extrais le ZIP où tu veux. À l'intérieur du dossier : <code>cellule-worker-cpu.exe</code> (ou <code>cuda</code>/<code>proxy</code>) et un sous-dossier <code>_internal</code> avec les dépendances. Double-clic sur le <code>.exe</code>. Le dossier est auto-suffisant — tu peux le déplacer ou le copier, garde juste la structure intacte.",
+        exe_behavior_li0: "<strong>Zéro modification système</strong> : l'exe lit et écrit uniquement dans son propre dossier (config.json, wallet.json, modèles téléchargés). Pas de registre Windows, pas d'<code>%APPDATA%</code>, pas de droits admin. Supprime le dossier = désinstallé complètement.",
         exe_behavior_li1: "Premier lancement : bench sur Qwen 3.5 2B pour scorer ton matériel. 1-2 min au premier install (download modèle).",
         exe_behavior_li2: "Le pool t'assigne ensuite le meilleur modèle pour ta machine et le worker s'auto-upgrade (download + reload transparents).",
         exe_behavior_li3: "Pour réinitialiser (nouvel onboarding) : ferme la fenêtre, supprime <code>assigned_model.json</code> et <code>config.json</code> dans le dossier de l'exe (ou d'où tu l'as lancé), relance.",
@@ -672,7 +673,7 @@ var I18N = {
         ts1_linux: "<strong>Linux</strong> : <code>sudo apt install build-essential cmake</code>",
         ts1_mac: "<strong>macOS</strong> : <code>xcode-select --install</code>",
         ts1_win: "<strong>Windows</strong> : Installe <a href=\"https://visualstudio.microsoft.com/visual-cpp-build-tools/\" target=\"_blank\">Visual C++ Build Tools</a> (choisir \"D\u00e9veloppement Desktop en C++\")",
-        ts2_title: "Le worker n'appara\u00eet pas sur <a href=\"https://cellule.ai/status\">/status</a>",
+        ts2_title: "Le worker n'appara\u00eet pas sur <a href=\"https://cellule.ai/v1/status\">/v1/status</a>",
         ts2_body: "V\u00e9rifie les logs (voir \"G\u00e9rer le service\" ci-dessus). Causes fr\u00e9quentes : pas de r\u00e9seau vers <code>cellule.ai:443</code>, Python trop ancien, pare-feu qui bloque le WebSocket.",
         ts3_title: "Le worker consomme tout mon CPU",
         ts3_body: "Le worker ne tourne que quand le r\u00e9seau lui envoie un job. Entre les jobs il est inactif. Tu peux plafonner le CPU via systemd (<code>CPUQuota=50%</code>) ou launchd (<code>Nice = 10</code>).",
