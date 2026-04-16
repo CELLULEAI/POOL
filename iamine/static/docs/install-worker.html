@@ -75,6 +75,24 @@ th { color: #00d4ff; font-weight: 600; }
 <p><strong data-i18n="why_q">Why ?</strong> <span data-i18n="why_a">Without workers, there is no network. Every CPU or GPU joining brings more capacity, lower latency, better model coverage. Your machine earns community credits ($IAMINE) proportional to the compute it actually delivers.</span></p>
 </div>
 
+<h2 data-i18n="modes_title">Two ways to contribute</h2>
+
+<div class="os-tabs" style="margin-bottom:1.2rem;">
+  <div class="os-tab active" style="cursor:default;text-align:left;padding:1.2rem;">
+    <span class="name" data-i18n="mode_worker_name">&#x1F9EC; Worker (default)</span>
+    <p style="color:rgba(255,255,255,0.7);font-size:.85rem;margin-top:.5rem;line-height:1.5;" data-i18n="mode_worker_desc">Zero config. The worker auto-detects your hardware (CPU / GPU / RAM), picks the right GGUF model from the Cellule catalog (Qwen 2B / 4B / 30B MoE), downloads it, and joins the network. Best for anyone who just wants to contribute idle compute without touching an LLM stack.</p>
+    <pre style="margin:.6rem 0 0;font-size:.78rem;"><code>python -m iamine worker --auto</code></pre>
+  </div>
+  <div class="os-tab" style="cursor:default;text-align:left;padding:1.2rem;border-color:rgba(251,191,36,0.35);background:rgba(251,191,36,0.04);">
+    <span class="name" data-i18n="mode_proxy_name">&#x1F517; Proxy (advanced)</span>
+    <p style="color:rgba(255,255,255,0.7);font-size:.85rem;margin-top:.5rem;line-height:1.5;" data-i18n="mode_proxy_desc">Bring your own LLM. If you already run llama-server, Ollama, LocalAI, vLLM... the proxy forwards inference to YOUR endpoint instead of downloading a new model. You control which model runs, on which port, with which quantization. Read the full guide before launching.</p>
+    <pre style="margin:.6rem 0 0;font-size:.78rem;"><code>python -m iamine proxy --upstream http://localhost:8000</code></pre>
+    <p style="margin:.5rem 0 0;font-size:.8rem;"><a href="/docs/proxy-mode.html" data-i18n="mode_proxy_link">&rarr; Full proxy guide</a></p>
+  </div>
+</div>
+
+<p style="color:rgba(255,255,255,0.6);font-size:.88rem;margin-bottom:1.5rem;" data-i18n="modes_hint">The OS guides below cover the <strong>Worker (default)</strong> flow. If you want the proxy mode, same OS tabs apply for installing <code>iamine-ai</code>; only the final launch command changes.</p>
+
 <h2 data-i18n="pick_os">Pick your OS</h2>
 
 <div class="os-tabs">
@@ -305,6 +323,31 @@ Register-ScheduledTask -TaskName "CelluleWorker" -Action $action -Trigger $trigg
 </table>
 
 <p data-i18n="auto_hint">Don't know your specs ? Run the worker in <code>--auto</code> and it picks the best fit. Too small ? It will refuse gracefully and tell you why.</p>
+
+<h2 data-i18n="proxy_title">Proxy mode in depth</h2>
+
+<p data-i18n="proxy_intro">Proxy mode plugs an existing OpenAI-compatible LLM server into Cellule. The pool forwards inference requests to your upstream, you earn community credits per completion served.</p>
+
+<h3 data-i18n="proxy_who">Who is it for ?</h3>
+<ul>
+<li data-i18n="proxy_who_1">Developers running llama-server / Ollama / vLLM locally who want to monetize idle GPU time.</li>
+<li data-i18n="proxy_who_2">Gamers with an RTX 4090 / 5090 already hosting their own big model.</li>
+<li data-i18n="proxy_who_3">Homelab operators with a private inference service they want to expose opt-in.</li>
+<li data-i18n="proxy_who_4">Anyone who prefers to control exactly which model runs, with which quantization, on which port.</li>
+</ul>
+
+<h3 data-i18n="proxy_how">Launch example</h3>
+<pre><button class="copy-btn" onclick="copyCode(this)" data-i18n="copy">copy</button><code># 1. Start your local LLM server (example with llama.cpp)
+llama-server -m /path/to/model.gguf --port 8000
+
+# 2. In another terminal, start the Cellule proxy pointing at it
+python -m iamine proxy --upstream http://localhost:8000 --model my-model-name</code></pre>
+
+<p><a href="/docs/proxy-mode.html" data-i18n="proxy_full_doc">&rarr; Full proxy mode documentation (template, config, troubleshooting)</a></p>
+
+<div class="warn">
+<strong data-i18n="proxy_note_title">Heads up.</strong> <span data-i18n="proxy_note_body">Proxy mode is for users who know what they expose. Your upstream LLM's capabilities (context length, model name, quality) must match what you advertise to the network, otherwise the pool's quality checker will blacklist your node.</span>
+</div>
 
 <h2 data-i18n="uninstall">Uninstall</h2>
 
