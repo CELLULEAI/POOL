@@ -136,7 +136,7 @@ jobs:
           $content | Out-File -Encoding ascii worker_entry.py
 
           # Resolve icon path from the installed iamine package
-          $iconPath = python -c "import iamine, os; p = os.path.join(os.path.dirname(iamine.__file__), "cellule.ico"); print(p if os.path.exists(p) else "")"
+          $iconPath = python -c "import iamine, os; p = os.path.join(os.path.dirname(iamine.__file__), 'cellule.ico'); print(p if os.path.exists(p) else '')"
           if ([string]::IsNullOrEmpty($iconPath)) { Write-Host "(no icon found, building without)"; $iconArgs = @() } else { Write-Host "Using icon: $iconPath"; $iconArgs = @("--icon", $iconPath) }
 
           $pyinstArgs = @(
