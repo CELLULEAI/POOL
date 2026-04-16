@@ -217,6 +217,28 @@ launchctl load ~/Library/LaunchAgents/ai.cellule.worker.plist</code></pre>
 
 <h2>Windows</h2>
 
+<h3 data-i18n="win_quick_dl">⬇ Quick download</h3>
+
+<div style="display:flex;flex-wrap:wrap;gap:.8rem;margin:1rem 0;">
+  <a href="https://github.com/CELLULEAI/POOL/releases/download/v0.2.72-worker/cellule-worker-cpu.exe" class="hero-cta" style="flex:1;min-width:240px;display:block;text-decoration:none;color:inherit;padding:1rem;text-align:center;background:rgba(0,255,234,0.06);border-color:rgba(0,255,234,0.4);">
+    <div style="font-family:ui-monospace,monospace;font-size:.9rem;color:#00d4ff;">cellule-worker-cpu.exe</div>
+    <div style="font-size:.78rem;color:rgba(255,255,255,0.6);margin-top:.3rem;" data-i18n="dl_cpu_desc">42 MB — any Windows PC, no GPU</div>
+    <div style="font-size:.72rem;color:#00ff88;margin-top:.3rem;font-weight:600;" data-i18n="dl_btn">⬇ Download</div>
+  </a>
+  <a href="https://github.com/CELLULEAI/POOL/releases/download/v0.2.72-worker/cellule-worker-cuda.exe" class="hero-cta" style="flex:1;min-width:240px;display:block;text-decoration:none;color:inherit;padding:1rem;text-align:center;background:rgba(0,212,255,0.06);border-color:rgba(0,212,255,0.4);">
+    <div style="font-family:ui-monospace,monospace;font-size:.9rem;color:#00d4ff;">cellule-worker-cuda.exe</div>
+    <div style="font-size:.78rem;color:rgba(255,255,255,0.6);margin-top:.3rem;" data-i18n="dl_cuda_desc">456 MB — NVIDIA GPU (CUDA 12.5)</div>
+    <div style="font-size:.72rem;color:#00ff88;margin-top:.3rem;font-weight:600;" data-i18n="dl_btn2">⬇ Download</div>
+  </a>
+  <a href="https://github.com/CELLULEAI/POOL/releases/download/v0.2.72-worker/cellule-proxy.exe" class="hero-cta" style="flex:1;min-width:240px;display:block;text-decoration:none;color:inherit;padding:1rem;text-align:center;background:rgba(251,191,36,0.06);border-color:rgba(251,191,36,0.4);">
+    <div style="font-family:ui-monospace,monospace;font-size:.9rem;color:#00d4ff;">cellule-proxy.exe</div>
+    <div style="font-size:.78rem;color:rgba(255,255,255,0.6);margin-top:.3rem;" data-i18n="dl_proxy_desc">40 MB — you bring your own LLM</div>
+    <div style="font-size:.72rem;color:#00ff88;margin-top:.3rem;font-weight:600;" data-i18n="dl_btn3">⬇ Download</div>
+  </a>
+</div>
+
+<p style="font-size:.82rem;color:rgba(255,255,255,0.55);margin:0 0 1.5rem;text-align:center;" data-i18n="dl_note">Direct downloads from GitHub Releases. SmartScreen will warn (binaries unsigned) — right-click → Properties → Unblock if needed. <a href="https://github.com/CELLULEAI/POOL/releases/tag/v0.2.72-worker" target="_blank" style="color:#00d4ff;">See full release</a>.</p>
+
 <h3 data-i18n="option_a">Option A: standalone <code>.exe</code> <span style="color:#fbbf24;font-size:.85rem;">— PREPROD / BETA to test</span></h3>
 
 <p data-i18n="option_a_desc">Two pre-built executables are published to GitHub Releases. They bundle Python + iamine + llama.cpp into a single double-clickable file. <strong style="color:#fbbf24;">PREPROD</strong> — please report any issue you hit.</p>
@@ -437,6 +459,14 @@ var I18N = {
         mac_req1: "macOS 12+ (Monterey or later)",
         mac_req2: "Python 3.12+ \u2014 install with <code>brew install python@3.12</code> if missing",
         mac_req3: "At least 8 GB RAM for the trial 2B model, 16+ GB recommended",
+        win_quick_dl: "⬇ Quick download",
+        dl_cpu_desc: "42 MB — any Windows PC, no GPU",
+        dl_cuda_desc: "456 MB — NVIDIA GPU (CUDA 12.5)",
+        dl_proxy_desc: "40 MB — you bring your own LLM",
+        dl_btn: "⬇ Download",
+        dl_btn2: "⬇ Download",
+        dl_btn3: "⬇ Download",
+        dl_note: "Direct downloads from GitHub Releases. SmartScreen will warn (binaries unsigned) — right-click → Properties → Unblock if needed. <a href=\"https://github.com/CELLULEAI/POOL/releases/tag/v0.2.72-worker\" target=\"_blank\" style=\"color:#00d4ff;\">See full release</a>.",
         option_a: "Option A: standalone <code>.exe</code> <span style=\"color:#fbbf24;font-size:.85rem;\">\u2014 PREPROD / BETA to test</span>",
         option_a_desc: "Two pre-built executables are published to GitHub Releases. They bundle Python + iamine + llama.cpp into a single double-clickable file. <strong style=\"color:#fbbf24;\">PREPROD</strong> \u2014 please report any issue you hit.",
         col_variant: "Variant", col_for: "For", col_size: "Size", col_speed_typ: "Typical speed",
@@ -531,6 +561,14 @@ var I18N = {
         mac_req1: "macOS 12+ (Monterey ou plus r\u00e9cent)",
         mac_req2: "Python 3.12+ \u2014 installer avec <code>brew install python@3.12</code> si manquant",
         mac_req3: "Au moins 8 Go de RAM pour le mod\u00e8le trial 2B, 16+ Go recommand\u00e9",
+        win_quick_dl: "⬇ Téléchargement direct",
+        dl_cpu_desc: "42 Mo — tout PC Windows, sans GPU",
+        dl_cuda_desc: "456 Mo — GPU NVIDIA (CUDA 12.5)",
+        dl_proxy_desc: "40 Mo — tu apportes ton propre LLM",
+        dl_btn: "⬇ Télécharger",
+        dl_btn2: "⬇ Télécharger",
+        dl_btn3: "⬇ Télécharger",
+        dl_note: "Téléchargements directs depuis GitHub Releases. SmartScreen avertira (binaires non signés) — clic droit → Propriétés → Débloquer si besoin. <a href=\"https://github.com/CELLULEAI/POOL/releases/tag/v0.2.72-worker\" target=\"_blank\" style=\"color:#00d4ff;\">Voir la release complète</a>.",
         option_a: "Option A : <code>.exe</code> autonome <span style=\"color:#fbbf24;font-size:.85rem;\">\u2014 PREPROD / BETA \u00e0 tester</span>",
         option_a_desc: "Deux ex\u00e9cutables pr\u00e9-compil\u00e9s sont publi\u00e9s sur GitHub Releases. Ils embarquent Python + iamine + llama.cpp dans un seul fichier double-cliquable. <strong style=\"color:#fbbf24;\">PREPROD</strong> \u2014 signalez tout probl\u00e8me rencontr\u00e9.",
         col_variant: "Variante", col_for: "Pour", col_size: "Taille", col_speed_typ: "Vitesse typique",
