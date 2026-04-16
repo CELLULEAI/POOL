@@ -131,7 +131,8 @@ def _auto_setup(config_path_arg: str = "config.json"):
     # Le pool attribuera le bon modele apres le benchmark
     # Bench sur 2B (pas 0.8B) — le 2B reflète mieux le hardware réel
     # Le 0.8B est trop petit pour stresser cache/RAM/GPU
-    rec = MODEL_REGISTRY[1] if len(MODEL_REGISTRY) > 1 else MODEL_REGISTRY[0]
+    # Bench sur le plus petit modele du registre (2B since sub-2B removed in 0.2.85)
+    rec = MODEL_REGISTRY[0]
     ctx = rec.ctx_default
 
     # Detection GPU minimale (NVIDIA + AMD ROCm)
