@@ -567,16 +567,19 @@ class Pool:
         # Conversation tracking
         conv = self.router.get_or_create_conversation(conv_id, api_token)
 
-        # === SMART ROUTING Phase 2+4 — classification du prompt ===
-        # Phase 2 : heuristique lexicale (rapide, locale).
-        # Phase 4 : si heuristique ambigue (confidence < 0.7), demander a un
-        # worker LLM idle de classifier. Doctrine "pool travaille".
+        # === SMART ROUTING Phase 2+3+4 — classification du prompt ===
+        # Phase 2 : heuristique lexicale (rapide, locale, ~1ms).
+        # Phase 3 : KNN pgvector sur jobs.prompt_embedding (~10-50ms).
+        # Phase 4 : si encore ambigu (< 0.7), LLM idle classifier (~1-3s).
+        # Priorite de la confidence la plus haute. Doctrine "pool travaille".
         # Skip pour les tool-calls (le client gere son propre contexte/prompt).
         classified_tier = ""
         classified_conf: float | None = None
         classified_method = ""
         last_user_for_classify = ""
+        prompt_embedding_vec: list[float] | None = None
         if not tools:
+            # --- Phase 2 : heuristique ---
             try:
                 from .core.routing_heuristic import classify_prompt
                 for m in reversed(messages):
@@ -589,14 +592,34 @@ class Pool:
             except Exception as e:
                 log.warning(f"classify_prompt failed (non-blocking): {e}")
 
-            # Phase 4 : fallback LLM idle classifier si heuristique ambigue
+            # --- Phase 3 : embedding + KNN pgvector vote ---
+            if last_user_for_classify:
+                try:
+                    from .core.routing_embeddings import embed_prompt
+                    loop_embed = asyncio.get_event_loop()
+                    prompt_embedding_vec = await loop_embed.run_in_executor(
+                        None, embed_prompt, last_user_for_classify,
+                    )
+                    if prompt_embedding_vec:
+                        knn_res = await self.store.knn_tier_vote(prompt_embedding_vec, k=10)
+                        if knn_res:
+                            knn_tier, knn_conf, n_found = knn_res
+                            # KNN requiert >=5 voisins pour etre fiable (cold start)
+                            if n_found >= 5 and knn_conf > (classified_conf or 0):
+                                log.info(f"KNN override: {classified_tier}({classified_conf:.2f}) -> {knn_tier}({knn_conf:.2f}) n={n_found}")
+                                classified_tier = knn_tier
+                                classified_conf = knn_conf
+                                classified_method = "knn"
+                except Exception as e:
+                    log.warning(f"KNN classify failed (non-blocking): {e}")
+
+            # --- Phase 4 : fallback LLM idle classifier si toujours ambigu ---
             if last_user_for_classify and classified_conf is not None and classified_conf < 0.7:
                 try:
                     from .core.routing_llm_classify import classify_via_idle_worker
                     llm_result = await classify_via_idle_worker(self, last_user_for_classify)
                     if llm_result:
                         llm_tier, llm_conf, clf_wid = llm_result
-                        # override uniquement si la confidence LLM > heuristique
                         if llm_conf > (classified_conf or 0):
                             log.info(f"LLM classify override: {classified_tier}({classified_conf:.2f}) -> {llm_tier}({llm_conf:.2f}) via {clf_wid}")
                             classified_tier = llm_tier
@@ -929,6 +952,7 @@ class Pool:
                 routed_tier=logged_tier,
                 route_confidence=logged_conf,
                 route_method=logged_method,
+                prompt_embedding=prompt_embedding_vec,
             )))
         except Exception as e:
             log.warning(f"log_job (routing instrumentation) failed: {e}")

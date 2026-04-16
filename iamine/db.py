@@ -175,6 +175,7 @@ class JobRecord:
     routed_tier: str = ""                 # small | medium | large | code
     route_confidence: float | None = None  # [0.0, 1.0] — None si pas classifié
     route_method: str = ""                 # passive | heuristic | knn | llm_idle | fallback
+    prompt_embedding: list[float] | None = None  # vecteur 384d (MiniLM), Phase 3 KNN
 
 
 @dataclass
@@ -988,15 +989,51 @@ class PostgresStore(Store):
 
     # --- Jobs ---
     async def log_job(self, record: JobRecord) -> None:
+        emb_literal = None
+        emb = getattr(record, "prompt_embedding", None)
+        if emb:
+            emb_literal = "[" + ",".join(f"{x:.6f}" for x in emb) + "]"
         async with self.pool.acquire() as conn:
             await conn.execute("""
                 INSERT INTO jobs (job_id, worker_id, tokens_generated, tokens_per_sec, duration_sec, model, credits_earned,
-                                  routed_tier, route_confidence, route_method)
-                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+                                  routed_tier, route_confidence, route_method, prompt_embedding)
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::vector)
             """, record.job_id, record.worker_id, record.tokens_generated,
                 record.tokens_per_sec, record.duration_sec, record.model, record.credits_earned,
-                record.routed_tier or None, record.route_confidence, record.route_method or None)
+                record.routed_tier or None, record.route_confidence, record.route_method or None,
+                emb_literal)
             await conn.execute("UPDATE workers SET total_jobs=total_jobs+1 WHERE worker_id=$1", record.worker_id)
+
+    async def knn_tier_vote(self, embedding: list[float], k: int = 10) -> tuple[str, float, int] | None:
+        """KNN vote pour smart routing Phase 3.
+
+        Query les k voisins les plus proches via ivfflat cosine, vote majorite.
+        Retourne (tier, confidence, n_found) ou None si cold start.
+        """
+        if not embedding or len(embedding) != 384:
+            return None
+        emb_literal = "[" + ",".join(f"{x:.6f}" for x in embedding) + "]"
+        async with self.pool.acquire() as conn:
+            rows = await conn.fetch(
+                """
+                SELECT routed_tier
+                FROM jobs
+                WHERE prompt_embedding IS NOT NULL
+                  AND routed_tier IS NOT NULL
+                  AND route_method IN ('heuristic', 'llm_idle', 'knn')
+                ORDER BY prompt_embedding <=> $1::vector
+                LIMIT $2
+                """,
+                emb_literal, k,
+            )
+        if not rows:
+            return None
+        counts: dict[str, int] = {}
+        for r in rows:
+            counts[r["routed_tier"]] = counts.get(r["routed_tier"], 0) + 1
+        top_tier, top_n = max(counts.items(), key=lambda kv: kv[1])
+        conf = top_n / len(rows)
+        return top_tier, conf, len(rows)
 
     async def get_job_count(self) -> int:
         async with self.pool.acquire() as conn:
