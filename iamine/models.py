@@ -143,38 +143,33 @@ SINGLE_WORKER_MIN_RAM = {m.id: m.ram_required_gb for m in MODEL_REGISTRY}
 REGISTRY_BY_ID = {m.id: m for m in MODEL_REGISTRY}
 
 
-def best_model_from_bench(bench_tps_08b: float, ram_gb: float, has_gpu: bool = False, gpu_vram_gb: float = 0) -> tuple[ModelTier, int]:
-    """Attribue le meilleur modele a partir du bench sur 0.8B.
+def best_model_from_bench(bench_tps: float, ram_gb: float, has_gpu: bool = False, gpu_vram_gb: float = 0) -> tuple[ModelTier, int]:
+    """Attribue le meilleur modele a partir du bench sur 2B (depuis v0.2.85).
 
-    Equation : tps_estime = bench_0.8B * (0.5 / size_gb_modele)
-    On prend le plus gros modele avec tps_estime >= 8 t/s et qui rentre en RAM.
-    Gros modeles GPU (27B+) : seuil abaisse a 4 t/s (qualite compense la vitesse).
-
-    C'est le modele XMRig : bench d'abord, attribution ensuite.
+    Equation : tps_estime = bench_2B * (BENCH_MODEL_SIZE / size_gb_modele)
+    On prend le plus gros modele qui tient en VRAM (GPU) ou RAM (CPU)
+    avec tps_estime >= seuil par tier.
     """
-    # Seuil 8 t/s pour interactif (<= 9B), 4 t/s pour gros reasoning (>= 27B)
     MIN_TPS_BY_SIZE = {1.3: 8, 2.7: 8, 5.5: 8, 16: 4, 21: 4}
     DEFAULT_MIN_TPS = 6.0
-    BENCH_MODEL_SIZE = 1.3  # taille 2B Q4 en GB (bench sur 2B depuis v0.2.48)
+    BENCH_MODEL_SIZE = 1.3  # taille du 2B Q4 en GB (modele de bench)
 
-    # Petit ctx partout : la DB (L3) gere la memoire longue via compactage
     CTX_BY_PARAMS = {
-        "0.8B": 2048, "2B": 2048, "4B": 2048,
+        "2B": 2048, "4B": 2048,
         "9B": 4096, "27B": 4096, "35B": 4096,
-        "0.5B": 2048, "1.5B": 2048, "3B": 2048,
-        "7B": 2048, "14B": 4096, "32B": 4096,
+        "3B": 2048, "7B": 2048, "14B": 4096, "32B": 4096,
     }
 
     # GPU : prendre le plus gros qui rentre en VRAM
-    # GPU boost : modeles charges en VRAM sont 3x plus rapides que l'estimation CPU
+    # Marge proportionnelle : 20% du modele (min 0.5 GB) pour KV cache + runtime
     if has_gpu and gpu_vram_gb > 2:
-        GPU_BOOST = 3.0  # GPU throughput ~3x vs estimation lineaire CPU
-        GPU_VRAM_MARGIN = 1.5  # marge VRAM pour KV cache + overhead GPU runtime
+        GPU_BOOST = 3.0
         best = MODEL_REGISTRY[0]
         for m in MODEL_REGISTRY:
-            tps_est = bench_tps_08b * (BENCH_MODEL_SIZE / m.size_gb) * GPU_BOOST if m.size_gb > 0 else 0
+            tps_est = bench_tps * (BENCH_MODEL_SIZE / m.size_gb) * GPU_BOOST if m.size_gb > 0 else 0
             min_tps = MIN_TPS_BY_SIZE.get(m.size_gb, DEFAULT_MIN_TPS)
-            if (m.size_gb + GPU_VRAM_MARGIN <= gpu_vram_gb
+            vram_margin = max(0.5, m.size_gb * 0.2)
+            if (m.size_gb + vram_margin <= gpu_vram_gb
                     and m.quality_score > best.quality_score
                     and tps_est >= min_tps):
                 best = m
@@ -190,7 +185,7 @@ def best_model_from_bench(bench_tps_08b: float, ram_gb: float, has_gpu: bool = F
             continue
         # Estimation des t/s sur ce modele
         # CPU scale mieux que lineaire grace au cache L3 (facteur 1.5x pour 2B-9B)
-        raw_est = bench_tps_08b * (BENCH_MODEL_SIZE / m.size_gb) if m.size_gb > 0 else bench_tps_08b
+        raw_est = bench_tps * (BENCH_MODEL_SIZE / m.size_gb) if m.size_gb > 0 else bench_tps
         cpu_boost = 1.5 if m.size_gb <= 5.5 else 1.2
         estimated_tps = raw_est * cpu_boost
         min_tps = MIN_TPS_BY_SIZE.get(m.size_gb, DEFAULT_MIN_TPS)
