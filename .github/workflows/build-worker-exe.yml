@@ -135,6 +135,10 @@ jobs:
           }
           $content | Out-File -Encoding ascii worker_entry.py
 
+          # Resolve icon path from the installed iamine package
+          $iconPath = python -c "import iamine, os; p = os.path.join(os.path.dirname(iamine.__file__), "iamine_icon.ico"); print(p if os.path.exists(p) else "")"
+          if ([string]::IsNullOrEmpty($iconPath)) { Write-Host "(no icon found, building without)"; $iconArgs = @() } else { Write-Host "Using icon: $iconPath"; $iconArgs = @("--icon", $iconPath) }
+
           $pyinstArgs = @(
             "--onefile",
             "--name", $exeName,
@@ -167,6 +171,7 @@ jobs:
             Write-Host "Proxy variant : skipping llama_cpp bundling"
           }
 
+          $pyinstArgs = $iconArgs + $pyinstArgs
           $pyinstArgs += "worker_entry.py"
           & pyinstaller @pyinstArgs
           if ($LASTEXITCODE -ne 0) { Write-Error "pyinstaller failed"; exit 1 }
