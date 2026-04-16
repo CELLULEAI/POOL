@@ -64,5 +64,9 @@ worker-config.json
 watchdog-reports.sh
 deploy/
 mobile/
-docs/
 tests/
+
+# Docs: public architecture diagrams allowed, rest excluded
+docs/*
+!docs/architecture/
+!docs/architecture/**
