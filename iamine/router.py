@@ -283,7 +283,7 @@ class SmartRouter:
                 return True
         return False
 
-    def select_worker(self, conv: Conversation, workers: dict, requested_model: str | None = None, exclude_local_hostname: str | None = None, pool_version: str | None = None, approved_files: set[str] | None = None) -> str | None:
+    def select_worker(self, conv: Conversation, workers: dict, requested_model: str | None = None, exclude_local_hostname: str | None = None, pool_version: str | None = None, approved_files: set[str] | None = None, preferred_tier: str | None = None, preferred_confidence: float | None = None) -> str | None:
         """Selectionne le meilleur worker pour cette conversation.
 
         Retourne le worker_id ou None si aucun disponible.
@@ -294,7 +294,10 @@ class SmartRouter:
         3. Filtre par disponibilite (pas busy)
         4. Exclut le worker local si un worker externe 3B+ est dispo
         5. Prefere le worker deja assigne a cette conversation (affinite)
-        6. Sinon prend le plus rapide (bench_tps)
+        6. Smart routing Phase 2 : bonus de fit selon preferred_tier/confidence
+           (non-bloquant : si tier_ideal busy, le router reste libre de choisir
+           un tier compatible — "tout le pool travaille")
+        7. Sinon prend le plus rapide (bench_tps)
         """
         candidates = []
 
@@ -412,6 +415,15 @@ class SmartRouter:
                 # Context migration: strongly prefer workers with more headroom
                 headroom = worker_ctx - conv.total_tokens
                 score += headroom / 100.0  # 100K headroom = +1000, 5K = +50
+
+            # === SMART ROUTING Phase 2 — bonus de fit par tier classifie ===
+            # Voir iamine/core/routing_heuristic.py. Scale par la confidence :
+            # une classification ambigue (<0.7) n'ecrase pas le deficit scoring.
+            if preferred_tier and preferred_confidence is not None and preferred_confidence > 0:
+                from .core.routing_heuristic import fit_bonus, tier_from_model_path
+                w_tier = tier_from_model_path(model_path)
+                if w_tier:
+                    score += fit_bonus(preferred_tier, w_tier) * preferred_confidence
 
             candidates.append((w.worker_id, score, worker_ctx))
 

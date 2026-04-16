@@ -523,11 +523,14 @@ class Pool:
                         pass
         return False
 
-    def get_available_worker(self, conv_id: str | None = None, requested_model: str | None = None) -> ConnectedWorker | None:
+    def get_available_worker(self, conv_id: str | None = None, requested_model: str | None = None, preferred_tier: str | None = None, preferred_confidence: float | None = None) -> ConnectedWorker | None:
         """Smart routing — selectionne le meilleur worker selon le contexte.
 
         Le worker local (VPS) est exclu si un autre worker 3B+ est disponible,
         afin qu'il se concentre sur l'orchestration et la base de données.
+
+        preferred_tier/confidence (Phase 2) : hint issu de classify_prompt sur
+        le dernier message user. Non-bloquant — bonus de fit scale par confidence.
         """
         # Déterminer si le worker local doit être exclu
         exclude_local = self._has_external_3b_worker()
@@ -536,7 +539,7 @@ class Pool:
             conv = self.router.get_or_create_conversation(conv_id)
             from .models import MODEL_REGISTRY
             _approved = {m.hf_file for m in MODEL_REGISTRY}
-            best_id = self.router.select_worker(conv, self.workers, requested_model, exclude_local_hostname=self._pool_hostname if exclude_local else None, pool_version=__version__, approved_files=_approved)
+            best_id = self.router.select_worker(conv, self.workers, requested_model, exclude_local_hostname=self._pool_hostname if exclude_local else None, pool_version=__version__, approved_files=_approved, preferred_tier=preferred_tier, preferred_confidence=preferred_confidence)
             if best_id:
                 return self.workers.get(best_id)
 
@@ -563,6 +566,25 @@ class Pool:
         """Soumet un job avec smart routing."""
         # Conversation tracking
         conv = self.router.get_or_create_conversation(conv_id, api_token)
+
+        # === SMART ROUTING Phase 2 — classification heuristique du prompt ===
+        # On classe le dernier message user pour guider le router.
+        # Skip pour les tool-calls (le client gere son propre contexte/prompt).
+        classified_tier = ""
+        classified_conf: float | None = None
+        if not tools:
+            try:
+                from .core.routing_heuristic import classify_prompt
+                last_user = ""
+                for m in reversed(messages):
+                    if m.get("role") == "user":
+                        last_user = m.get("content", "") or ""
+                        break
+                if last_user:
+                    classified_tier, classified_conf = classify_prompt(last_user)
+            except Exception as e:
+                log.warning(f"classify_prompt failed (non-blocking): {e}")
+                classified_tier, classified_conf = "", None
 
         # --- M13: Trigger consolidation if pending observations ---
         if AGENT_MEMORY_ENABLED and api_token:
@@ -640,7 +662,7 @@ class Pool:
                 if msg.get("content") and msg.get("role") in ("user", "system"):
                     conv.add_message(msg["role"], msg["content"])
 
-        worker = self.get_available_worker(conv.conv_id, requested_model)
+        worker = self.get_available_worker(conv.conv_id, requested_model, preferred_tier=classified_tier, preferred_confidence=classified_conf)
 
         # QoS : si tous les workers sont busy, attendre qu'un se libère
         if worker is None:
@@ -662,7 +684,7 @@ class Pool:
                         pass
                     waited += 2
                     # D'abord essayer le smart routing
-                    worker = self.get_available_worker(conv.conv_id, requested_model)
+                    worker = self.get_available_worker(conv.conv_id, requested_model, preferred_tier=classified_tier, preferred_confidence=classified_conf)
                     # Apres 3s, tenter le forwarding cross-pool
                     if worker is None and waited >= 3:
                         # --- M7a: forward from queue when all local workers busy ---
@@ -851,23 +873,32 @@ class Pool:
             asyncio.create_task(self._save_conv_background(conv))
 
         # === SMART ROUTING — Phase 1 : instrumentation passive ===
-        # Log chaque job avec le tier effectivement servi (pas de classification encore,
-        # on mesure la distribution actuelle pour valider le gap avant Phase 2+).
+        # Log chaque job :
+        # - Phase 2 actif (tools=False) : routed_tier = tier classifie par l'heuristique,
+        #   route_method=heuristic, confidence enregistree.
+        # - Fallback (tools=True ou classification vide) : tier derive du worker servi,
+        #   route_method=passive (comme Phase 1).
         # Voir project_todo_smart_routing.md
         try:
             from .db import JobRecord
-            model_path_log = (worker.info.get("model_path") or "").lower()
-            params_log = (worker.info.get("params") or "").upper()
-            if "coder" in model_path_log:
-                served_tier = "code"
-            elif "35b" in model_path_log or "27b" in model_path_log or params_log in ("27B", "35B"):
-                served_tier = "large"
-            elif "9b" in model_path_log or params_log == "9B":
-                served_tier = "medium"
-            elif "2b" in model_path_log or "4b" in model_path_log or params_log in ("2B", "4B"):
-                served_tier = "small"
+            if classified_tier:
+                logged_tier = classified_tier
+                logged_method = "heuristic"
+                logged_conf = classified_conf
             else:
-                served_tier = ""
+                model_path_log = (worker.info.get("model_path") or "").lower()
+                if "coder" in model_path_log:
+                    logged_tier = "code"
+                elif "35b" in model_path_log or "27b" in model_path_log or "72b" in model_path_log:
+                    logged_tier = "large"
+                elif "9b" in model_path_log:
+                    logged_tier = "medium"
+                elif "2b" in model_path_log or "4b" in model_path_log:
+                    logged_tier = "small"
+                else:
+                    logged_tier = ""
+                logged_method = "passive"
+                logged_conf = None
             asyncio.create_task(self.store.log_job(JobRecord(
                 job_id=job_id,
                 worker_id=worker.worker_id,
@@ -876,9 +907,9 @@ class Pool:
                 duration_sec=float(result.get("duration_sec", 0) or 0),
                 model=result.get("model", "") or worker.info.get("model_path", ""),
                 credits_earned=float(result.get("credits_earned", 0) or 0),
-                routed_tier=served_tier,
-                route_confidence=None,
-                route_method="passive",
+                routed_tier=logged_tier,
+                route_confidence=logged_conf,
+                route_method=logged_method,
             )))
         except Exception as e:
             log.warning(f"log_job (routing instrumentation) failed: {e}")
