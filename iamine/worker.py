@@ -290,6 +290,15 @@ class Worker:
             await self._send(ws, {"type": "command_ack", "cmd": "update_model", "status": "refused"})
             return
 
+        # Frozen exe (PyInstaller one-file) : ignore les update_model du pool.
+        # L utilisateur choisit son modele au premier lancement et le worker y reste
+        # jusqu a ce qu il relance manuellement. Evite les cycles exit/relaunch dus
+        # au restart Windows cassant le cleanup _MEI.
+        if getattr(sys, "frozen", False):
+            log.info(f"Frozen exe: ignoring update_model ({model_path})")
+            await self._send(ws, {"type": "command_ack", "cmd": "update_model", "status": "ignored_frozen"})
+            return
+
         dest = Path(model_path)
         dest.parent.mkdir(parents=True, exist_ok=True)
 
@@ -339,19 +348,6 @@ class Worker:
             log.warning(f"Failed to save assigned_model.json: {e}")
 
         log.info(f"Config updated: {model_path} ctx={ctx_size} gpu={gpu_layers}")
-        # Frozen exe (PyInstaller one-file) : restart Windows casse le cleanup _MEI
-        # (aiohttp/unicodedata puis idna fail). On sort proprement et on demande a
-        # l utilisateur de relancer manuellement. Le prochain lancement charge le
-        # nouveau modele via assigned_model.json.
-        if getattr(sys, "frozen", False):
-            await self._send(ws, {"type": "command_ack", "cmd": "update_model", "status": "pending_manual_restart"})
-            print("")
-            print(" * UPDATE       New model ready: " + model_path)
-            print(" * UPDATE       Please close this window and relaunch")
-            print(" * UPDATE       cellule-worker-cpu.exe to activate.")
-            print("")
-            log.info("Frozen exe: exiting cleanly, user must relaunch manually")
-            sys.exit(0)
         await self._send(ws, {"type": "command_ack", "cmd": "update_model", "status": "restarting"})
         self._restart_self()
 
