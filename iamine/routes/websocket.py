@@ -69,7 +69,7 @@ async def worker_ws(ws: WebSocket):
             if msg_type == "register":
                 info = msg.get("worker", {})
                 worker_id = info.get("worker_id", "unknown")
-                pool.add_worker(worker_id, ws, info)
+                await pool.add_worker(worker_id, ws, info)
                 # Envoyer le token API au worker
                 w = pool.workers.get(worker_id)
                 if w and w.ws is ws:

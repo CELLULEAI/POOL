@@ -185,7 +185,7 @@ class Pool:
             return False
         return True
 
-    def add_worker(self, worker_id: str, ws: WebSocket, info: dict) -> None:
+    async def add_worker(self, worker_id: str, ws: WebSocket, info: dict) -> None:
         import hashlib
 
         # Rejeter les workers trop anciens
@@ -231,9 +231,20 @@ class Pool:
             # Premiere connexion de ce worker — bonus de bienvenue
             # L'ID machine est base sur le worker_id (deterministe par machine)
             machine_id = worker_id  # ex: Pulse-8457
-            is_new = machine_id not in self._known_machines
+            is_new_local = machine_id not in self._known_machines
             self._known_machines.add(machine_id)
 
+            # Anti-migration-farming: check federation peers.
+            # If ANY peer has seen this worker_id before, skip the bonus.
+            # Fail-open on timeout/error: grant bonus rather than block onboarding.
+            is_new_fed = True
+            if is_new_local:
+                try:
+                    is_new_fed = not await self._worker_known_in_federation(machine_id)
+                except Exception as _fe:
+                    log.debug(f"Federation anti-farm check failed (fail-open): {_fe}")
+
+            is_new = is_new_local and is_new_fed
             bonus = self.WELCOME_BONUS if is_new else 0.0
             self.api_tokens[api_token] = {
                 "worker_id": worker_id,
@@ -242,7 +253,9 @@ class Pool:
                 "credits": bonus,
             }
             if is_new:
-                log.info(f"NEW MACHINE {worker_id} — bonus +{bonus} $IAMINE!")
+                log.info(f"NEW MACHINE {worker_id} — bonus +{bonus} $IAMINE! (local+fed clean)")
+            elif is_new_local and not is_new_fed:
+                log.info(f"REJOIN {worker_id} — bonus skipped (known in federation)")
 
         self.workers[worker_id].info["api_token"] = api_token
         gpu_tag = f" — GPU: {info['gpu']} ({info['gpu_vram_gb']} GB)" if info.get("has_gpu") else ""
@@ -382,6 +395,68 @@ class Pool:
     async def _update_worker_db(self, worker_id: str, info: dict):
         """Met a jour version et status en DB — délégué à core/credits.py."""
         await _update_worker_db_fn(self, worker_id, info)
+
+
+    async def _worker_known_in_federation(self, worker_id: str) -> bool:
+        """Query federated peers to check if this worker_id has been seen.
+
+        Returns True if at least 1 peer confirms. Fail-open (returns False)
+        on any error or timeout — we prefer false-grant of a bonus to
+        false-rejection of a legitimate new worker.
+
+        Cache 1h per worker_id to avoid hammering peers on reconnection.
+        """
+        import aiohttp
+        import time as _t
+
+        cache = getattr(self, "_fed_known_cache", None)
+        if cache is None:
+            cache = {}
+            self._fed_known_cache = cache
+
+        cached = cache.get(worker_id)
+        if cached and (_t.time() - cached[1]) < 3600:
+            return cached[0]
+
+        if not hasattr(self.store, "pool"):
+            return False
+
+        try:
+            from .core.federation import list_peers as _list_peers
+            peers = await _list_peers(self.store.pool)
+        except Exception:
+            return False
+
+        if not peers:
+            return False
+
+        async def _check_peer(peer):
+            url = (peer.get("url") or "").rstrip("/") + f"/v1/federation/worker/known/{worker_id}"
+            try:
+                timeout = aiohttp.ClientTimeout(total=1.5)
+                async with aiohttp.ClientSession(timeout=timeout) as sess:
+                    async with sess.get(url) as resp:
+                        if resp.status != 200:
+                            return False
+                        data = await resp.json()
+                        return bool(data.get("known"))
+            except Exception:
+                return False
+
+        # Overall timeout 2s across all peers in parallel
+        import asyncio as _aio
+        try:
+            results = await _aio.wait_for(
+                _aio.gather(*[_check_peer(p) for p in peers], return_exceptions=True),
+                timeout=2.0,
+            )
+        except _aio.TimeoutError:
+            log.debug("anti-farm fed check: overall timeout, fail-open")
+            return False
+
+        known = any(r is True for r in results)
+        cache[worker_id] = (known, _t.time())
+        return known
 
     async def _save_benchmark(self, worker_id: str, info: dict):
         """Sauvegarde le benchmark — délégué à core/credits.py."""
