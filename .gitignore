@@ -70,3 +70,5 @@ tests/
 docs/*
 !docs/architecture/
 !docs/architecture/**
+*.apk
+iamine/static/OLD/
