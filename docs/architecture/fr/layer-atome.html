@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CELLULE — Couche 1 · Atome</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;background:#0a0a0a;min-height:100vh;padding:2rem;color:#f0f0f0}
+  .container{max-width:1200px;margin:0 auto}
+  .nav{display:flex;gap:1rem;margin-bottom:1.5rem;font-family:'JetBrains Mono',monospace;font-size:.8rem}
+  .nav a{color:rgba(255,255,255,.6);text-decoration:none;padding:.4rem .8rem;border:1px solid #222;border-radius:6px;transition:all .2s}
+  .nav a:hover{color:#00d4ff;border-color:#00d4ff}
+  .nav a.active{color:#00d4ff;border-color:#00d4ff;background:rgba(0,212,255,.1)}
+  .header{margin-bottom:2rem}
+  .header-row{display:flex;align-items:center;gap:1rem;margin-bottom:.5rem}
+  .pulse-dot{width:12px;height:12px;background:#00d4ff;border-radius:50%;animation:pulse 2s infinite;box-shadow:0 0 12px rgba(0,212,255,.6)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+  h1{font-size:1.75rem;font-weight:700;letter-spacing:-.025em;font-family:'JetBrains Mono',monospace}
+  .subtitle{color:rgba(255,255,255,.5);font-size:.9rem;margin-left:1.75rem;font-family:'JetBrains Mono',monospace}
+  .diagram-container{background:rgba(10,10,20,.5);border-radius:1rem;border:1px solid #222;padding:1.5rem;overflow-x:auto;box-shadow:0 0 40px rgba(0,212,255,.08)}
+  svg{width:100%;min-width:900px;display:block;font-family:'JetBrains Mono',monospace}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-top:2rem}
+  .card{background:rgba(10,10,20,.5);border-radius:.75rem;border:1px solid #222;padding:1.25rem}
+  .card-header{display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem}
+  .card-dot{width:10px;height:10px;border-radius:50%}
+  .card-dot.cyan{background:#00d4ff;box-shadow:0 0 8px rgba(0,212,255,.5)}
+  .card-dot.green{background:#00ff88;box-shadow:0 0 8px rgba(0,255,136,.5)}
+  .card-dot.orange{background:#ff6b00;box-shadow:0 0 8px rgba(255,107,0,.5)}
+  .card h3{font-size:.95rem;font-weight:600;font-family:'JetBrains Mono',monospace}
+  .card ul{list-style:none;color:rgba(255,255,255,.6);font-size:.78rem}
+  .card li{margin-bottom:.375rem}
+  .footer{text-align:center;margin-top:2rem;color:rgba(255,255,255,.4);font-size:.75rem;font-family:'JetBrains Mono',monospace}
+  .footer a{color:#00d4ff;text-decoration:none}
+  a.node:hover rect{filter:drop-shadow(0 0 14px rgba(0,212,255,.6));cursor:pointer}
+  body.embed{padding:1rem;background:transparent}
+  body.embed .nav,body.embed .lang-switch,body.embed .footer{display:none!important}
+  body.embed .header{margin-bottom:1rem}
+</style>
+</head>
+<body>
+<div class="lang-switch" style="position:fixed;top:1rem;right:1rem;display:flex;gap:.25rem;font-family:'JetBrains Mono',monospace;font-size:.75rem;z-index:100">
+  <a href="../en/layer-atome.html" style="padding:.3rem .6rem;border:1px solid #222;border-radius:4px;color:rgba(255,255,255,.6);text-decoration:none">EN</a>
+  <a href="layer-atome.html" style="padding:.3rem .6rem;border:1px solid #00d4ff;border-radius:4px;color:#00d4ff;text-decoration:none;background:rgba(0,212,255,.1)">FR</a>
+</div>
+<div class="container">
+  <div class="nav">
+    <a href="index.html">← vue d'ensemble</a>
+    <a href="layer-atome.html" class="active">1 · atome</a>
+    <a href="layer-pool.html">2 · pool</a>
+    <a href="layer-federation.html">3 · fédération</a>
+    <a href="layer-economie.html">4 · économie</a>
+  </div>
+  <div class="header">
+    <div class="header-row"><div class="pulse-dot"></div><h1>Couche 1 — Atome</h1></div>
+    <p class="subtitle">Worker LLM autonome · hétérogène · plug-and-play</p>
+  </div>
+
+  <div class="diagram-container">
+    <svg viewBox="0 0 1000 720" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+      <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#555"/></marker>
+        <marker id="arrowC" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#00d4ff"/></marker>
+        <marker id="arrowG" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/></marker>
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1a1a1a" stroke-width=".5"/></pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#grid)"/>
+
+      <!-- Machine boundary -->
+      <rect x="20" y="40" width="640" height="660" rx="12" fill="rgba(0,212,255,.03)" stroke="#00d4ff" stroke-width="1" stroke-dasharray="8,4"/>
+      <text x="36" y="62" fill="#00d4ff" font-size="10" font-weight="600">machine contributrice · Linux/macOS/Windows · CPU/GPU hétérogène</text>
+
+      <!-- CLI entry -->
+      <rect x="50" y="90" width="180" height="60" rx="6" fill="rgba(30,41,59,.5)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="140" y="114" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">CLI · iamine-ai</text>
+      <text x="140" y="130" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">python -m iamine worker --auto</text>
+      <text x="140" y="144" fill="rgba(255,255,255,.4)" font-size="8" text-anchor="middle">pip install iamine-ai</text>
+
+      <!-- Bootstrap / iamine init -->
+      <rect x="260" y="90" width="180" height="60" rx="6" fill="rgba(30,41,59,.5)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="350" y="114" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">iamine init</text>
+      <text x="350" y="130" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">bootstrap OPENCODE.md</text>
+      <text x="350" y="144" fill="rgba(255,255,255,.4)" font-size="8" text-anchor="middle">/v1/opencode-md</text>
+
+      <!-- Identity -->
+      <rect x="470" y="90" width="170" height="60" rx="6" fill="rgba(136,19,55,.4)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="555" y="114" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">Ed25519 identity</text>
+      <text x="555" y="130" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">worker_id + keypair</text>
+      <text x="555" y="144" fill="#fb7185" font-size="8" text-anchor="middle">signature heartbeat</text>
+
+      <!-- HW autodetect -->
+      <rect x="50" y="190" width="260" height="100" rx="6" fill="rgba(0,212,255,.08)" stroke="#00d4ff" stroke-width="1.5"/>
+      <text x="180" y="214" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">HW auto-detect</text>
+      <text x="180" y="234" fill="rgba(255,255,255,.7)" font-size="9" text-anchor="middle">• threads CPU · RAM dispo</text>
+      <text x="180" y="248" fill="rgba(255,255,255,.7)" font-size="9" text-anchor="middle">• GPU (CUDA/Metal/ROCm)</text>
+      <text x="180" y="262" fill="rgba(255,255,255,.7)" font-size="9" text-anchor="middle">• capabilities report</text>
+      <text x="180" y="280" fill="#00d4ff" font-size="8" text-anchor="middle">→ choix modèle GGUF adapté</text>
+
+      <!-- Model selector -->
+      <rect x="340" y="190" width="300" height="100" rx="6" fill="rgba(0,255,136,.06)" stroke="#00ff88" stroke-width="1.5"/>
+      <text x="490" y="214" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">Model Selector</text>
+      <text x="490" y="234" fill="rgba(255,255,255,.7)" font-size="9" text-anchor="middle">Qwen 0.8B (bench) · 2B · 3B · 9B · 14B</text>
+      <text x="490" y="248" fill="rgba(255,255,255,.7)" font-size="9" text-anchor="middle">Qwen3-30B-A3B (MoE shardé)</text>
+      <text x="490" y="262" fill="rgba(255,255,255,.7)" font-size="9" text-anchor="middle">match HW ↔ profil pool</text>
+      <text x="490" y="280" fill="#00ff88" font-size="8" text-anchor="middle">download · cache · hot-swap</text>
+
+      <!-- llama.cpp runtime -->
+      <rect x="50" y="330" width="590" height="110" rx="8" fill="rgba(0,255,136,.06)" stroke="#00ff88" stroke-width="2"/>
+      <text x="345" y="358" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">Runtime — llama.cpp</text>
+      <text x="345" y="382" fill="rgba(255,255,255,.7)" font-size="10" text-anchor="middle">inférence GGUF · context-length adaptatif (32K → 131K)</text>
+      <text x="345" y="400" fill="rgba(255,255,255,.7)" font-size="10" text-anchor="middle">tool-calling OpenAI-compatible · SSE streaming</text>
+      <text x="345" y="418" fill="#00ff88" font-size="9" text-anchor="middle">wheel précompilé par le pool · worker ne compile jamais</text>
+
+      <!-- Cache GGUF -->
+      <rect x="50" y="470" width="180" height="80" rx="6" fill="rgba(76,29,149,.4)" stroke="#a78bfa" stroke-width="1.5"/>
+      <text x="140" y="494" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">Cache GGUF</text>
+      <text x="140" y="512" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">local · immuable</text>
+      <text x="140" y="526" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">SHA hash check</text>
+      <text x="140" y="542" fill="#a78bfa" font-size="8" text-anchor="middle">multi-modèles coexistants</text>
+
+      <!-- Service systemd -->
+      <rect x="250" y="470" width="180" height="80" rx="6" fill="rgba(30,41,59,.5)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="340" y="494" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">iamine.service</text>
+      <text x="340" y="512" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">systemd · auto-restart</text>
+      <text x="340" y="526" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">watchdog self-update</text>
+      <text x="340" y="542" fill="rgba(255,255,255,.4)" font-size="8" text-anchor="middle">journalctl -u iamine</text>
+
+      <!-- Admin local -->
+      <rect x="450" y="470" width="190" height="80" rx="6" fill="rgba(30,41,59,.5)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="545" y="494" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">Admin local</text>
+      <text x="545" y="512" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">status · logs · config</text>
+      <text x="545" y="526" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">readonly prod sans mdp</text>
+      <text x="545" y="542" fill="rgba(255,255,255,.4)" font-size="8" text-anchor="middle">sudo systemctl …</text>
+
+      <!-- WS link to pool -->
+      <rect x="50" y="590" width="590" height="80" rx="6" fill="rgba(0,212,255,.08)" stroke="#00d4ff" stroke-width="2"/>
+      <text x="345" y="614" fill="#fff" font-size="12" font-weight="700" text-anchor="middle">WebSocket → Pool</text>
+      <text x="345" y="634" fill="rgba(255,255,255,.7)" font-size="10" text-anchor="middle">wss://cellule.ai/ws · join · heartbeat · job poll · stream tokens back</text>
+      <text x="345" y="652" fill="#00d4ff" font-size="9" text-anchor="middle">message signé Ed25519 · reconnect auto · multi-pool compatible (M7b seed list)</text>
+
+      <!-- POOL outside -->
+      <a class="node" xlink:href="layer-pool.html">
+        <rect x="700" y="280" width="260" height="160" rx="10" fill="rgba(0,255,136,.08)" stroke="#00ff88" stroke-width="2"/>
+        <text x="830" y="312" fill="#fff" font-size="15" font-weight="700" text-anchor="middle">POOL</text>
+        <text x="830" y="335" fill="rgba(255,255,255,.7)" font-size="10" text-anchor="middle">FastAPI · Postgres · WS</text>
+        <text x="830" y="352" fill="rgba(255,255,255,.7)" font-size="10" text-anchor="middle">routing coopératif</text>
+        <text x="830" y="369" fill="rgba(255,255,255,.7)" font-size="10" text-anchor="middle">assign jobs au worker</text>
+        <text x="830" y="400" fill="#00ff88" font-size="10" text-anchor="middle" font-weight="600">couche 2 →</text>
+        <text x="830" y="418" fill="rgba(255,255,255,.4)" font-size="8" text-anchor="middle">cliquer pour explorer</text>
+      </a>
+
+      <!-- Flows -->
+      <line x1="140" y1="150" x2="140" y2="188" stroke="#fff" stroke-width="1" opacity=".3" marker-end="url(#arrow)"/>
+      <line x1="555" y1="150" x2="555" y2="188" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <text x="570" y="172" fill="#fb7185" font-size="8">signe</text>
+
+      <line x1="180" y1="290" x2="180" y2="328" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#arrowC)"/>
+      <text x="195" y="312" fill="rgba(255,255,255,.5)" font-size="8">caps</text>
+      <line x1="490" y1="290" x2="490" y2="328" stroke="#00ff88" stroke-width="1.5" marker-end="url(#arrowG)"/>
+      <text x="505" y="312" fill="rgba(255,255,255,.5)" font-size="8">model</text>
+
+      <line x1="140" y1="468" x2="140" y2="440" stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#arrow)"/>
+      <text x="155" y="456" fill="rgba(255,255,255,.5)" font-size="8">load</text>
+
+      <line x1="345" y1="552" x2="345" y2="588" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#arrowC)"/>
+
+      <line x1="640" y1="630" x2="698" y2="360" stroke="#00d4ff" stroke-width="2" marker-end="url(#arrowC)"/>
+      <text x="700" y="490" fill="#00d4ff" font-size="9">wss</text>
+    </svg>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-header"><div class="card-dot cyan"></div><h3>Hardware heterogeneity</h3></div>
+      <ul>
+        <li>• CPU threads auto-scan</li>
+        <li>• RAM libre → fenêtre modèle</li>
+        <li>• GPU CUDA/Metal/ROCm détecté</li>
+        <li>• Modèle sélectionné selon "atome hétérogène avec personnalité"</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-dot green"></div><h3>Runtime</h3></div>
+      <ul>
+        <li>• llama.cpp wheel GPU précompilé</li>
+        <li>• jamais de compilation locale</li>
+        <li>• context 32K → 131K escalade auto</li>
+        <li>• tool-calling OpenAI-compatible</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-dot orange"></div><h3>Sécurité locale</h3></div>
+      <ul>
+        <li>• Ed25519 keypair (jamais exfiltré)</li>
+        <li>• Unix permissions (pas de règles écrites)</li>
+        <li>• Admin readonly sans mdp David</li>
+        <li>• Service isolé (user dédié)</li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="footer">CELLULE · couche 1/4 · <a href="index.html">vue d'ensemble</a> · <a href="layer-pool.html">couche suivante →</a></p>
+</div>
+<script>if(new URLSearchParams(location.search).get('embed')==='1')document.body.classList.add('embed');</script>
+</body>
+</html>

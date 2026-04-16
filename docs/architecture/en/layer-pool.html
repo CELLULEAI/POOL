@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CELLULE — Layer 2 · Pool</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;background:#0a0a0a;min-height:100vh;padding:2rem;color:#f0f0f0}
+  .container{max-width:1200px;margin:0 auto}
+  .nav{display:flex;gap:1rem;margin-bottom:1.5rem;font-family:'JetBrains Mono',monospace;font-size:.8rem}
+  .nav a{color:rgba(255,255,255,.6);text-decoration:none;padding:.4rem .8rem;border:1px solid #222;border-radius:6px;transition:all .2s}
+  .nav a:hover{color:#00ff88;border-color:#00ff88}
+  .nav a.active{color:#00ff88;border-color:#00ff88;background:rgba(0,255,136,.1)}
+  .header{margin-bottom:2rem}
+  .header-row{display:flex;align-items:center;gap:1rem;margin-bottom:.5rem}
+  .pulse-dot{width:12px;height:12px;background:#00ff88;border-radius:50%;animation:pulse 2s infinite;box-shadow:0 0 12px rgba(0,255,136,.6)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+  h1{font-size:1.75rem;font-weight:700;letter-spacing:-.025em;font-family:'JetBrains Mono',monospace}
+  .subtitle{color:rgba(255,255,255,.5);font-size:.9rem;margin-left:1.75rem;font-family:'JetBrains Mono',monospace}
+  .diagram-container{background:rgba(10,10,20,.5);border-radius:1rem;border:1px solid #222;padding:1.5rem;overflow-x:auto;box-shadow:0 0 40px rgba(0,255,136,.08)}
+  svg{width:100%;min-width:900px;display:block;font-family:'JetBrains Mono',monospace}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-top:2rem}
+  .card{background:rgba(10,10,20,.5);border-radius:.75rem;border:1px solid #222;padding:1.25rem}
+  .card-header{display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem}
+  .card-dot{width:10px;height:10px;border-radius:50%}
+  .card-dot.cyan{background:#00d4ff;box-shadow:0 0 8px rgba(0,212,255,.5)}
+  .card-dot.green{background:#00ff88;box-shadow:0 0 8px rgba(0,255,136,.5)}
+  .card-dot.violet{background:#a78bfa;box-shadow:0 0 8px rgba(167,139,250,.5)}
+  .card-dot.orange{background:#ff6b00;box-shadow:0 0 8px rgba(255,107,0,.5)}
+  .card-dot.rose{background:#fb7185;box-shadow:0 0 8px rgba(251,113,133,.5)}
+  .card-dot.amber{background:#fbbf24;box-shadow:0 0 8px rgba(251,191,36,.5)}
+  .card h3{font-size:.95rem;font-weight:600;font-family:'JetBrains Mono',monospace}
+  .card ul{list-style:none;color:rgba(255,255,255,.6);font-size:.78rem}
+  .card li{margin-bottom:.375rem}
+  .footer{text-align:center;margin-top:2rem;color:rgba(255,255,255,.4);font-size:.75rem;font-family:'JetBrains Mono',monospace}
+  .footer a{color:#00ff88;text-decoration:none}
+  a.node:hover rect{filter:drop-shadow(0 0 14px rgba(0,255,136,.6));cursor:pointer}
+  body.embed{padding:1rem;background:transparent}
+  body.embed .nav,body.embed .lang-switch,body.embed .footer{display:none!important}
+  body.embed .header{margin-bottom:1rem}
+</style>
+</head>
+<body>
+<div class="lang-switch" style="position:fixed;top:1rem;right:1rem;display:flex;gap:.25rem;font-family:'JetBrains Mono',monospace;font-size:.75rem;z-index:100">
+  <a href="layer-pool.html" style="padding:.3rem .6rem;border:1px solid #00ff88;border-radius:4px;color:#00ff88;text-decoration:none;background:rgba(0,255,136,.1)">EN</a>
+  <a href="../fr/layer-pool.html" style="padding:.3rem .6rem;border:1px solid #222;border-radius:4px;color:rgba(255,255,255,.6);text-decoration:none">FR</a>
+</div>
+<div class="container">
+  <div class="nav">
+    <a href="index.html">← overview</a>
+    <a href="layer-atome.html">1 · atom</a>
+    <a href="layer-pool.html" class="active">2 · pool</a>
+    <a href="layer-federation.html">3 · federation</a>
+    <a href="layer-economie.html">4 · economy</a>
+  </div>
+  <div class="header">
+    <div class="header-row"><div class="pulse-dot"></div><h1>Layer 2 — Pool</h1></div>
+    <p class="subtitle">Backend · OpenAI-compatible universal API · smart routing · zero-knowledge memory</p>
+  </div>
+
+  <div class="diagram-container">
+    <svg viewBox="0 0 1000 980" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+      <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#555"/></marker>
+        <marker id="arrowG" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/></marker>
+        <marker id="arrowC" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#00d4ff"/></marker>
+        <marker id="arrowV" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#a78bfa"/></marker>
+        <marker id="arrowA" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#fbbf24"/></marker>
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1a1a1a" stroke-width=".5"/></pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#grid)"/>
+
+      <!-- ═══ ROW 1: Users → CF → API ═══ -->
+      <rect x="40" y="50" width="200" height="70" rx="6" fill="rgba(30,41,59,.5)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="140" y="76" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">Users / Agents</text>
+      <text x="140" y="94" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">Browser · OpenCode · ClawCode</text>
+      <text x="140" y="108" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">Cursor · aider · iamine CLI</text>
+
+      <rect x="280" y="50" width="220" height="70" rx="6" fill="rgba(120,53,15,.3)" stroke="#ff6b00" stroke-width="1.5"/>
+      <text x="390" y="76" fill="#fff" font-size="12" font-weight="600" text-anchor="middle">Cloudflare + nginx TLS</text>
+      <text x="390" y="94" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">Flexible SSL (→ Full strict TODO)</text>
+      <text x="390" y="108" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">:443 HTTPS · :443 WSS</text>
+
+      <rect x="540" y="50" width="420" height="70" rx="6" fill="rgba(0,255,136,.08)" stroke="#00ff88" stroke-width="2"/>
+      <text x="750" y="76" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">FastAPI — OpenAI-compatible universal API</text>
+      <text x="750" y="94" fill="rgba(255,255,255,.7)" font-size="10" text-anchor="middle">/v1/chat/completions · /v1/models · /v1/federation/* · /v1/opencode-md</text>
+      <text x="750" y="108" fill="#00ff88" font-size="9" text-anchor="middle">SSE streaming · tool-calls · auto conv_id · admin_token</text>
+
+      <!-- ═══ ROW 2: Auth · Smart Routing · Checker · Sub-agents ═══ -->
+      <rect x="40" y="160" width="200" height="90" rx="6" fill="rgba(136,19,55,.4)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="140" y="184" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">Auth &amp; Tokens</text>
+      <text x="140" y="202" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">email/Google login</text>
+      <text x="140" y="216" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">email verification (M16)</text>
+      <text x="140" y="230" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">iam_token per user</text>
+      <text x="140" y="244" fill="#fb7185" font-size="8" text-anchor="middle">separate admin_token</text>
+
+      <rect x="280" y="160" width="220" height="90" rx="6" fill="rgba(0,255,136,.06)" stroke="#00ff88" stroke-width="1.5"/>
+      <text x="390" y="184" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">Smart Routing</text>
+      <text x="390" y="202" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">deficit scoring + fit_bonus</text>
+      <text x="390" y="216" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">intent-based tier matching</text>
+      <text x="390" y="230" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">always answer (no 503)</text>
+      <text x="390" y="244" fill="#00ff88" font-size="8" text-anchor="middle">cascade 2→3→4 · max conf wins</text>
+
+      <rect x="540" y="160" width="200" height="90" rx="6" fill="rgba(0,255,136,.06)" stroke="#00ff88" stroke-width="1.5"/>
+      <text x="640" y="184" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">LLM Checker</text>
+      <text x="640" y="202" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">core/checker.py</text>
+      <text x="640" y="216" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">periodic bench</text>
+      <text x="640" y="230" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">skip tool-calls</text>
+      <text x="640" y="244" fill="#00ff88" font-size="8" text-anchor="middle">DB config pool_config</text>
+
+      <rect x="770" y="160" width="190" height="90" rx="6" fill="rgba(0,255,136,.06)" stroke="#00ff88" stroke-width="1.5"/>
+      <text x="865" y="184" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">Sub-agents</text>
+      <text x="865" y="202" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">auto-review (1s)</text>
+      <text x="865" y="216" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">cross-pool (M7a)</text>
+      <text x="865" y="230" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">multi-role pipeline</text>
+      <text x="865" y="244" fill="#00ff88" font-size="8" text-anchor="middle">SSE expose review</text>
+
+      <!-- ═══ ROW 3: SMART ROUTING PIPELINE (new Phase 1-5) ═══ -->
+      <rect x="40" y="285" width="920" height="170" rx="10" fill="rgba(251,191,36,.04)" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <text x="500" y="308" fill="#fbbf24" font-size="12" font-weight="700" text-anchor="middle">SMART ROUTING PIPELINE — Phase 1→5</text>
+      <text x="500" y="322" fill="rgba(255,255,255,.45)" font-size="8" text-anchor="middle">Doctrine: "the whole pool works — no dedicated worker" · max confidence wins · non-blocking fallback at each stage</text>
+
+      <!-- Phase 2 Heuristic -->
+      <rect x="60" y="340" width="140" height="100" rx="6" fill="rgba(0,255,136,.1)" stroke="#00ff88" stroke-width="1.5"/>
+      <text x="130" y="360" fill="#fff" font-size="10" font-weight="600" text-anchor="middle">P2 Heuristic</text>
+      <text x="130" y="376" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">lexical classify</text>
+      <text x="130" y="390" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">code markers</text>
+      <text x="130" y="404" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">reasoning keywords</text>
+      <text x="130" y="420" fill="#00ff88" font-size="8" text-anchor="middle">~1ms · local</text>
+      <text x="130" y="434" fill="rgba(255,255,255,.45)" font-size="7" text-anchor="middle">12/12 test cases</text>
+
+      <!-- Phase 3 KNN -->
+      <rect x="230" y="340" width="160" height="100" rx="6" fill="rgba(167,139,250,.15)" stroke="#a78bfa" stroke-width="1.5"/>
+      <text x="310" y="360" fill="#fff" font-size="10" font-weight="600" text-anchor="middle">P3 KNN pgvector</text>
+      <text x="310" y="376" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">MiniLM-L6-v2 384d</text>
+      <text x="310" y="390" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">top-10 neighbors vote</text>
+      <text x="310" y="404" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">ivfflat cosine index</text>
+      <text x="310" y="420" fill="#a78bfa" font-size="8" text-anchor="middle">~50ms · skip if n&lt;5</text>
+      <text x="310" y="434" fill="rgba(255,255,255,.45)" font-size="7" text-anchor="middle">cold start safe</text>
+
+      <!-- Phase 4 LLM idle -->
+      <rect x="420" y="340" width="170" height="100" rx="6" fill="rgba(0,212,255,.1)" stroke="#00d4ff" stroke-width="1.5"/>
+      <text x="505" y="360" fill="#fff" font-size="10" font-weight="600" text-anchor="middle">P4 LLM idle classify</text>
+      <text x="505" y="376" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">smallest idle worker</text>
+      <text x="505" y="390" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">classify_task via WS</text>
+      <text x="505" y="404" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">10 tokens · 3s timeout</text>
+      <text x="505" y="420" fill="#00d4ff" font-size="8" text-anchor="middle">~1-3s · only if conf&lt;0.7</text>
+      <text x="505" y="434" fill="rgba(255,255,255,.45)" font-size="7" text-anchor="middle">blacklist 5min on timeout</text>
+
+      <!-- Phase 5 Feedback -->
+      <rect x="620" y="340" width="150" height="100" rx="6" fill="rgba(251,113,133,.1)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="695" y="360" fill="#fff" font-size="10" font-weight="600" text-anchor="middle">P5 Feedback loop</text>
+      <text x="695" y="376" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">reprompt &lt;30s = flag</text>
+      <text x="695" y="390" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">exclude from KNN vote</text>
+      <text x="695" y="404" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">routing_feedback table</text>
+      <text x="695" y="420" fill="#fb7185" font-size="8" text-anchor="middle">auto-corrective</text>
+      <text x="695" y="434" fill="rgba(255,255,255,.45)" font-size="7" text-anchor="middle">/v1/admin/routing_stats</text>
+
+      <!-- Tier distribution result -->
+      <rect x="800" y="340" width="140" height="100" rx="6" fill="rgba(251,191,36,.1)" stroke="#fbbf24" stroke-width="1.5"/>
+      <text x="870" y="360" fill="#fbbf24" font-size="10" font-weight="600" text-anchor="middle">Distribution</text>
+      <text x="870" y="380" fill="rgba(255,255,255,.7)" font-size="9" text-anchor="middle">small 52%</text>
+      <text x="870" y="394" fill="rgba(255,255,255,.7)" font-size="9" text-anchor="middle">medium 18%</text>
+      <text x="870" y="408" fill="rgba(255,255,255,.7)" font-size="9" text-anchor="middle">code 18%</text>
+      <text x="870" y="422" fill="rgba(255,255,255,.7)" font-size="9" text-anchor="middle">large 12%</text>
+      <text x="870" y="440" fill="#fbbf24" font-size="7" text-anchor="middle">was: large 80%+</text>
+
+      <!-- Pipeline arrows -->
+      <line x1="200" y1="390" x2="228" y2="390" stroke="#00ff88" stroke-width="1.5" marker-end="url(#arrowG)"/>
+      <line x1="390" y1="390" x2="418" y2="390" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arrowV)"/>
+      <line x1="590" y1="390" x2="618" y2="390" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#arrowC)"/>
+      <line x1="770" y1="390" x2="798" y2="390" stroke="#fb7185" stroke-width="1.5"/>
+      <!-- Feedback return arrow -->
+      <path d="M 695 440 L 695 456 L 310 456 L 310 440" fill="none" stroke="#fb7185" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <text x="500" y="454" fill="#fb7185" font-size="7" text-anchor="middle">exclude flagged from KNN</text>
+
+      <!-- ═══ ROW 4: Memory (4-tier) + PostgreSQL ═══ -->
+      <rect x="40" y="490" width="460" height="150" rx="8" fill="rgba(167,139,250,.08)" stroke="#a78bfa" stroke-width="2"/>
+      <text x="270" y="516" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">Zero-knowledge memory (4-tier, M13)</text>
+      <rect x="60" y="530" width="100" height="90" rx="4" fill="rgba(167,139,250,.15)" stroke="#a78bfa" stroke-width="1"/>
+      <text x="110" y="548" fill="#fff" font-size="10" font-weight="600" text-anchor="middle">L1 messages</text>
+      <text x="110" y="566" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">observ. TTL</text>
+      <text x="110" y="580" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">raw JSON</text>
+      <text x="110" y="602" fill="#a78bfa" font-size="8" text-anchor="middle">hot</text>
+      <rect x="170" y="530" width="100" height="90" rx="4" fill="rgba(167,139,250,.15)" stroke="#a78bfa" stroke-width="1"/>
+      <text x="220" y="548" fill="#fff" font-size="10" font-weight="600" text-anchor="middle">L2 conversations</text>
+      <text x="220" y="566" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">Fernet encrypted</text>
+      <text x="220" y="580" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">compaction</text>
+      <text x="220" y="602" fill="#a78bfa" font-size="8" text-anchor="middle">opt-in</text>
+      <rect x="280" y="530" width="100" height="90" rx="4" fill="rgba(167,139,250,.15)" stroke="#a78bfa" stroke-width="1"/>
+      <text x="330" y="548" fill="#fff" font-size="10" font-weight="600" text-anchor="middle">L3 embeddings</text>
+      <text x="330" y="566" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">pgvector</text>
+      <text x="330" y="580" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">user facts</text>
+      <text x="330" y="602" fill="#a78bfa" font-size="8" text-anchor="middle">filtered RAG</text>
+      <rect x="390" y="530" width="100" height="90" rx="4" fill="rgba(167,139,250,.15)" stroke="#a78bfa" stroke-width="1"/>
+      <text x="440" y="548" fill="#fff" font-size="10" font-weight="600" text-anchor="middle">L4 hybrid</text>
+      <text x="440" y="566" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">MCP server</text>
+      <text x="440" y="580" fill="rgba(255,255,255,.6)" font-size="8" text-anchor="middle">agent memory</text>
+      <text x="440" y="602" fill="#a78bfa" font-size="8" text-anchor="middle">federation sync</text>
+
+      <rect x="540" y="490" width="420" height="150" rx="8" fill="rgba(76,29,149,.4)" stroke="#a78bfa" stroke-width="2"/>
+      <text x="750" y="516" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">PostgreSQL + pgvector</text>
+      <text x="750" y="538" fill="rgba(255,255,255,.7)" font-size="10" text-anchor="middle">pool brain · DB-first for all persistent data</text>
+      <text x="560" y="560" fill="rgba(255,255,255,.65)" font-size="9">• users · accounts · tokens · sessions</text>
+      <text x="560" y="576" fill="rgba(255,255,255,.65)" font-size="9">• messages · conversations · memory (L1/L2/L3/L4)</text>
+      <text x="560" y="592" fill="rgba(255,255,255,.65)" font-size="9">• federation_state · peers · gossip_log · revenue_ledger</text>
+      <text x="560" y="608" fill="#fbbf24" font-size="9">• jobs.prompt_embedding vector(384) · routing_feedback</text>
+      <text x="560" y="624" fill="#a78bfa" font-size="9">• migrations 001 → 025+ · pool_config (admin)</text>
+
+      <!-- ═══ ROW 5: WS pool · Admin · Frontend ═══ -->
+      <rect x="40" y="680" width="260" height="90" rx="6" fill="rgba(0,212,255,.08)" stroke="#00d4ff" stroke-width="1.5"/>
+      <text x="170" y="704" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">WebSocket pool</text>
+      <text x="170" y="722" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">wss://cellule.ai/ws</text>
+      <text x="170" y="736" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">workers join/leave</text>
+      <text x="170" y="750" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">heartbeat · job dispatch · classify_task</text>
+      <text x="170" y="764" fill="#00d4ff" font-size="8" text-anchor="middle">9 workers · 4 tiers · 3 pools</text>
+
+      <rect x="340" y="680" width="300" height="90" rx="6" fill="rgba(30,41,59,.5)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="490" y="704" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">Admin dashboard</text>
+      <text x="490" y="722" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">admin.html + admin_pool.html</text>
+      <text x="490" y="736" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">DB cleanup · blacklist · PG accounts</text>
+      <text x="490" y="750" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">/v1/admin/routing_stats (Phase 5)</text>
+      <text x="490" y="764" fill="rgba(255,255,255,.4)" font-size="8" text-anchor="middle">admin_token auth</text>
+
+      <rect x="680" y="680" width="280" height="90" rx="6" fill="rgba(0,212,255,.08)" stroke="#00d4ff" stroke-width="1.5"/>
+      <text x="820" y="704" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">cellule.ai Frontend</text>
+      <text x="820" y="722" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">trial chat (pinned 2B model)</text>
+      <text x="820" y="736" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">user dashboard · tokens · tools</text>
+      <text x="820" y="750" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">interactive molecule canvas</text>
+      <text x="820" y="764" fill="#00d4ff" font-size="8" text-anchor="middle">community wording (no "free")</text>
+
+      <!-- ═══ ROW 6: Workers + links to other layers ═══ -->
+      <rect x="40" y="810" width="920" height="60" rx="8" fill="rgba(0,212,255,.05)" stroke="#00d4ff" stroke-width="1" stroke-dasharray="6,4"/>
+      <a class="node" xlink:href="layer-atome.html">
+        <text x="500" y="836" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">WORKERS (atoms) — small 2B/4B · medium 9B · code 30B-A3B · large 35B-A3B · heterogeneous</text>
+        <text x="500" y="855" fill="#00d4ff" font-size="9" text-anchor="middle">← click to see layer 1 atom</text>
+      </a>
+
+      <a class="node" xlink:href="layer-federation.html">
+        <rect x="40" y="890" width="450" height="70" rx="8" fill="rgba(255,107,0,.08)" stroke="#ff6b00" stroke-width="1.5"/>
+        <text x="265" y="914" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">→ Federation (layer 3)</text>
+        <text x="265" y="932" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">anti-entropy gossip · merkle · RAID quorum</text>
+        <text x="265" y="948" fill="#ff6b00" font-size="8" text-anchor="middle">outbound to other bonded pools</text>
+      </a>
+
+      <a class="node" xlink:href="layer-economie.html">
+        <rect x="510" y="890" width="450" height="70" rx="8" fill="rgba(167,139,250,.08)" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="735" y="914" fill="#fff" font-size="11" font-weight="600" text-anchor="middle">→ Economy (layer 4)</text>
+        <text x="735" y="932" fill="rgba(255,255,255,.6)" font-size="9" text-anchor="middle">revenue_ledger · settlement · slashing · $IAMINE</text>
+        <text x="735" y="948" fill="#a78bfa" font-size="8" text-anchor="middle">fed by each inference</text>
+      </a>
+
+      <!-- ═══ CONNECTION ARROWS ═══ -->
+      <line x1="240" y1="85" x2="278" y2="85" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#arrowC)"/>
+      <line x1="500" y1="85" x2="538" y2="85" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#arrowC)"/>
+      <line x1="750" y1="120" x2="140" y2="158" stroke="#fb7185" stroke-width="1" stroke-dasharray="3,3" opacity=".6"/>
+      <line x1="750" y1="120" x2="390" y2="158" stroke="#00ff88" stroke-width="1" opacity=".4"/>
+      <line x1="750" y1="120" x2="640" y2="158" stroke="#00ff88" stroke-width="1" opacity=".4"/>
+      <line x1="750" y1="120" x2="865" y2="158" stroke="#00ff88" stroke-width="1" opacity=".4"/>
+      <!-- Router → routing pipeline -->
+      <line x1="390" y1="250" x2="390" y2="283" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arrowA)"/>
+      <!-- Memory/DB connections -->
+      <line x1="310" y1="456" x2="270" y2="488" stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowV)"/>
+      <line x1="640" y1="250" x2="750" y2="488" stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowV)"/>
+      <text x="330" y="476" fill="rgba(255,255,255,.5)" font-size="8">KNN + embeddings</text>
+      <!-- WS pool dispatch -->
+      <line x1="390" y1="456" x2="170" y2="678" stroke="#00d4ff" stroke-width="1" opacity=".3"/>
+      <line x1="170" y1="770" x2="500" y2="808" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#arrowC)"/>
+      <text x="320" y="792" fill="rgba(255,255,255,.5)" font-size="8">dispatch job by tier</text>
+    </svg>
+  </div>
+
+  <div class="cards">
+    <div class="card"><div class="card-header"><div class="card-dot green"></div><h3>Universal API</h3></div><ul><li>• OpenAI-compatible (chat/completions)</li><li>• SSE streaming tokens + tool-calls</li><li>• auto conv_id (L2 persistence)</li><li>• clients: OpenCode, Cursor, aider, ClawCode</li></ul></div>
+    <div class="card"><div class="card-header"><div class="card-dot amber"></div><h3>Smart Routing P2→P5</h3></div><ul><li>• P2 heuristic: regex+keywords (~1ms)</li><li>• P3 KNN: MiniLM 384d pgvector (~50ms)</li><li>• P4 LLM idle: smallest worker classifies (~1-3s)</li><li>• P5 feedback: reprompt &lt;30s auto-excludes</li><li>• Result: small 52% | large 12% (was 80%+)</li></ul></div>
+    <div class="card"><div class="card-header"><div class="card-dot violet"></div><h3>DB-first · pgvector</h3></div><ul><li>• All persistent data in PostgreSQL</li><li>• prompt_embedding vector(384) per job</li><li>• routing_feedback auto-corrective</li><li>• Versioned migrations 001→025+</li></ul></div>
+    <div class="card"><div class="card-header"><div class="card-dot orange"></div><h3>Sub-agents LIVE</h3></div><ul><li>• Auto-review (1s, from phase 1)</li><li>• Cross-pool forward (M7a)</li><li>• Multi-role pipeline (N-pool scale)</li><li>• SSE exposes review to clients</li></ul></div>
+    <div class="card"><div class="card-header"><div class="card-dot rose"></div><h3>Zero-knowledge memory</h3></div><ul><li>• L2 conversations Fernet encrypted</li><li>• User opt-in (toggle)</li><li>• GDPR export + delete</li><li>• Pool admin cannot read content</li></ul></div>
+    <div class="card"><div class="card-header"><div class="card-dot cyan"></div><h3>9 workers · 4 tiers</h3></div><ul><li>• small: Vertex, Cyclops (2B) + Gladiator, Thor, Jarvis (4B)</li><li>• medium: Scout (9B)</li><li>• code: Coder (30B-A3B)</li><li>• large: RED, Tank (35B-A3B)</li></ul></div>
+  </div>
+
+  <p class="footer">CELLULE · layer 2/4 · <a href="layer-atome.html">← atom</a> · <a href="index.html">overview</a> · <a href="layer-federation.html">federation →</a></p>
+</div>
+<script>if(new URLSearchParams(location.search).get('embed')==='1')document.body.classList.add('embed');</script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CELLULE — Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;background:#0a0a0a;min-height:100vh;padding:2rem;color:#f0f0f0}
+  .container{max-width:1200px;margin:0 auto}
+  .header{margin-bottom:2rem}
+  .header-row{display:flex;align-items:center;gap:1rem;margin-bottom:.5rem}
+  .pulse-dot{width:12px;height:12px;background:#00d4ff;border-radius:50%;animation:pulse 2s infinite;box-shadow:0 0 12px rgba(0,212,255,.6)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+  h1{font-size:1.75rem;font-weight:700;letter-spacing:-.025em;font-family:'JetBrains Mono',monospace}
+  .subtitle{color:rgba(255,255,255,.5);font-size:.9rem;margin-left:1.75rem;font-family:'JetBrains Mono',monospace}
+  .diagram-container{background:rgba(10,10,20,.5);border-radius:1rem;border:1px solid #222;padding:1.5rem;overflow-x:auto;box-shadow:0 0 40px rgba(0,212,255,.08)}
+  svg{width:100%;min-width:900px;display:block;font-family:'JetBrains Mono',monospace}
+  .legend-row{display:flex;flex-wrap:wrap;gap:1.5rem;margin-top:1.5rem;padding:1rem;background:rgba(10,10,20,.5);border:1px solid #222;border-radius:.75rem;font-size:.75rem;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,.7)}
+  .legend-item{display:flex;align-items:center;gap:.5rem}
+  .legend-swatch{width:14px;height:10px;border-radius:2px;border:1.5px solid}
+  .footer{text-align:center;margin-top:2rem;color:rgba(255,255,255,.4);font-size:.75rem;font-family:'JetBrains Mono',monospace}
+  .footer a{color:#00d4ff;text-decoration:none}
+  a.node:hover rect{filter:drop-shadow(0 0 14px rgba(0,212,255,.6));cursor:pointer}
+  a.node:hover text{fill:#00d4ff}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-top:2rem}
+  .card{background:rgba(10,10,20,.5);border-radius:.75rem;border:1px solid #222;padding:1.25rem;transition:all .2s}
+  .card:hover{border-color:#00d4ff;box-shadow:0 0 20px rgba(0,212,255,.15)}
+  .card a{color:inherit;text-decoration:none;display:block}
+  .card-header{display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem}
+  .card-dot{width:10px;height:10px;border-radius:50%}
+  .card-dot.cyan{background:#00d4ff;box-shadow:0 0 8px rgba(0,212,255,.5)}
+  .card-dot.green{background:#00ff88;box-shadow:0 0 8px rgba(0,255,136,.5)}
+  .card-dot.orange{background:#ff6b00;box-shadow:0 0 8px rgba(255,107,0,.5)}
+  .card-dot.violet{background:#a78bfa;box-shadow:0 0 8px rgba(167,139,250,.5)}
+  .card h3{font-size:.95rem;font-weight:600;font-family:'JetBrains Mono',monospace}
+  .card ul{list-style:none;color:rgba(255,255,255,.6);font-size:.78rem}
+  .card li{margin-bottom:.375rem}
+  .card .cta{margin-top:.75rem;color:#00d4ff;font-size:.75rem;font-family:'JetBrains Mono',monospace}
+  body.embed{padding:1rem;background:transparent}
+  body.embed .lang-switch,body.embed .footer{display:none!important}
+  body.embed .header{margin-bottom:1rem}
+</style>
+</head>
+<body>
+<div class="lang-switch" style="position:fixed;top:1rem;right:1rem;display:flex;gap:.25rem;font-family:'JetBrains Mono',monospace;font-size:.75rem;z-index:100">
+  <a href="index.html" style="padding:.3rem .6rem;border:1px solid #00d4ff;border-radius:4px;color:#00d4ff;text-decoration:none;background:rgba(0,212,255,.1)">EN</a>
+  <a href="../fr/index.html" style="padding:.3rem .6rem;border:1px solid #222;border-radius:4px;color:rgba(255,255,255,.6);text-decoration:none">FR</a>
+</div>
+<div class="container">
+  <div class="header">
+    <div class="header-row">
+      <div class="pulse-dot"></div>
+      <h1>CELLULE — Architecture</h1>
+    </div>
+    <p class="subtitle">Decentralized LLM inference network · atom → pool → molecule</p>
+  </div>
+
+  <div class="diagram-container">
+    <svg viewBox="0 0 1000 640" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+      <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#555"/></marker>
+        <marker id="arrowCyan" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#00d4ff"/></marker>
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1a1a1a" stroke-width=".5"/></pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#grid)"/>
+
+      <text x="500" y="40" fill="rgba(255,255,255,.4)" font-size="11" text-anchor="middle">Click a layer to explore details</text>
+
+      <rect x="340" y="70" width="320" height="70" rx="8" fill="rgba(30,41,59,.5)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="500" y="98" fill="#fff" font-size="13" font-weight="600" text-anchor="middle">USER / API</text>
+      <text x="500" y="116" fill="rgba(255,255,255,.6)" font-size="10" text-anchor="middle">cellule.ai · trial chat · dashboard · CLI · OpenCode</text>
+      <text x="500" y="130" fill="#00d4ff" font-size="9" text-anchor="middle">HTTPS / WSS / OpenAI-compatible API</text>
+
+      <a class="node" xlink:href="layer-pool.html">
+        <rect x="320" y="210" width="360" height="120" rx="10" fill="rgba(0,255,136,.08)" stroke="#00ff88" stroke-width="2"/>
+        <text x="500" y="240" fill="#fff" font-size="15" font-weight="700" text-anchor="middle">POOL</text>
+        <text x="500" y="260" fill="rgba(255,255,255,.7)" font-size="10" text-anchor="middle">FastAPI · PostgreSQL+pgvector · WebSocket</text>
+        <text x="500" y="276" fill="rgba(255,255,255,.7)" font-size="10" text-anchor="middle">Cooperative routing · L1/L2/L3 memory · Sub-agents</text>
+        <text x="500" y="292" fill="rgba(255,255,255,.7)" font-size="10" text-anchor="middle">LLM Checker · Admin · Trial chat · Tokens</text>
+        <text x="500" y="318" fill="#00ff88" font-size="9" text-anchor="middle" font-weight="600">→ layer 2 · network backend</text>
+      </a>
+
+      <a class="node" xlink:href="layer-atome.html">
+        <rect x="40" y="230" width="220" height="90" rx="10" fill="rgba(0,212,255,.1)" stroke="#00d4ff" stroke-width="2"/>
+        <text x="150" y="260" fill="#fff" font-size="14" font-weight="700" text-anchor="middle">ATOM</text>
+        <text x="150" y="280" fill="rgba(255,255,255,.7)" font-size="10" text-anchor="middle">LLM worker · llama.cpp</text>
+        <text x="150" y="294" fill="rgba(255,255,255,.7)" font-size="10" text-anchor="middle">GGUF · HW auto-detect</text>
+        <text x="150" y="312" fill="#00d4ff" font-size="9" text-anchor="middle" font-weight="600">→ layer 1</text>
+      </a>
+
+      <a class="node" xlink:href="layer-federation.html">
+        <rect x="740" y="230" width="220" height="90" rx="10" fill="rgba(255,107,0,.1)" stroke="#ff6b00" stroke-width="2"/>
+        <text x="850" y="260" fill="#fff" font-size="14" font-weight="700" text-anchor="middle">FEDERATION</text>
+        <text x="850" y="280" fill="rgba(255,255,255,.7)" font-size="10" text-anchor="middle">molecule · gossip · RAID</text>
+        <text x="850" y="294" fill="rgba(255,255,255,.7)" font-size="10" text-anchor="middle">Ed25519 · merkle · quorum</text>
+        <text x="850" y="312" fill="#ff6b00" font-size="9" text-anchor="middle" font-weight="600">→ layer 3</text>
+      </a>
+
+      <a class="node" xlink:href="layer-economie.html">
+        <rect x="340" y="420" width="320" height="90" rx="10" fill="rgba(167,139,250,.1)" stroke="#a78bfa" stroke-width="2"/>
+        <text x="500" y="450" fill="#fff" font-size="14" font-weight="700" text-anchor="middle">ECONOMY</text>
+        <text x="500" y="470" fill="rgba(255,255,255,.7)" font-size="10" text-anchor="middle">revenue_ledger · settlement · slashing</text>
+        <text x="500" y="484" fill="rgba(255,255,255,.7)" font-size="10" text-anchor="middle">split 60/20/10/10 · $IAMINE alpha</text>
+        <text x="500" y="502" fill="#a78bfa" font-size="9" text-anchor="middle" font-weight="600">→ layer 4</text>
+      </a>
+
+      <rect x="40" y="550" width="920" height="60" rx="8" fill="rgba(10,10,20,.6)" stroke="#222" stroke-width="1" stroke-dasharray="6,4"/>
+      <text x="500" y="575" fill="rgba(255,255,255,.5)" font-size="11" text-anchor="middle" font-weight="600">DATA PLANE — PostgreSQL + pgvector (L1 messages · L2 conversations · L3 embeddings · federation_state · revenue_ledger)</text>
+      <text x="500" y="595" fill="rgba(255,255,255,.35)" font-size="9" text-anchor="middle">1 DB per pool · replicated via gossip anti-entropy (M11.2)</text>
+
+      <line x1="500" y1="140" x2="500" y2="208" stroke="#00d4ff" stroke-width="2" marker-end="url(#arrowCyan)"/>
+      <text x="515" y="178" fill="#00d4ff" font-size="9">inference request</text>
+      <line x1="260" y1="275" x2="318" y2="275" stroke="#00d4ff" stroke-width="1.5" marker-end="url(#arrowCyan)"/>
+      <text x="289" y="269" fill="rgba(255,255,255,.5)" font-size="8" text-anchor="middle">WS</text>
+      <line x1="318" y1="285" x2="260" y2="285" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <text x="289" y="300" fill="rgba(255,255,255,.5)" font-size="8" text-anchor="middle">job</text>
+      <line x1="680" y1="275" x2="738" y2="275" stroke="#ff6b00" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <text x="709" y="269" fill="rgba(255,255,255,.5)" font-size="8" text-anchor="middle">gossip/merkle</text>
+      <line x1="738" y1="285" x2="680" y2="285" stroke="#ff6b00" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <text x="709" y="300" fill="rgba(255,255,255,.5)" font-size="8" text-anchor="middle">replication</text>
+      <line x1="500" y1="330" x2="500" y2="418" stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <text x="515" y="378" fill="rgba(255,255,255,.5)" font-size="9">ledger append</text>
+    </svg>
+  </div>
+
+  <div class="legend-row">
+    <div class="legend-item"><span class="legend-swatch" style="background:rgba(0,212,255,.1);border-color:#00d4ff"></span>Atom (worker)</div>
+    <div class="legend-item"><span class="legend-swatch" style="background:rgba(0,255,136,.08);border-color:#00ff88"></span>Pool (backend)</div>
+    <div class="legend-item"><span class="legend-swatch" style="background:rgba(255,107,0,.1);border-color:#ff6b00"></span>Federation (crypto/gossip)</div>
+    <div class="legend-item"><span class="legend-swatch" style="background:rgba(167,139,250,.1);border-color:#a78bfa"></span>Economy (ledger)</div>
+    <div class="legend-item"><span class="legend-swatch" style="background:rgba(30,41,59,.5);border-color:#94a3b8"></span>User / External</div>
+  </div>
+
+  <div class="cards">
+    <div class="card"><a href="layer-atome.html">
+      <div class="card-header"><div class="card-dot cyan"></div><h3>Layer 1 — Atom</h3></div>
+      <ul>
+        <li>• <code>iamine-ai</code> CLI</li>
+        <li>• Threads / RAM / GPU auto-detect</li>
+        <li>• llama.cpp + GGUF</li>
+        <li>• WebSocket heartbeat</li>
+        <li>• Ed25519 worker identity</li>
+      </ul>
+      <div class="cta">explore →</div>
+    </a></div>
+    <div class="card"><a href="layer-pool.html">
+      <div class="card-header"><div class="card-dot green"></div><h3>Layer 2 — Pool</h3></div>
+      <ul>
+        <li>• FastAPI + nginx TLS</li>
+        <li>• PostgreSQL + pgvector</li>
+        <li>• Cooperative routing (deficit scoring)</li>
+        <li>• Zero-knowledge L1/L2/L3 memory</li>
+        <li>• Sub-agents (review, pipeline, cross-pool)</li>
+      </ul>
+      <div class="cta">explore →</div>
+    </a></div>
+    <div class="card"><a href="layer-federation.html">
+      <div class="card-header"><div class="card-dot orange"></div><h3>Layer 3 — Federation</h3></div>
+      <ul>
+        <li>• 3 bonded pools (primary · GPU · cluster)</li>
+        <li>• Anti-entropy gossip (M11.2)</li>
+        <li>• Merkle trees + RAID quorum N≥3</li>
+        <li>• Forwarding (M7a) · Heartbeat (M7b)</li>
+        <li>• Worker placement / migration (M12)</li>
+      </ul>
+      <div class="cta">explore →</div>
+    </a></div>
+    <div class="card"><a href="layer-economie.html">
+      <div class="card-header"><div class="card-dot violet"></div><h3>Layer 4 — Economy</h3></div>
+      <ul>
+        <li>• Append-only revenue_ledger</li>
+        <li>• M9 Settlement (dry_run live)</li>
+        <li>• M10 Slashing (merkle exclusion)</li>
+        <li>• M10 Disputes Q4 (double-exclusion)</li>
+        <li>• $IAMINE token alpha (not deployed)</li>
+      </ul>
+      <div class="cta">explore →</div>
+    </a></div>
+  </div>
+
+  <p class="footer">CELLULE · <a href="https://cellule.ai">cellule.ai</a> · architecture generated 2026-04-15 · pool v0.2.67</p>
+</div>
+<script>if(new URLSearchParams(location.search).get('embed')==='1')document.body.classList.add('embed');</script>
+</body>
+</html>
