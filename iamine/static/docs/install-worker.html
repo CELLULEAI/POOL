@@ -220,24 +220,24 @@ launchctl load ~/Library/LaunchAgents/ai.cellule.worker.plist</code></pre>
 <h3 data-i18n="win_quick_dl">⬇ Quick download</h3>
 
 <div style="display:flex;flex-wrap:wrap;gap:.8rem;margin:1rem 0;">
-  <a href="https://github.com/CELLULEAI/POOL/releases/download/v0.2.72-worker/cellule-worker-cpu.exe" class="hero-cta" style="flex:1;min-width:240px;display:block;text-decoration:none;color:inherit;padding:1rem;text-align:center;background:rgba(0,255,234,0.06);border-color:rgba(0,255,234,0.4);">
+  <a href="https://github.com/CELLULEAI/POOL/releases/download/v0.2.76-worker/cellule-worker-cpu.exe" class="hero-cta" style="flex:1;min-width:240px;display:block;text-decoration:none;color:inherit;padding:1rem;text-align:center;background:rgba(0,255,234,0.06);border-color:rgba(0,255,234,0.4);">
     <div style="font-family:ui-monospace,monospace;font-size:.9rem;color:#00d4ff;">cellule-worker-cpu.exe</div>
     <div style="font-size:.78rem;color:rgba(255,255,255,0.6);margin-top:.3rem;" data-i18n="dl_cpu_desc">42 MB — any Windows PC, no GPU</div>
     <div style="font-size:.72rem;color:#00ff88;margin-top:.3rem;font-weight:600;" data-i18n="dl_btn">⬇ Download</div>
   </a>
-  <a href="https://github.com/CELLULEAI/POOL/releases/download/v0.2.72-worker/cellule-worker-cuda.exe" class="hero-cta" style="flex:1;min-width:240px;display:block;text-decoration:none;color:inherit;padding:1rem;text-align:center;background:rgba(0,212,255,0.06);border-color:rgba(0,212,255,0.4);">
+  <a href="https://github.com/CELLULEAI/POOL/releases/download/v0.2.76-worker/cellule-worker-cuda.exe" class="hero-cta" style="flex:1;min-width:240px;display:block;text-decoration:none;color:inherit;padding:1rem;text-align:center;background:rgba(0,212,255,0.06);border-color:rgba(0,212,255,0.4);">
     <div style="font-family:ui-monospace,monospace;font-size:.9rem;color:#00d4ff;">cellule-worker-cuda.exe</div>
     <div style="font-size:.78rem;color:rgba(255,255,255,0.6);margin-top:.3rem;" data-i18n="dl_cuda_desc">456 MB — NVIDIA GPU (CUDA 12.5)</div>
     <div style="font-size:.72rem;color:#00ff88;margin-top:.3rem;font-weight:600;" data-i18n="dl_btn2">⬇ Download</div>
   </a>
-  <a href="https://github.com/CELLULEAI/POOL/releases/download/v0.2.72-worker/cellule-proxy.exe" class="hero-cta" style="flex:1;min-width:240px;display:block;text-decoration:none;color:inherit;padding:1rem;text-align:center;background:rgba(251,191,36,0.06);border-color:rgba(251,191,36,0.4);">
+  <a href="https://github.com/CELLULEAI/POOL/releases/download/v0.2.76-worker/cellule-proxy.exe" class="hero-cta" style="flex:1;min-width:240px;display:block;text-decoration:none;color:inherit;padding:1rem;text-align:center;background:rgba(251,191,36,0.06);border-color:rgba(251,191,36,0.4);">
     <div style="font-family:ui-monospace,monospace;font-size:.9rem;color:#00d4ff;">cellule-proxy.exe</div>
     <div style="font-size:.78rem;color:rgba(255,255,255,0.6);margin-top:.3rem;" data-i18n="dl_proxy_desc">40 MB — you bring your own LLM</div>
     <div style="font-size:.72rem;color:#00ff88;margin-top:.3rem;font-weight:600;" data-i18n="dl_btn3">⬇ Download</div>
   </a>
 </div>
 
-<p style="font-size:.82rem;color:rgba(255,255,255,0.55);margin:0 0 1.5rem;text-align:center;" data-i18n="dl_note">Direct downloads from GitHub Releases. SmartScreen will warn (binaries unsigned) — right-click → Properties → Unblock if needed. <a href="https://github.com/CELLULEAI/POOL/releases/tag/v0.2.72-worker" target="_blank" style="color:#00d4ff;">See full release</a>.</p>
+<p style="font-size:.82rem;color:rgba(255,255,255,0.55);margin:0 0 1.5rem;text-align:center;" data-i18n="dl_note">Direct downloads from GitHub Releases. SmartScreen will warn (binaries unsigned) — right-click → Properties → Unblock if needed. <a href="https://github.com/CELLULEAI/POOL/releases/tag/v0.2.76-worker" target="_blank" style="color:#00d4ff;">See full release</a>.</p>
 
 <div style="margin:.5rem 0 1.5rem;padding:1rem 1.2rem;background:rgba(0,212,255,0.06);border-left:3px solid #00d4ff;border-radius:4px;font-size:.88rem;line-height:1.55;">
   <div style="font-weight:600;color:#00d4ff;margin-bottom:.4rem;" data-i18n="exe_behavior_title">How the .exe works (read before running)</div>
@@ -476,7 +476,7 @@ var I18N = {
         dl_btn: "⬇ Download",
         dl_btn2: "⬇ Download",
         dl_btn3: "⬇ Download",
-        dl_note: "Direct downloads from GitHub Releases. SmartScreen will warn (binaries unsigned) — right-click → Properties → Unblock if needed. <a href=\"https://github.com/CELLULEAI/POOL/releases/tag/v0.2.72-worker\" target=\"_blank\" style=\"color:#00d4ff;\">See full release</a>.",
+        dl_note: "Direct downloads from GitHub Releases. SmartScreen will warn (binaries unsigned) — right-click → Properties → Unblock if needed. <a href=\"https://github.com/CELLULEAI/POOL/releases/tag/v0.2.76-worker\" target=\"_blank\" style=\"color:#00d4ff;\">See full release</a>.",
         exe_behavior_title: "How the .exe works (read before running)",
         exe_behavior_p1: "The Windows <code>.exe</code> is <strong>pinned to the model chosen at first launch</strong>. The pool will <em>not</em> auto-switch your model while the exe runs. This is deliberate — it guarantees stability on Windows.",
         exe_behavior_li1: "First launch → worker benches on Qwen 3.5 2B, then sticks to whatever model fits your hardware best.",
@@ -583,7 +583,7 @@ var I18N = {
         dl_btn: "⬇ Télécharger",
         dl_btn2: "⬇ Télécharger",
         dl_btn3: "⬇ Télécharger",
-        dl_note: "Téléchargements directs depuis GitHub Releases. SmartScreen avertira (binaires non signés) — clic droit → Propriétés → Débloquer si besoin. <a href=\"https://github.com/CELLULEAI/POOL/releases/tag/v0.2.72-worker\" target=\"_blank\" style=\"color:#00d4ff;\">Voir la release complète</a>.",
+        dl_note: "Téléchargements directs depuis GitHub Releases. SmartScreen avertira (binaires non signés) — clic droit → Propriétés → Débloquer si besoin. <a href=\"https://github.com/CELLULEAI/POOL/releases/tag/v0.2.76-worker\" target=\"_blank\" style=\"color:#00d4ff;\">Voir la release complète</a>.",
         exe_behavior_title: "Fonctionnement du .exe (à lire avant de lancer)",
         exe_behavior_p1: "Le <code>.exe</code> Windows est <strong>figé sur le modèle choisi au premier lancement</strong>. Le pool ne changera <em>pas</em> automatiquement ton modèle pendant que l'exe tourne. C'est volontaire — ça garantit la stabilité sur Windows.",
         exe_behavior_li1: "Premier lancement → le worker bench sur Qwen 3.5 2B, puis reste sur le modèle adapté à ton matériel.",
