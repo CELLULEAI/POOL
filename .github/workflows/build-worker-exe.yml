@@ -155,7 +155,10 @@ jobs:
             if (-not (Test-Path $libDir)) { Write-Error "llama_cpp/lib missing"; exit 1 }
             $dlls = Get-ChildItem $libDir -Filter *.dll
             Write-Host "Found $($dlls.Count) DLLs"
-            $pyinstArgs += @("--paths", $llamaPath, "--collect-all", "llama_cpp", "--hidden-import=llama_cpp")
+            # Fix collision : llama_cpp is both a module file (llama_cpp.py) AND a
+            # package directory. Force PyInstaller to bundle it as a package so
+            # sub-imports like llama_cpp._ctypes_extensions work at runtime.
+            $pyinstArgs += @("--paths", $llamaPath, "--collect-all", "llama_cpp", "--collect-submodules", "llama_cpp", "--hidden-import=llama_cpp", "--hidden-import=llama_cpp._ctypes_extensions", "--hidden-import=llama_cpp._internals", "--hidden-import=llama_cpp._logger", "--hidden-import=llama_cpp.llama_cpp", "--module-collection-mode=llama_cpp=pyz+py")
             foreach ($dll in $dlls) {
               $pyinstArgs += "--add-binary"
               $pyinstArgs += "$($dll.FullName);llama_cpp/lib"
