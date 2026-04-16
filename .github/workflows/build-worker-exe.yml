@@ -77,7 +77,7 @@ jobs:
           }
 
       - name: Plan B — rename llama_cpp/llama_cpp.py to break PyInstaller collision
-        if: matrix.variant != proxy
+        if: matrix.variant != 'proxy'
         shell: pwsh
         run: |
           & .pyinstaller-hooks/plan_b_rename_llama_cpp.ps1
