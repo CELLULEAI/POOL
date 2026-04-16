@@ -238,16 +238,43 @@ class Worker:
         self.state = WorkerState.IDLE
 
     def _restart_self(self) -> None:
-        """Relance le process worker (fonctionne sur Linux/systemd ET Windows/manuel)."""
+        """Relance le process worker (Linux/systemd, Windows frozen, Windows dev)."""
         log.info("Restarting worker process...")
         args = sys.argv[1:] if sys.argv else []
-        # Frozen exe (PyInstaller one-file) : sys.executable EST le binaire iamine.
-        # os.execv sur Windows casse le cleanup _MEI (module unicodedata introuvable
-        # apres restart). Sortir proprement + spawn fresh process.
+        # Frozen exe on Windows (PyInstaller --onefile) : parent+child extract/cleanup
+        # of the _MEI runtime dir race if we exec/Popen directly (modules like
+        # unicodedata become unloadable in the child). Solution : spawn a COMPLETELY
+        # decoupled batch that sleeps 3s then relaunches the exe. Batch is a shell
+        # process (cmd.exe), not a python child, so no _MEI shared.
         if getattr(sys, "frozen", False):
+            import os as _os
+            import tempfile
             import subprocess
-            subprocess.Popen([sys.executable] + args)
+            exe_path = sys.executable
+            # Quote args with embedded spaces
+            quoted_args = " ".join(f"\"{a}\"" if " " in a else a for a in args)
+            batch_content = (
+                "@echo off\r\n"
+                "timeout /t 10 /nobreak > nul\r\n"
+                f"start \"\" \"{exe_path}\" {quoted_args}\r\n"
+            )
+            batch_path = _os.path.join(tempfile.gettempdir(), "cellule-restart.bat")
+            with open(batch_path, "w") as bf:
+                bf.write(batch_content)
+            log.info(f"Spawning decoupled relaunch via {batch_path} (10s delay)")
+            # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP : completely detach from parent
+            DETACHED = 0x00000008
+            NEW_PGROUP = 0x00000200
+            subprocess.Popen(
+                ["cmd", "/c", batch_path],
+                creationflags=DETACHED | NEW_PGROUP,
+                close_fds=True,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
             sys.exit(0)
+        # Non-frozen (Linux/dev) : os.execv is fine
         cmd = [sys.executable, "-m", "iamine"] + args
         try:
             os.execv(sys.executable, cmd)
@@ -302,15 +329,6 @@ class Worker:
         if "iamine.org" not in model_url and "cellule.ai" not in model_url and "huggingface" not in model_url:
             log.warning(f"URL refused: {model_url}")
             await self._send(ws, {"type": "command_ack", "cmd": "update_model", "status": "refused"})
-            return
-
-        # Frozen exe (PyInstaller one-file) : ignore les update_model du pool.
-        # L utilisateur choisit son modele au premier lancement et le worker y reste
-        # jusqu a ce qu il relance manuellement. Evite les cycles exit/relaunch dus
-        # au restart Windows cassant le cleanup _MEI.
-        if getattr(sys, "frozen", False):
-            log.info(f"Frozen exe: ignoring update_model ({model_path})")
-            await self._send(ws, {"type": "command_ack", "cmd": "update_model", "status": "ignored_frozen"})
             return
 
         dest = Path(model_path)

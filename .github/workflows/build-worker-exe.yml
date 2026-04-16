@@ -146,7 +146,8 @@ jobs:
           if ([string]::IsNullOrEmpty($iconPath)) { Write-Host "(no icon found, building without)"; $iconArgs = @() } else { Write-Host "Using icon: $iconPath"; $iconArgs = @("--icon", $iconPath) }
 
           $pyinstArgs = @(
-            "--onefile",
+            "--onedir",
+            "--contents-directory", "_internal",
             "--name", $exeName,
             "--collect-all", "iamine",
             "--collect-all", "numpy",
@@ -191,12 +192,12 @@ jobs:
           CPU_VARIANT: ${{ matrix.variant }}
         run: |
           if ($env:CPU_VARIANT -eq 'proxy') {
-            $exe = "dist/cellule-proxy.exe"
+            $exe = "dist/cellule-proxy/cellule-proxy.exe"
             # Proxy with no args prints usage and exits 0 -> OK smoke test
             & $exe
             if ($LASTEXITCODE -ne 0) { Write-Error "proxy smoke failed"; exit 1 }
           } else {
-            $exe = "dist/cellule-worker-$env:CPU_VARIANT.exe"
+            $exe = "dist/cellule-worker-$env:CPU_VARIANT/cellule-worker-$env:CPU_VARIANT.exe"
             & $exe --help
             if ($LASTEXITCODE -ne 0) { Write-Error "exe --help failed"; exit 1 }
           }
@@ -207,22 +208,39 @@ jobs:
           CPU_VARIANT: ${{ matrix.variant }}
         run: |
           if ($env:CPU_VARIANT -eq 'proxy') {
-            $exe = "dist/cellule-proxy.exe"
-            $minSize = 10
-          } else {
-            $exe = "dist/cellule-worker-$env:CPU_VARIANT.exe"
+            $name = "cellule-proxy"
             $minSize = 30
-            if ($env:CPU_VARIANT -eq 'cuda') { $minSize = 100 }
+          } else {
+            $name = "cellule-worker-$env:CPU_VARIANT"
+            $minSize = 80
+            if ($env:CPU_VARIANT -eq 'cuda') { $minSize = 200 }
           }
-          $size = (Get-Item $exe).Length / 1MB
-          Write-Host ("{0} size: {1:N1} MB" -f $exe, $size)
-          if ($size -lt $minSize) { Write-Error "exe too small ($size MB, need >=$minSize)"; exit 1 }
+          $dirPath = "dist/$name"
+          $size = (Get-ChildItem -Path $dirPath -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB
+          Write-Host ("{0}/ size: {1:N1} MB (unzipped)" -f $dirPath, $size)
+          if ($size -lt $minSize) { Write-Error "dist dir too small ($size MB, need >=$minSize)"; exit 1 }
 
-      - name: Upload artifact
+      - name: Pack onedir to ZIP
+        shell: pwsh
+        env:
+          CPU_VARIANT: ${{ matrix.variant }}
+        run: |
+          if ($env:CPU_VARIANT -eq 'proxy') {
+            $name = "cellule-proxy"
+          } else {
+            $name = "cellule-worker-$env:CPU_VARIANT"
+          }
+          $dirPath = "dist/$name"
+          $zipPath = "dist/$name.zip"
+          Compress-Archive -Path $dirPath -DestinationPath $zipPath -CompressionLevel Optimal
+          $zipSize = (Get-Item $zipPath).Length / 1MB
+          Write-Host ("{0} zipped: {1:N1} MB" -f $zipPath, $zipSize)
+
+      - name: Upload artifact (ZIP)
         uses: actions/upload-artifact@v4
         with:
           name: cellule-${{ matrix.variant == 'proxy' && 'proxy' || format('worker-{0}', matrix.variant) }}-windows
-          path: dist/cellule-${{ matrix.variant == 'proxy' && 'proxy' || format('worker-{0}', matrix.variant) }}.exe
+          path: dist/cellule-${{ matrix.variant == 'proxy' && 'proxy' || format('worker-{0}', matrix.variant) }}.zip
           retention-days: 30
 
       - name: Attach to GitHub Release (only on tag push)
@@ -231,19 +249,25 @@ jobs:
         with:
           name: Cellule Worker ${{ github.ref_name }}
           body: |
-            Standalone Windows worker executables — PREPROD / BETA.
+            Windows worker packages (onedir + ZIP distribution).
 
-            - `cellule-worker-cpu.exe` (~45 MB) : any Windows 10/11 PC, no GPU required
-            - `cellule-worker-cuda.exe` (~455 MB) : NVIDIA GPU (CUDA 12.5 runtime bundled)
-            - `cellule-proxy.exe` (~15-25 MB) : you already run your own LLM (llama-server / Ollama / vLLM), plug it in
+            - `cellule-worker-cpu.zip` (~60 MB) : any Windows 10/11 PC, no GPU required
+            - `cellule-worker-cuda.zip` (~250 MB) : NVIDIA GPU (CUDA 12.5 runtime bundled)
+            - `cellule-proxy.zip` (~40 MB) : bring your own LLM (llama-server / Ollama / vLLM)
 
-            Install : download the right file, right-click &rarr; Properties &rarr; Unblock,
-            double-click to start. Worker variants auto-join. Proxy expects --upstream URL.
+            **Install** :
+            1. Download the right `.zip`
+            2. Right-click &rarr; Properties &rarr; Unblock (Windows SmartScreen)
+            3. Extract anywhere (keep the folder structure)
+            4. Double-click the `.exe` inside the extracted folder
+            5. Worker variants auto-join. Proxy expects `--upstream URL`.
+
+            **Why onedir/ZIP instead of single .exe ?** PyInstaller --onefile on Windows hits a file-lock race during self-restart after `update_model`. --onedir removes the `_MEI` extraction dir, restart works reliably.
 
             Source : https://github.com/CELLULEAI/POOL
             Docs   : https://cellule.ai/docs/install-worker.html
             Feedback : please open an issue for any bug or success story.
-          files: dist/cellule-${{ matrix.variant == 'proxy' && 'proxy' || format('worker-{0}', matrix.variant) }}.exe
+          files: dist/cellule-${{ matrix.variant == 'proxy' && 'proxy' || format('worker-{0}', matrix.variant) }}.zip
           fail_on_unmatched_files: true
           draft: false
           prerelease: true

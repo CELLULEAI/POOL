@@ -32,19 +32,11 @@ class ModelTier:
 
 FAMILY_QWEN35: list[ModelTier] = [
     ModelTier(
-        id="qwen3.5-0.8b-q4", name="Qwen 3.5 0.8B",
-        hf_repo="bartowski/Qwen_Qwen3.5-0.8B-GGUF",
-        hf_file="Qwen_Qwen3.5-0.8B-Q4_K_M.gguf",
-        size_gb=0.5, ram_required_gb=1.5, ctx_default=4096,
-        params="0.8B", quality_score=20, min_tps_useful=6.0,
-        earn_per_100tok=0.5, cost_per_request=1.0, generation="3.5",
-    ),
-    ModelTier(
         id="qwen3.5-2b-q4", name="Qwen 3.5 2B",
         hf_repo="bartowski/Qwen_Qwen3.5-2B-GGUF",
         hf_file="Qwen_Qwen3.5-2B-Q4_K_M.gguf",
         size_gb=1.3, ram_required_gb=2.5, ctx_default=4096,
-        params="2B", quality_score=35, min_tps_useful=6.0,
+        params="2B", quality_score=35, min_tps_useful=8.0,
         earn_per_100tok=1.0, cost_per_request=2.0, generation="3.5",
     ),
     ModelTier(
@@ -52,7 +44,7 @@ FAMILY_QWEN35: list[ModelTier] = [
         hf_repo="bartowski/Qwen_Qwen3.5-4B-GGUF",
         hf_file="Qwen_Qwen3.5-4B-Q4_K_M.gguf",
         size_gb=2.7, ram_required_gb=5.0, ctx_default=8192,
-        params="4B", quality_score=55, min_tps_useful=6.0,
+        params="4B", quality_score=55, min_tps_useful=8.0,
         earn_per_100tok=2.0, cost_per_request=3.0, generation="3.5",
     ),
     ModelTier(
@@ -60,7 +52,7 @@ FAMILY_QWEN35: list[ModelTier] = [
         hf_repo="bartowski/Qwen_Qwen3.5-9B-GGUF",
         hf_file="Qwen_Qwen3.5-9B-Q4_K_M.gguf",
         size_gb=5.5, ram_required_gb=8.0, ctx_default=16384,
-        params="9B", quality_score=75, min_tps_useful=6.0,
+        params="9B", quality_score=75, min_tps_useful=8.0,
         earn_per_100tok=4.0, cost_per_request=5.0, generation="3.5",
     ),
     ModelTier(
@@ -68,7 +60,7 @@ FAMILY_QWEN35: list[ModelTier] = [
         hf_repo="bartowski/Qwen_Qwen3.5-27B-GGUF",
         hf_file="Qwen_Qwen3.5-27B-Q4_K_M.gguf",
         size_gb=16.0, ram_required_gb=20.0, ctx_default=32768,
-        params="27B", quality_score=92, min_tps_useful=3.0,
+        params="27B", quality_score=92, min_tps_useful=4.0,
         earn_per_100tok=15.0, cost_per_request=30.0, generation="3.5",
     ),
     ModelTier(
@@ -76,7 +68,7 @@ FAMILY_QWEN35: list[ModelTier] = [
         hf_repo="bartowski/Qwen_Qwen3.5-35B-A3B-GGUF",
         hf_file="Qwen_Qwen3.5-35B-A3B-Q4_K_M.gguf",
         size_gb=21.0, ram_required_gb=25.0, ctx_default=32768,
-        params="35B", quality_score=95, min_tps_useful=3.0,
+        params="35B", quality_score=95, min_tps_useful=4.0,
         earn_per_100tok=12.0, cost_per_request=20.0,
         model_type="moe", active_params_b=3.0, generation="3.5",
     ),
@@ -84,27 +76,11 @@ FAMILY_QWEN35: list[ModelTier] = [
 
 FAMILY_QWEN25: list[ModelTier] = [
     ModelTier(
-        id="qwen2.5-0.5b-q4", name="Qwen 2.5 0.5B",
-        hf_repo="bartowski/Qwen2.5-0.5B-Instruct-GGUF",
-        hf_file="Qwen2.5-0.5B-Instruct-Q4_K_M.gguf",
-        size_gb=0.4, ram_required_gb=1.0, ctx_default=2048,
-        params="0.5B", quality_score=10, min_tps_useful=5.0,
-        earn_per_100tok=0.3, cost_per_request=0.5, generation="2.5",
-    ),
-    ModelTier(
-        id="qwen2.5-1.5b-q4", name="Qwen 2.5 1.5B",
-        hf_repo="bartowski/Qwen2.5-1.5B-Instruct-GGUF",
-        hf_file="Qwen2.5-1.5B-Instruct-Q4_K_M.gguf",
-        size_gb=1.0, ram_required_gb=2.0, ctx_default=4096,
-        params="1.5B", quality_score=25, min_tps_useful=5.0,
-        earn_per_100tok=0.5, cost_per_request=1.0, generation="2.5",
-    ),
-    ModelTier(
         id="qwen2.5-3b-q4", name="Qwen 2.5 3B",
         hf_repo="bartowski/Qwen2.5-3B-Instruct-GGUF",
         hf_file="Qwen2.5-3B-Instruct-Q4_K_M.gguf",
         size_gb=1.9, ram_required_gb=3.5, ctx_default=4096,
-        params="3B", quality_score=40, min_tps_useful=4.0,
+        params="3B", quality_score=40, min_tps_useful=8.0,
         earn_per_100tok=1.0, cost_per_request=2.0, generation="2.5",
     ),
     ModelTier(
@@ -112,7 +88,7 @@ FAMILY_QWEN25: list[ModelTier] = [
         hf_repo="bartowski/Qwen2.5-7B-Instruct-GGUF",
         hf_file="Qwen2.5-7B-Instruct-Q4_K_M.gguf",
         size_gb=4.4, ram_required_gb=7.0, ctx_default=8192,
-        params="7B", quality_score=65, min_tps_useful=3.0,
+        params="7B", quality_score=65, min_tps_useful=6.0,
         earn_per_100tok=3.0, cost_per_request=4.0, generation="2.5",
     ),
     ModelTier(
@@ -120,7 +96,7 @@ FAMILY_QWEN25: list[ModelTier] = [
         hf_repo="bartowski/Qwen2.5-14B-Instruct-GGUF",
         hf_file="Qwen2.5-14B-Instruct-Q4_K_M.gguf",
         size_gb=8.7, ram_required_gb=12.0, ctx_default=16384,
-        params="14B", quality_score=82, min_tps_useful=2.0,
+        params="14B", quality_score=82, min_tps_useful=6.0,
         earn_per_100tok=8.0, cost_per_request=12.0, generation="2.5",
     ),
     ModelTier(
@@ -128,7 +104,7 @@ FAMILY_QWEN25: list[ModelTier] = [
         hf_repo="bartowski/Qwen2.5-32B-Instruct-GGUF",
         hf_file="Qwen2.5-32B-Instruct-Q4_K_M.gguf",
         size_gb=19.0, ram_required_gb=24.0, ctx_default=32768,
-        params="32B", quality_score=90, min_tps_useful=1.0,
+        params="32B", quality_score=90, min_tps_useful=4.0,
         earn_per_100tok=15.0, cost_per_request=25.0, generation="2.5",
     ),
 ]
@@ -172,12 +148,12 @@ def best_model_from_bench(bench_tps_08b: float, ram_gb: float, has_gpu: bool = F
 
     Equation : tps_estime = bench_0.8B * (0.5 / size_gb_modele)
     On prend le plus gros modele avec tps_estime >= 8 t/s et qui rentre en RAM.
-    Gros modeles GPU (27B+) : seuil abaisse a 5 t/s (qualite compense).
+    Gros modeles GPU (27B+) : seuil abaisse a 4 t/s (qualite compense la vitesse).
 
     C'est le modele XMRig : bench d'abord, attribution ensuite.
     """
-    # Seuil 8 t/s minimum — gros modeles GPU tolerent un peu moins
-    MIN_TPS_BY_SIZE = {0.5: 8, 1.3: 6, 2.7: 5, 5.5: 5, 16: 5, 21: 5}
+    # Seuil 8 t/s pour interactif (<= 9B), 4 t/s pour gros reasoning (>= 27B)
+    MIN_TPS_BY_SIZE = {1.3: 8, 2.7: 8, 5.5: 8, 16: 4, 21: 4}
     DEFAULT_MIN_TPS = 6.0
     BENCH_MODEL_SIZE = 1.3  # taille 2B Q4 en GB (bench sur 2B depuis v0.2.48)
 
@@ -204,7 +180,7 @@ def best_model_from_bench(bench_tps_08b: float, ram_gb: float, has_gpu: bool = F
                 best = m
         return best, CTX_BY_PARAMS.get(best.params, 4096)
 
-    best = MODEL_REGISTRY[0]  # fallback = 0.8B
+    best = MODEL_REGISTRY[0]  # fallback = smallest in registry (2B)
     for m in MODEL_REGISTRY:
         # RAM reelle avec petit ctx : modele + KV cache minimal + 1.5G marge OS
         ctx = CTX_BY_PARAMS.get(m.params, 2048)

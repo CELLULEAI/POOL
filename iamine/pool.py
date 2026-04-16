@@ -423,7 +423,7 @@ class Pool:
 
         try:
             from .core.federation import list_peers as _list_peers
-            peers = await _list_peers(self.store.pool)
+            peers = await _list_peers(self)
         except Exception:
             return False
 
