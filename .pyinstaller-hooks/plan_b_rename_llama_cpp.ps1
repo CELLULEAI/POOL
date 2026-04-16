@@ -51,13 +51,33 @@ foreach ($f in $pyFiles) {
 # Nuke bytecode caches so Python re-compiles from patched sources
 Get-ChildItem -Path $llamaPath -Filter __pycache__ -Recurse -Directory | Remove-Item -Recurse -Force
 
-# Verify : Python should import llama_cpp as package correctly
-# CUDA variants need cudart DLLs in PATH to load llama.dll
-if ($env:CUDA_PATH -and (Test-Path "$env:CUDA_PATHin")) {
-    $env:Path = "$env:CUDA_PATHin;$env:Path"
-    Write-Host "CUDA_PATH added to PATH for import verify"
+# Verify : Python should import llama_cpp as package correctly.
+# CUDA builds need cudart/cublas DLLs reachable when llama.dll loads.
+# Python 3.8+ on Windows DOES NOT consult $env:PATH for ctypes.CDLL — it
+# requires os.add_dll_directory(). We therefore patch both the PowerShell
+# PATH (for subprocesses) AND the Python DLL search path explicitly.
+$cudaBin = $null
+if ($env:CUDA_PATH) {
+    $cudaBin = Join-Path $env:CUDA_PATH "bin"
+    if (Test-Path $cudaBin) {
+        $env:Path = "$cudaBin;$env:Path"
+        Write-Host "CUDA bin prepended to PATH: $cudaBin"
+    } else {
+        Write-Host "CUDA_PATH set but bin dir missing: $cudaBin"
+        $cudaBin = $null
+    }
+} else {
+    Write-Host "CUDA_PATH not set — assuming CPU/proxy build"
 }
-python -c @"
+
+$verifyScript = @"
+import os, sys
+cuda_bin = os.environ.get('CUDA_PATH')
+if cuda_bin:
+    cuda_bin_path = os.path.join(cuda_bin, 'bin')
+    if os.path.isdir(cuda_bin_path):
+        os.add_dll_directory(cuda_bin_path)
+        print(f'os.add_dll_directory({cuda_bin_path})')
 import llama_cpp
 import llama_cpp._ctypes_extensions
 import llama_cpp._native_bindings
@@ -65,6 +85,7 @@ print('llama_cpp as package: OK')
 print('llama_cpp._native_bindings loaded')
 print('llama_cpp._ctypes_extensions loaded')
 "@
+$verifyScript | python -
 if ($LASTEXITCODE -ne 0) {
     Write-Error "plan B verify failed"
     exit 1
