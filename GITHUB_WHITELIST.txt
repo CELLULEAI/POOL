@@ -1,0 +1,66 @@
+# CELLULEAI/POOL — GitHub Whitelist (Option B : transparence ciblée)
+# 44 fichiers — Worker + CLI + MCP + Core libs + Docker + Docs + Migrations
+# PAS de routes serveur, PAS d'admin, PAS de slashing/settlement/disputes
+# PAS de frontend (static/), PAS de scripts ops
+#
+# Usage: git add -f $(grep -v '^#' GITHUB_WHITELIST.txt | grep -v '^$')
+
+# --- Docs ---
+.gitignore
+README.md
+ARCHITECTURE.md
+ROADMAP.md
+API.md
+docs/MCP_MEMORY_SERVER.md
+
+# --- Build ---
+Dockerfile
+pyproject.toml
+requirements.txt
+
+# --- Docker ---
+docker/Dockerfile
+docker/docker-compose.yml
+docker/.env.example
+docker/docker-entrypoint.sh
+docker/DOCKER_HUB_PUBLISH.md
+
+# --- Worker + CLI (ce que les contributeurs installent) ---
+iamine/__init__.py
+iamine/__main__.py
+iamine/config.py
+iamine/worker.py
+iamine/proxy.py
+iamine/benchmark.py
+iamine/wallet.py
+iamine/cli/__init__.py
+iamine/cli/federation.py
+
+# --- MCP Server ---
+iamine/mcp_server.py
+
+# --- Core libs (transparence : zero-knowledge vérifiable, protocol auditable) ---
+iamine/db.py
+iamine/memory.py
+iamine/router.py
+iamine/core/__init__.py
+iamine/core/types.py
+iamine/core/utils.py
+iamine/core/compaction.py
+iamine/core/credits.py
+iamine/core/assignment.py
+iamine/core/federation.py
+iamine/core/federation_merkle.py
+
+# --- M13 Agent Memory ---
+iamine/core/agent_memory.py
+iamine/core/agent_memory_phase2.py
+iamine/core/memory_replication.py
+
+# --- Schema DB (DDL uniquement) ---
+migrations/000_schema_version.sql
+migrations/001_initial_schema.sql
+migrations/002_extensions.sql
+migrations/006_user_memories.sql
+migrations/018_m13_agent_memory.sql
+migrations/019_m13_phase2_semantic.sql
