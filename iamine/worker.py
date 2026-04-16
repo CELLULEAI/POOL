@@ -89,6 +89,20 @@ class Worker:
                         if new_url != self.config.pool.url:
                             log.info(f"Failover: migration vers {new_url} (ancien: {self.config.pool.url})")
                             self.config.pool.url = new_url
+                            # Persist to config.json so relaunch does not retry the dead pool
+                            try:
+                                import json as _json
+                                from pathlib import Path as _Path
+                                cp = _Path(self.config_path).resolve()
+                                if cp.exists():
+                                    with open(cp) as _f:
+                                        _cfg = _json.load(_f)
+                                    _cfg.setdefault("pool", {})["url"] = new_url
+                                    with open(cp, "w") as _f:
+                                        _json.dump(_cfg, _f, indent=4)
+                                    log.info(f"Persisted pool.url to {cp}")
+                            except Exception as _pe:
+                                log.debug(f"Persist pool.url failed: {_pe}")
                             backoff = 5  # reset backoff for new pool
                     except Exception as e:
                         log.debug(f"Re-discovery failed: {e}")
