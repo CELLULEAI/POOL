@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CELLULE.AI — Whitepaper</title>
+    <meta name="description" content="CELLULE.AI Whitepaper: Decentralized AI inference powered by the people.">
+    <link rel="icon" href="/static/iamine_icon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+:root {
+    --bg: #0a0a0a;
+    --bg2: #111111;
+    --bg3: #1a1a1a;
+    --neon-blue: #00d4ff;
+    --neon-green: #00ff88;
+    --text: #f0f0f0;
+    --text2: #888888;
+    --border: #222222;
+}
+
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+}
+
+a {
+    color: var(--neon-blue);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+a:hover { color: var(--neon-green); }
+
+/* ── BACK BUTTON ─────────────────────────────────── */
+.back-bar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 14px 40px;
+    background: rgba(10, 10, 10, 0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.back-link {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+.back-link svg {
+    width: 16px; height: 16px;
+    vertical-align: middle;
+    margin-right: 6px;
+    stroke: currentColor;
+}
+.lang-switch {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text2);
+}
+.lang-switch a { margin-left: 12px; }
+
+/* ── LAYOUT ──────────────────────────────────────── */
+.wp-container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 100px 32px 80px;
+}
+
+/* ── COVER ───────────────────────────────────────── */
+.wp-cover {
+    text-align: center;
+    padding: 80px 0 60px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 60px;
+}
+.wp-logo {
+    font-size: 64px;
+    font-weight: 900;
+    letter-spacing: 6px;
+    background: linear-gradient(135deg, var(--neon-blue), var(--neon-green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 16px;
+}
+.wp-cover h2 {
+    font-size: 28px;
+    font-weight: 300;
+    color: var(--text2);
+    margin-bottom: 12px;
+}
+.wp-cover .wp-date {
+    font-size: 14px;
+    color: var(--text2);
+}
+.wp-cover .wp-version {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 4px 16px;
+    border: 1px solid var(--neon-blue);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--neon-blue);
+    letter-spacing: 1px;
+}
+
+/* ── TOC ─────────────────────────────────────────── */
+.wp-toc {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px 40px;
+    margin-bottom: 60px;
+}
+.wp-toc h3 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--neon-blue);
+    margin-bottom: 16px;
+}
+.wp-toc ol {
+    list-style: none;
+    counter-reset: toc;
+}
+.wp-toc li {
+    counter-increment: toc;
+    margin-bottom: 8px;
+}
+.wp-toc li::before {
+    content: counter(toc) ".";
+    color: var(--neon-green);
+    font-weight: 700;
+    margin-right: 10px;
+    font-size: 14px;
+}
+.wp-toc a {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+}
+.wp-toc a:hover { color: var(--neon-blue); }
+
+/* ── SECTIONS ────────────────────────────────────── */
+.wp-section {
+    margin-bottom: 64px;
+}
+.wp-section-num {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--neon-green);
+    background: rgba(0, 255, 136, 0.08);
+    padding: 4px 14px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+}
+.wp-section h2 {
+    font-size: 36px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+}
+.wp-section hr {
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--neon-blue), var(--neon-green));
+    border: none;
+    border-radius: 2px;
+    margin-bottom: 24px;
+}
+.wp-section p {
+    font-size: 16px;
+    color: var(--text);
+    margin-bottom: 16px;
+}
+.wp-section ul, .wp-section ol {
+    margin: 16px 0 16px 24px;
+}
+.wp-section li {
+    margin-bottom: 10px;
+    font-size: 15px;
+    color: var(--text);
+}
+.wp-section li strong {
+    color: var(--neon-blue);
+}
+
+/* ── TABLE ───────────────────────────────────────── */
+.wp-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 24px 0;
+    font-size: 14px;
+}
+.wp-table th {
+    text-align: left;
+    padding: 12px 16px;
+    background: var(--bg3);
+    color: var(--neon-blue);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid var(--border);
+}
+.wp-table td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+}
+.wp-table tr:hover td {
+    background: rgba(0, 212, 255, 0.03);
+}
+
+/* ── CODE / PRE ──────────────────────────────────── */
+.wp-code {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    margin: 24px 0;
+    overflow-x: auto;
+    font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--neon-green);
+}
+.wp-code .comment { color: var(--text2); }
+.wp-code .cmd { color: #fff; }
+
+/* ── ASCII DIAGRAM ───────────────────────────────── */
+.wp-diagram {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px 32px;
+    margin: 24px 0;
+    overflow-x: auto;
+    font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--neon-blue);
+    white-space: pre;
+}
+
+/* ── HIGHLIGHT BOX ───────────────────────────────── */
+.wp-highlight {
+    background: rgba(0, 212, 255, 0.05);
+    border-left: 3px solid var(--neon-blue);
+    padding: 20px 24px;
+    border-radius: 0 8px 8px 0;
+    margin: 24px 0;
+}
+.wp-highlight p {
+    margin: 0;
+    font-size: 15px;
+}
+
+/* ── ROADMAP TIMELINE ────────────────────────────── */
+.wp-timeline {
+    margin: 24px 0;
+    padding-left: 24px;
+    border-left: 2px solid var(--border);
+}
+.wp-timeline-item {
+    position: relative;
+    padding: 0 0 28px 24px;
+}
+.wp-timeline-item::before {
+    content: "";
+    position: absolute;
+    left: -7px;
+    top: 6px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--neon-blue);
+    border: 2px solid var(--bg);
+}
+.wp-timeline-item.active::before {
+    background: var(--neon-green);
+    box-shadow: 0 0 12px rgba(0, 255, 136, 0.5);
+}
+.wp-timeline-item h4 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+.wp-timeline-item p {
+    font-size: 14px;
+    color: var(--text2);
+    margin: 0;
+}
+
+/* ── FOOTER ──────────────────────────────────────── */
+.wp-footer {
+    text-align: center;
+    padding: 40px 0;
+    border-top: 1px solid var(--border);
+    margin-top: 40px;
+    color: var(--text2);
+    font-size: 14px;
+}
+
+/* ── RESPONSIVE ──────────────────────────────────── */
+@media (max-width: 600px) {
+    .wp-container { padding: 80px 18px 60px; }
+    .wp-cover { padding: 40px 0 32px; }
+    .wp-logo { font-size: 42px; letter-spacing: 3px; }
+    .wp-cover h2 { font-size: 20px; }
+    .wp-section h2 { font-size: 26px; }
+    .wp-toc { padding: 20px 24px; }
+    .back-bar { padding: 12px 18px; }
+    .wp-diagram { font-size: 10px; padding: 16px; }
+}
+
+/* ── PRINT ───────────────────────────────────────── */
+@media print {
+    :root {
+        --bg: #ffffff;
+        --bg2: #f8f8f8;
+        --bg3: #f0f0f0;
+        --neon-blue: #0066cc;
+        --neon-green: #008844;
+        --text: #111111;
+        --text2: #555555;
+        --border: #dddddd;
+    }
+    body { background: #fff; color: #111; }
+    .back-bar { display: none; }
+    .wp-container { padding: 20px; }
+    .wp-logo {
+        -webkit-text-fill-color: #0066cc;
+        background: none;
+    }
+    .wp-diagram { color: #0066cc; }
+    .wp-code { color: #008844; }
+    a { color: #0066cc; }
+}
+    </style>
+</head>
+<body>
+
+<!-- ── BACK BAR ────────────────────────────────────── -->
+<div class="back-bar">
+    <a href="/" class="back-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"/>
+            <polyline points="12 19 5 12 12 5"/>
+        </svg>
+        Back to CELLULE.AI
+    </a>
+    <div class="lang-switch">
+        <strong>EN</strong>
+        <a href="/static/whitepaper-fr.html">FR</a>
+    </div>
+</div>
+
+<div class="wp-container">
+
+<!-- ── COVER ───────────────────────────────────────── -->
+<div class="wp-cover">
+    <div class="wp-logo">CELLULE.AI</div>
+    <h2>Whitepaper</h2>
+    <p class="wp-date">April 2026</p>
+    <span class="wp-version">V1.0 &mdash; ATOM PHASE</span>
+</div>
+
+<!-- ── TABLE OF CONTENTS ──────────────────────────── -->
+<div class="wp-toc">
+    <h3>Table of Contents</h3>
+    <ol>
+        <li><a href="#s1">Executive Summary</a></li>
+        <li><a href="#s2">The Problem</a></li>
+        <li><a href="#s3">The Solution &mdash; CELLULE.AI Network</a></li>
+        <li><a href="#s4">Architecture &mdash; The Atomic Model</a></li>
+        <li><a href="#s5">Technical Features</a></li>
+        <li><a href="#s6">Economy &mdash; $IAMINE Token</a></li>
+        <li><a href="#s7">Roadmap</a></li>
+        <li><a href="#s8">Getting Started</a></li>
+    </ol>
+</div>
+
+<!-- ── 1. EXECUTIVE SUMMARY ───────────────────────── -->
+<div class="wp-section" id="s1">
+    <span class="wp-section-num">SECTION 1</span>
+    <h2>Executive Summary</h2>
+    <hr>
+    <p>
+        CELLULE.AI is a decentralized AI network where anyone can contribute computing power &mdash; CPU or GPU &mdash; to run LLM inference and earn <strong>$IAMINE</strong> tokens.
+    </p>
+    <p>
+        Unlike centralized AI services that lock inference behind expensive APIs and proprietary infrastructure, CELLULE.AI distributes inference across heterogeneous machines worldwide. A laptop with 4 GB of RAM and a server with 64 GB of VRAM cooperate in the same pool, each running the model best suited to their hardware.
+    </p>
+    <div class="wp-highlight">
+        <p><strong>The core principle:</strong> contribute compute, earn tokens. Spend tokens, access AI. No middleman. No vendor lock-in. No data harvesting.</p>
+    </div>
+</div>
+
+<!-- ── 2. THE PROBLEM ─────────────────────────────── -->
+<div class="wp-section" id="s2">
+    <span class="wp-section-num">SECTION 2</span>
+    <h2>The Problem</h2>
+    <hr>
+    <p>The current AI landscape suffers from fundamental structural issues:</p>
+    <ul>
+        <li><strong>Centralization:</strong> AI inference is controlled by a handful of corporations (OpenAI, Anthropic, Google). They set the prices, the rules, and the limits.</li>
+        <li><strong>GPU scarcity:</strong> Access to high-end GPUs is expensive and limited. Cloud GPU pricing is prohibitive for individuals and small teams.</li>
+        <li><strong>Wasted compute:</strong> Millions of machines sit idle worldwide &mdash; gaming PCs, workstations, servers &mdash; with no way to monetize their unused computing power.</li>
+        <li><strong>Privacy concerns:</strong> Every prompt sent to a centralized service is logged, stored, and potentially used for training. Users have no control over their data.</li>
+        <li><strong>Single points of failure:</strong> When a centralized service goes down, every user is affected. There is no redundancy, no fallback.</li>
+    </ul>
+</div>
+
+<!-- ── 3. THE SOLUTION ────────────────────────────── -->
+<div class="wp-section" id="s3">
+    <span class="wp-section-num">SECTION 3</span>
+    <h2>The Solution &mdash; CELLULE.AI Network</h2>
+    <hr>
+    <p>CELLULE.AI solves these problems with an open-source, distributed inference pool:</p>
+    <ul>
+        <li><strong>Open-source distributed pool:</strong> Workers connect via WebSocket to a coordination layer. The pool routes requests to the best available worker.</li>
+        <li><strong>Earn by contributing:</strong> Workers contribute CPU/GPU cycles and earn $IAMINE tokens proportional to their contribution.</li>
+        <li><strong>Smart routing (deficit scoring):</strong> A fair load-balancing algorithm ensures that workers with the most capacity &mdash; and the most debt to the network &mdash; get priority for incoming jobs.</li>
+        <li><strong>Multi-platform:</strong> Windows, Linux, macOS. Install in 60 seconds. One command.</li>
+        <li><strong>Heterogeneous:</strong> Models from 0.8B to 35B parameters cooperate in the same pool. The small models handle simple queries fast; the large models handle complex reasoning.</li>
+        <li><strong>OpenAI-compatible API:</strong> Any tool that speaks the OpenAI API can use CELLULE.AI &mdash; OpenCode, Cursor, aider, Open WebUI, and more.</li>
+    </ul>
+</div>
+
+<!-- ── 4. ARCHITECTURE ────────────────────────────── -->
+<div class="wp-section" id="s4">
+    <span class="wp-section-num">SECTION 4</span>
+    <h2>Architecture &mdash; The Atomic Model</h2>
+    <hr>
+    <p>CELLULE.AI follows a biological evolution in three phases:</p>
+
+    <table class="wp-table">
+        <thead>
+            <tr>
+                <th>Phase</th>
+                <th>Unit</th>
+                <th>Analogy</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Phase 1</strong></td>
+                <td>Atom</td>
+                <td>1 VPS + N workers (nucleus + electrons)</td>
+                <td style="color: var(--neon-green); font-weight: 700;">CURRENT</td>
+            </tr>
+            <tr>
+                <td><strong>Phase 2</strong></td>
+                <td>Molecule</td>
+                <td>K federated atoms (covalent bonds)</td>
+                <td>Design</td>
+            </tr>
+            <tr>
+                <td><strong>Phase 3</strong></td>
+                <td>Cell</td>
+                <td>M coordinated molecules (multi-cellular organism)</td>
+                <td>Vision</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3 style="margin: 32px 0 16px; font-size: 20px;">Phase 1 &mdash; The Atom (current)</h3>
+    <p>One nucleus (VPS running the pool) surrounded by electrons (workers contributing compute).</p>
+
+<div class="wp-diagram">
+                         +---------------------------+
+                         |       NUCLEUS (VPS)       |
+                         |                           |
+                         |   Pool FastAPI + WebSocket |
+                         |   PostgreSQL (L3, RAG)    |
+                         |   Smart Router            |
+                         |   OpenAI-compatible API   |
+                         +---------------------------+
+                                    |
+                    ________________|________________
+                   |                |                |
+              [Electron 1]    [Electron 2]    [Electron N]
+              Worker CPU      Worker GPU      Worker CPU
+              Qwen 3B        Qwen 30B-A3B    Qwen 9B
+              ~8 t/s          ~64 t/s         ~22 t/s</div>
+
+    <h3 style="margin: 32px 0 16px; font-size: 20px;">Phase 2 &mdash; The Molecule (federation)</h3>
+    <p>Multiple autonomous atoms that help each other. Discovery via seed list and gossip protocol. Trust established via Ed25519 challenge-response with 4 trust levels (unknown, seen, trusted, bonded). Cross-atom routing when local capacity is saturated.</p>
+
+<div class="wp-diagram">
+          [Atom A]  ----bond----  [Atom B]
+             |                       |
+          [workers]              [workers]
+             |                       |
+             +-------forward---------+
+                  (if saturated)</div>
+
+    <h3 style="margin: 32px 0 16px; font-size: 20px;">Phase 3 &mdash; The Cell (organism)</h3>
+    <p>Coordinated molecules with specializations: CHAT, CODE, RAG, EDGE, TRAINING. A simplified Raft consensus ensures coherence. A global capability registry enables auto-routing across molecules.</p>
+</div>
+
+<!-- ── 5. TECHNICAL FEATURES ──────────────────────── -->
+<div class="wp-section" id="s5">
+    <span class="wp-section-num">SECTION 5</span>
+    <h2>Technical Features</h2>
+    <hr>
+
+    <h3 style="margin: 24px 0 12px; font-size: 18px;">L1 / L2 / L3 Memory</h3>
+    <p>Conversations are stored in a three-tier memory system:</p>
+    <ul>
+        <li><strong>L1 (RAM):</strong> Active conversation context. Fast, ephemeral.</li>
+        <li><strong>L2 (Compaction):</strong> Summarized context. Reduces token count while preserving meaning.</li>
+        <li><strong>L3 (PostgreSQL):</strong> Persistent storage. Conversations survive server restarts, worker reassignments, and network events.</li>
+    </ul>
+
+    <h3 style="margin: 24px 0 12px; font-size: 18px;">Vectorized RAG (pgvector)</h3>
+    <p>Facts extracted from conversations are vectorized and stored in PostgreSQL via pgvector. Retrieval-augmented generation enriches responses with relevant prior context. All data is encrypted with zero-knowledge encryption &mdash; even the server cannot read your facts.</p>
+
+    <h3 style="margin: 24px 0 12px; font-size: 18px;">Native Tool-Calls</h3>
+    <p>The pool natively supports OpenAI-style tool-calls. Coding agents like OpenCode, Cursor, and aider can use CELLULE.AI as a drop-in replacement for OpenAI. File writes, code execution, and multi-step reasoning work out of the box.</p>
+
+    <h3 style="margin: 24px 0 12px; font-size: 18px;">Think Tool</h3>
+    <p>When a small model (e.g., 9B) encounters a problem beyond its capability, it can delegate to a larger model (30B+) automatically via the think tool. The user sees a seamless response; the pool handles the orchestration.</p>
+
+    <h3 style="margin: 24px 0 12px; font-size: 18px;">Pool Assist (Automatic Fallback)</h3>
+    <p>If all workers of a given tier are busy, the pool automatically falls back to the next available tier. The doctrine is <strong>zero-503</strong>: the network never returns an error without attempting a response.</p>
+
+    <h3 style="margin: 24px 0 12px; font-size: 18px;">Memory Opt-in (GDPR Compliant)</h3>
+    <p>Memory is strictly opt-in. Users choose whether their conversations are persisted. When opted out, data is ephemeral and destroyed at the end of the session. Full GDPR compliance.</p>
+</div>
+
+<!-- ── 6. ECONOMY ─────────────────────────────────── -->
+<div class="wp-section" id="s6">
+    <span class="wp-section-num">SECTION 6</span>
+    <h2>Economy &mdash; $IAMINE Token</h2>
+    <hr>
+    <p>The $IAMINE token is the native unit of exchange in the network. It aligns incentives between contributors and consumers.</p>
+
+    <table class="wp-table">
+        <thead>
+            <tr>
+                <th>Action</th>
+                <th>Effect</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Contribute compute (run a worker)</td>
+                <td style="color: var(--neon-green);">Earn $IAMINE</td>
+            </tr>
+            <tr>
+                <td>Use the API (send prompts)</td>
+                <td style="color: var(--neon-blue);">Spend $IAMINE</td>
+            </tr>
+            <tr>
+                <td>Join the network (first connection)</td>
+                <td style="color: var(--neon-green);">Welcome bonus</td>
+            </tr>
+            <tr>
+                <td>Maintain uptime (loyalty)</td>
+                <td style="color: var(--neon-green);">Loyalty rewards</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3 style="margin: 24px 0 12px; font-size: 18px;">Fair Routing via Deficit Scoring</h3>
+    <p>The pool uses a deficit scoring algorithm to balance load fairly. Workers that have contributed the most compute but received the fewest jobs accumulate a "deficit" that gives them priority for the next incoming request. This ensures that no worker is starved and that the network remains balanced.</p>
+
+    <div class="wp-highlight">
+        <p><strong>The flywheel:</strong> More workers = more capacity = faster responses = more users = more demand = more rewards for workers.</p>
+    </div>
+</div>
+
+<!-- ── 7. ROADMAP ─────────────────────────────────── -->
+<div class="wp-section" id="s7">
+    <span class="wp-section-num">SECTION 7</span>
+    <h2>Roadmap</h2>
+    <hr>
+
+    <div class="wp-timeline">
+        <div class="wp-timeline-item active">
+            <h4>Q2 2026 &mdash; Stabilize the Atom</h4>
+            <p>Harden the pool, publish on GitHub, open alpha access, automated testing, API documentation.</p>
+        </div>
+        <div class="wp-timeline-item">
+            <h4>Q3 2026 &mdash; Expand Platforms</h4>
+            <p>macOS Metal support, USB bootable distro (zero-config worker), Android worker app, improved onboarding.</p>
+        </div>
+        <div class="wp-timeline-item">
+            <h4>Q4 2026 &mdash; Federation (Molecule)</h4>
+            <p>Inter-atom discovery and trust protocol. Federated accounts. Cross-atom routing. Distributed RAG.</p>
+        </div>
+        <div class="wp-timeline-item">
+            <h4>2027 &mdash; Cell Coordination</h4>
+            <p>Specialized molecules (CHAT, CODE, RAG, EDGE). Raft consensus. Global capability registry. $IAMINE token on-chain.</p>
+        </div>
+    </div>
+</div>
+
+<!-- ── 8. GETTING STARTED ─────────────────────────── -->
+<div class="wp-section" id="s8">
+    <span class="wp-section-num">SECTION 8</span>
+    <h2>Getting Started</h2>
+    <hr>
+    <p>Join the network in 60 seconds. One command installs the worker and auto-detects your hardware (CPU threads, RAM, GPU) to pick the best model for your machine.</p>
+
+    <div class="wp-code">
+<span class="comment"># Install and start the worker</span>
+<span class="cmd">pip install iamine-ai -i https://cellule.ai/pypi --extra-index-url https://pypi.org/simple</span>
+<span class="cmd">python -m iamine worker --auto</span>
+    </div>
+
+    <p>That's it. Your machine is now contributing compute to the CELLULE.AI network and earning $IAMINE tokens.</p>
+
+    <div class="wp-highlight">
+        <p><strong>Requirements:</strong> Python 3.10+, 4 GB RAM minimum. GPU optional but recommended. Windows, Linux, or macOS.</p>
+    </div>
+
+    <p style="text-align: center; margin-top: 40px;">
+        <a href="/#contribute" style="display: inline-block; padding: 14px 36px; background: linear-gradient(135deg, var(--neon-blue), var(--neon-green)); color: #000; font-weight: 700; font-size: 15px; border-radius: 8px; letter-spacing: 0.5px;">
+            Join the Network
+        </a>
+    </p>
+</div>
+
+<!-- ── FOOTER ─────────────────────────────────────── -->
+<div class="wp-footer">
+    <p>&copy; 2026 CELLULE.AI.ORG &mdash; Decentralized AI for everyone.</p>
+    <p style="margin-top: 8px;"><a href="https://cellule.ai">cellule.ai</a></p>
+</div>
+
+</div>
+</body>
+</html>
