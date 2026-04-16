@@ -669,16 +669,24 @@ async def set_pseudo(data: dict):
 # ─── GET /v1/account/memory ────────────────────────────────────────────────
 
 @router.get("/v1/account/memory")
-async def get_memory_status(session_id: str = ""):
-    """Retourne l etat actuel de la memoire persistante du compte."""
+async def get_memory_status(request: Request, session_id: str = ""):
+    """Retourne l etat actuel de la memoire persistante du compte.
+    Auth: Bearer token (acc_*) OU query ?session_id=... (legacy front)."""
     pool = _pool()
     accounts = _accounts()
 
-    account_id = _get_session_account(session_id)
-    if not account_id or account_id not in accounts:
-        return JSONResponse({"error": "invalid session"}, status_code=401)
-
-    acc = accounts[account_id]
+    # Try Bearer first
+    auth_header = request.headers.get("authorization", "")
+    api_token = auth_header[7:] if auth_header.startswith("Bearer ") else ""
+    acc = None
+    if api_token:
+        acc = next((a for a in accounts.values() if a.get("account_token") == api_token), None)
+    if acc is None:
+        # Fallback to session_id
+        account_id = _get_session_account(session_id)
+        if not account_id or account_id not in accounts:
+            return JSONResponse({"error": "invalid token or session"}, status_code=401)
+        acc = accounts[account_id]
     memory_enabled = acc.get("memory_enabled", True)
 
     # Compter les faits RAG stockes
@@ -696,21 +704,33 @@ async def get_memory_status(session_id: str = ""):
 # ─── POST /v1/account/memory ───────────────────────────────────────────────
 
 @router.post("/v1/account/memory")
-async def set_memory(data: dict):
-    """Active ou desactive la memoire persistante (RAG) du compte."""
+async def set_memory(request: Request, data: dict):
+    """Active ou desactive la memoire persistante (RAG) du compte.
+    Auth: Bearer token (acc_*) OU body session_id (legacy front)."""
     accounts = _accounts()
 
-    session_id = data.get("session_id", "")
     enabled = data.get("enabled")
+    session_id = data.get("session_id", "")
 
-    account_id = _get_session_account(session_id)
-    if not account_id or account_id not in accounts:
-        return JSONResponse({"error": "invalid session"}, status_code=401)
+    # Try Bearer first
+    auth_header = request.headers.get("authorization", "")
+    api_token = auth_header[7:] if auth_header.startswith("Bearer ") else ""
+    acc = None
+    account_id = None
+    if api_token:
+        acc = next((a for a in accounts.values() if a.get("account_token") == api_token), None)
+        if acc:
+            account_id = acc.get("account_id", "")
+    if acc is None:
+        # Fallback to session_id
+        account_id = _get_session_account(session_id)
+        if not account_id or account_id not in accounts:
+            return JSONResponse({"error": "invalid token or session"}, status_code=401)
+        acc = accounts[account_id]
 
     if enabled is None:
         return JSONResponse({"error": "enabled field required (true/false)"}, status_code=400)
 
-    acc = accounts[account_id]
     acc["memory_enabled"] = bool(enabled)
     _save_accounts()
     # Persister en DB aussi (DB-first)
