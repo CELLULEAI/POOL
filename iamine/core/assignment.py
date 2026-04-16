@@ -21,6 +21,19 @@ log = logging.getLogger("iamine.pool")
 
 _MODEL_SIZE_RE = re.compile(r'[\-_](\d+(?:\.\d+)?)[Bb][\-_\.]')
 
+# Anti-oscillation : cooldown par worker sur les pushs update_model
+UPDATE_MODEL_COOLDOWN_SEC = 1800  # 30 min
+_last_update_model_at: dict[str, float] = {}
+
+
+def _can_push_update_model(worker_id: str) -> bool:
+    last = _last_update_model_at.get(worker_id, 0)
+    return (time.time() - last) >= UPDATE_MODEL_COOLDOWN_SEC
+
+
+def _mark_update_model_pushed(worker_id: str) -> None:
+    _last_update_model_at[worker_id] = time.time()
+
 
 def _parse_model_size(model_path: str) -> float:
     """Extrait la taille en milliards depuis un path GGUF."""
@@ -79,6 +92,9 @@ async def _auto_bench(pool_inst, worker):
                 # Trouver le tier inferieur
                 idx = MODEL_REGISTRY.index(current_tier)
                 downgrade = MODEL_REGISTRY[idx - 1] if idx > 0 else MODEL_REGISTRY[0]
+                if not _can_push_update_model(worker.worker_id):
+                    log.info(f"Post-upgrade downgrade SKIPPED (cooldown): {worker.worker_id}")
+                    return
                 log.info(f"Post-upgrade downgrade: {worker.worker_id} {current_tier.name} at {tps:.1f} t/s < {current_tier.min_tps_useful} -> {downgrade.name}")
                 try:
                     await pool_inst.store.update_worker_assignment(
@@ -91,6 +107,7 @@ async def _auto_bench(pool_inst, worker):
                         "ctx_size": downgrade.ctx_default,
                         "gpu_layers": -1 if worker.info.get("has_gpu") else 0,
                     })
+                    _mark_update_model_pushed(worker.worker_id)
                 except Exception as e:
                     log.debug(f"Downgrade send failed: {e}")
             else:
@@ -154,6 +171,11 @@ async def _self_heal_downgrade(pool_inst, worker):
         worker.info["_healing"] = True
         direction = "upgraded" if best_target.size_gb > current_size else "downgraded"
 
+        if not _can_push_update_model(worker.worker_id):
+            log.info(f"SELF-HEAL SKIPPED (cooldown): {worker.worker_id}")
+            worker.info["_healing"] = False
+            return
+
         payload = {
             "type": "command",
             "cmd": "update_model",
@@ -164,6 +186,7 @@ async def _self_heal_downgrade(pool_inst, worker):
             "threads": min(worker.info.get("cpu_threads", 4), 16),
         }
         await worker.ws.send_json(payload)
+        _mark_update_model_pushed(worker.worker_id)
         worker.busy = True
         log.warning(
             f"SELF-HEAL: {worker.worker_id} {direction} {current_model.split('/')[-1]} -> {best_target.name} "
@@ -333,6 +356,10 @@ async def _check_model_assignment(pool_inst, worker, info: dict):
             log.info(f"Worker {worker.worker_id} needs {label} but version {version} too old for remote update")
             return
 
+        if not _can_push_update_model(worker.worker_id):
+            log.info(f"Placement SKIPPED (cooldown): {worker.worker_id} -> {target_id}")
+            return
+
         payload = {
             "type": "command",
             "cmd": "update_model",
@@ -359,6 +386,7 @@ async def _check_model_assignment(pool_inst, worker, info: dict):
             log.info(f"Skip auto-assign {worker.worker_id}: cooldown {_cooldown}s (assigned {int(time.time()-last_assign)}s ago)")
             return
         await worker.ws.send_json(payload)
+        _mark_update_model_pushed(worker.worker_id)
         worker.busy = True
         worker.info["_last_assign_time"] = time.time()
         tier_name = REGISTRY_BY_ID.get(target_id, None)

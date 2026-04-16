@@ -339,6 +339,19 @@ class Worker:
             log.warning(f"Failed to save assigned_model.json: {e}")
 
         log.info(f"Config updated: {model_path} ctx={ctx_size} gpu={gpu_layers}")
+        # Frozen exe (PyInstaller one-file) : restart Windows casse le cleanup _MEI
+        # (aiohttp/unicodedata puis idna fail). On sort proprement et on demande a
+        # l utilisateur de relancer manuellement. Le prochain lancement charge le
+        # nouveau modele via assigned_model.json.
+        if getattr(sys, "frozen", False):
+            await self._send(ws, {"type": "command_ack", "cmd": "update_model", "status": "pending_manual_restart"})
+            print("")
+            print(" * UPDATE       New model ready: " + model_path)
+            print(" * UPDATE       Please close this window and relaunch")
+            print(" * UPDATE       cellule-worker-cpu.exe to activate.")
+            print("")
+            log.info("Frozen exe: exiting cleanly, user must relaunch manually")
+            sys.exit(0)
         await self._send(ws, {"type": "command_ack", "cmd": "update_model", "status": "restarting"})
         self._restart_self()
 
