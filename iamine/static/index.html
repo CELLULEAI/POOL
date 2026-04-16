@@ -2539,15 +2539,32 @@ function copyInstall() {
     });
 }
 
-/* ── Footer live stats ────────────────────────────── */
+/* ── Footer live stats (cross-pool aggregation like hero) ──────── */
 function refreshFooterStats() {
-    fetch("/v1/status")
-        .then(function(r) { return r.json(); })
-        .then(function(d) {
-            document.getElementById("footer-workers").textContent = d.workers_online || 0;
-            document.getElementById("footer-jobs").textContent = d.total_jobs || 0;
-        })
-        .catch(function() {});
+    Promise.all([
+        fetch("/v1/status").then(function(r) { return r.json(); }),
+        fetch("/v1/federation/discover").then(function(r) { return r.json(); }).catch(function() { return {pools:[]}; })
+    ]).then(function(results) {
+        var d = results[0];
+        var fed = results[1];
+        var totalWorkers = d.workers_online || 0;
+        var totalJobs = d.total_jobs || 0;
+        if (fed.pools) {
+            fed.pools.forEach(function(p) {
+                if (fed.pools[0] && p.name === fed.pools[0].name) return; // skip self
+                if (p.capabilities) {
+                    p.capabilities.forEach(function(cap) {
+                        totalWorkers += cap.worker_count || 0;
+                    });
+                }
+                if (typeof p.total_jobs === "number") {
+                    totalJobs += p.total_jobs;
+                }
+            });
+        }
+        document.getElementById("footer-workers").textContent = totalWorkers;
+        document.getElementById("footer-jobs").textContent = totalJobs;
+    }).catch(function() {});
 }
 refreshFooterStats();
 setInterval(refreshFooterStats, 10000);
