@@ -76,6 +76,12 @@ jobs:
             python -c "import llama_cpp; print('llama_cpp_imported_ok', getattr(llama_cpp, '__version__', 'unknown'))"
           }
 
+      - name: Plan B — rename llama_cpp/llama_cpp.py to break PyInstaller collision
+        if: matrix.variant != proxy
+        shell: pwsh
+        run: |
+          & .pyinstaller-hooks/plan_b_rename_llama_cpp.ps1
+
       - name: Install iamine-ai (retry x3)
         shell: pwsh
         env:
