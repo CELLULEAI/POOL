@@ -182,6 +182,21 @@ class ProxyWorker:
                             "cmd": "update_model",
                             "status": "ignored_proxy",
                         }))
+                    elif cmd == "self_update":
+                        # Only one backend in the proxy should trigger the upgrade
+                        # (pip install is global, not per-backend)
+                        if self.backend.name == (list(self.proxy.backends.keys())[0]
+                                                   if hasattr(self, "proxy") and hasattr(self.proxy, "backends")
+                                                   else self.backend.name):
+                            log.info(f"[{self.backend.name}] self_update: pip install --upgrade iamine-ai")
+                            await ws.send(json.dumps({
+                                "type": "command_ack",
+                                "cmd": "self_update",
+                                "status": "updating",
+                            }))
+                            await self._cmd_self_update()
+                        else:
+                            log.debug(f"[{self.backend.name}] self_update ignore (already handled by primary backend)")
                     else:
                         log.debug(f"[{self.backend.name}] Commande ignoree: {cmd}")
 
@@ -313,6 +328,32 @@ class ProxyWorker:
         return f"Fonction '{func}' non autorisee (whitelist: {', '.join(safe_functions.keys())})"
 
     _ALLOWED_CMD_PREFIXES = ("curl", "python3", "cat")
+
+    async def _cmd_self_update(self) -> None:
+        """Upgrade the iamine-ai package via pip and re-exec the proxy."""
+        import subprocess, sys, os
+        try:
+            in_venv = hasattr(sys, "real_prefix") or (
+                hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix)
+            cmd = [
+                sys.executable, "-m", "pip", "install", "--upgrade",
+                "iamine-ai", "-i", "https://cellule.ai/pypi",
+                "--extra-index-url", "https://pypi.org/simple", "-q",
+            ]
+            if not in_venv:
+                cmd.insert(4, "--user")
+                cmd.insert(4, "--break-system-packages")
+            r = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+            if r.returncode == 0:
+                log.info(f"self_update pip ok — re-exec proxy...")
+                # Re-exec ourselves to pick up the new code
+                os.execv(sys.executable,
+                          [sys.executable, "-m", "iamine", "proxy",
+                           "-c", getattr(self, "config_path", "proxy.json")])
+            else:
+                log.warning(f"self_update pip failed: {r.stderr[:300]}")
+        except Exception as e:
+            log.warning(f"self_update error: {e}")
 
     def _exec_cmd(self, cmd: str) -> str:
         import subprocess

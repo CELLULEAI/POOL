@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta property="og:title" content="Cellule.ai — Federation & cross-pool actions">
+<meta property="og:description" content="How Cellule.ai pools federate — Ed25519 signatures, read vs write actions, manual approve, wallet guards. Explained simply.">
+<meta property="og:url" content="https://cellule.ai/docs/federation.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Cellule.ai">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Cellule.ai — Federation explained">
+<meta name="twitter:description" content="How pools talk to each other without trust. Signatures, opt-in, manual approve.">
+<meta name="twitter:site" content="@moleculeiallm">
+<title>Cellule.ai — Federation explained</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0a0a0f; color: #e0e0e0; font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif; line-height: 1.6; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 3rem 1.5rem; }
+h1 { font-size: 2.2rem; margin-bottom: 0.5rem; color: #00ffea; }
+h2 { font-size: 1.4rem; margin: 2.5rem 0 1rem; color: #8b5cf6; }
+h3 { font-size: 1.1rem; margin: 1.5rem 0 0.75rem; color: #00d4ff; }
+p { margin-bottom: 1rem; }
+code { background: rgba(255,255,255,0.08); padding: 0.2rem 0.4rem; border-radius: 4px; font-family: ui-monospace, monospace; font-size: 0.9em; color: #39ff14; }
+pre { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 1rem; overflow-x: auto; margin: 1rem 0; font-family: ui-monospace, monospace; font-size: 0.85rem; color: #e0e0e0; }
+pre code { background: transparent; padding: 0; color: inherit; }
+.preprod { background: rgba(232, 255, 0, 0.12); border: 1px solid rgba(232, 255, 0, 0.35); border-radius: 8px; padding: 1rem 1.25rem; margin: 1.5rem 0; }
+.preprod strong { color: #e8ff00; }
+.warn { background: rgba(255, 107, 0, 0.10); border: 1px solid rgba(255, 107, 0, 0.35); border-radius: 8px; padding: 1rem 1.25rem; margin: 1.5rem 0; }
+.warn strong { color: #ff8b30; }
+.ok { background: rgba(0, 255, 136, 0.08); border: 1px solid rgba(0, 255, 136, 0.3); border-radius: 8px; padding: 1rem 1.25rem; margin: 1.5rem 0; }
+.ok strong { color: #00ff88; }
+a { color: #00d4ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.92rem; }
+th, td { padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.08); text-align: left; vertical-align: top; }
+th { color: #00d4ff; font-weight: 600; }
+.tag-read { color: #00ff88; font-weight: 600; }
+.tag-write { color: #fbbf24; font-weight: 600; }
+.footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); opacity: 0.6; font-size: 0.85rem; }
+.ascii { font-family: ui-monospace, monospace; font-size: 0.82rem; background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 8px; white-space: pre; overflow-x: auto; line-height: 1.35; color: #b0b0b0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🧬 How Cellule.ai pools federate</h1>
+<p>Cellule.ai is a <strong>community-owned network of AI pools</strong>. Each pool is an independent instance — its own hardware, its own operator, its own workers. But pools talk to each other to share load, replicate data, and coordinate. This page explains <strong>how that conversation is secured</strong> and <strong>what you control as a pool operator</strong>.</p>
+
+<div class="preprod">
+<strong>⚠ PREPROD / testnet phase.</strong> The federation protocol is live but $IAMINE credits have no market value yet. Every design choice below is made with the <strong>future on-chain economy</strong> in mind — we protect wallets today so the system holds when real value flows tomorrow.
+</div>
+
+<h2>The mental model — no master, just a molecule</h2>
+
+<p>A traditional cloud has <strong>one boss</strong>: the cloud provider. If they ban you, you're out. If they get hacked, everyone loses.</p>
+
+<p>Cellule.ai works the other way around. There are <strong>no master pools</strong>. Each pool is sovereign. When a pool wants something from another pool (a query, an action), it asks — and the target pool's human admin decides. <em>No automation, no central authority, no silent override.</em></p>
+
+<div class="ascii">
+       Pool A                  Pool B                  Pool C
+    +---------+              +---------+              +---------+
+    |         |  signed Ed25519        |  signed Ed25519        |
+    |  admin  |&lt;-------------&gt;|  admin  |&lt;-------------&gt;|  admin  |
+    |  workers|  cross-pool   | workers |  cross-pool  | workers |
+    |  users  |  messages     | users   |  messages    |  users  |
+    +---------+              +---------+              +---------+
+         ^                        ^                        ^
+         |                        |                        |
+         +-------- bonded trust>=3 (replication) -------+
+</div>
+
+<h2>How it's secured — Ed25519 signatures</h2>
+
+<p>Every single cross-pool message is <strong>cryptographically signed</strong> by the pool that sends it. Think of it as a notarized letter:</p>
+
+<ul style="margin: 1rem 0 1rem 2rem;">
+  <li><strong>Sender identity</strong> = a public key (Ed25519, 256-bit). Your pool's ID (<code>atom_id</code>) is literally <code>sha256(pubkey)</code>. You can't fake being another pool without stealing its private key.</li>
+  <li><strong>Content integrity</strong> = the signature covers the full request body. If a middle-man changes one byte, the signature fails.</li>
+  <li><strong>Anti-replay</strong> = each message carries a nonce that's remembered for 5 minutes. Replaying an old message is refused.</li>
+  <li><strong>Trust level</strong> = your pool classifies each peer (trust 0 to 4). Only peers bonded at <strong>trust ≥ 3</strong> (replication-bonded) can send admin requests.</li>
+</ul>
+
+<div class="ok">
+<strong>✓ What this means for you</strong><br>
+If someone tries to impersonate a peer pool to make your pool do something, the signature check rejects the message before anything happens. An attacker would need the peer's private key — and that key never leaves the peer's machine.
+</div>
+
+<h2>The 2 types of cross-pool actions</h2>
+
+<p>There are <strong>two kinds of things</strong> a peer pool can ask yours to do. They have very different impact, so Cellule.ai treats them differently.</p>
+
+<table>
+<thead>
+<tr><th>Kind</th><th>Example</th><th>What it does</th><th>Default</th></tr>
+</thead>
+<tbody>
+<tr>
+  <td><span class="tag-read">READ</span></td>
+  <td><code>query_events</code></td>
+  <td>Lets a peer read your <em>molecule events log</em> (circuit open/close, worker join/leave, handshakes). Filtered: only whitelisted types, only last 7 days, no cross-peer leakage.</td>
+  <td><strong style="color:#00ff88;">ON</strong> by default</td>
+</tr>
+<tr>
+  <td><span class="tag-write">WRITE</span></td>
+  <td><code>circuit_reset</code></td>
+  <td>Lets a peer <em>ask</em> your pool to clear its worker blacklist and reset quality scores. You still manually approve — but if approved, it modifies state.</td>
+  <td><strong style="color:#fbbf24;">OFF</strong> by default</td>
+</tr>
+</tbody>
+</table>
+
+<h3>Why this split?</h3>
+
+<p>Reading events is <strong>harmless to your wallet</strong>. No credit moves, no worker is re-authorized, no slashing is bypassed. It's observability. So we make it ON by default — it helps the community see the health of the network.</p>
+
+<p>Writing actions can <strong>indirectly affect money</strong>. A <code>circuit_reset</code>, for example, could re-authorize a worker that was penalized for bad quality. If two pool operators collude, they could reset each other's penalized workers forever, draining the fairness mechanism. So writes stay <strong>OFF by default</strong> — you have to knowingly turn them on.</p>
+
+<div class="warn">
+<strong>⚠ The wallet rule.</strong> Any endpoint that can affect — directly or indirectly — the revenue ledger, slashing events, worker shares, or settlement flows is <strong>opt-in OFF</strong> by default. This is a firm invariant, validated by the project's economic guardian. It's how we protect the future on-chain economy today.
+</div>
+
+<h2>Your 2 toggles in <code>/admin/pool</code></h2>
+
+<p>In your pool's admin UI (<code>/admin</code> → Federation tab for the VPS, <code>/admin/pool</code> for community pool operators), you'll see two checkboxes:</p>
+
+<h3><span class="tag-read">☑ Accept read requests (query_events)</span></h3>
+<p><strong>Recommended ON.</strong> Lets peers read your filtered event log. No economic impact. Helps cross-pool observability.</p>
+
+<h3><span class="tag-write">☐ Accept write requests (circuit_reset + future actions)</span></h3>
+<p><strong>Keep OFF unless you know why you need it.</strong> Protects your workers' economic state. If ON, you still get a manual Approve/Reject prompt for each incoming request — plus automatic blocks (slashing guard, 6h cooldown per peer, signature verification). But the safest posture is OFF.</p>
+
+<h2>What happens when a peer sends you a request</h2>
+
+<ol class="steps">
+<li><strong>Signature check</strong> — Ed25519 verification. Fails silently if bad.</li>
+<li><strong>Trust check</strong> — refuses if peer trust &lt; 3.</li>
+<li><strong>Opt-in check</strong> — refuses with <code>403 disabled</code> if the matching toggle (read or write) is OFF.</li>
+<li><strong>Rate limit</strong> — max 10 pending requests per peer. 11th gets <code>429</code>.</li>
+<li><strong>Cooldown</strong> (writes only) — 6 hours minimum between two approved <code>circuit_reset</code> from the same peer.</li>
+<li><strong>Slashing guard</strong> (<code>circuit_reset</code> only) — blocked with <code>409</code> if any slashing event is pending. You can force an override — but it's logged permanently with a full snapshot.</li>
+<li><strong>Manual approve</strong> — the request lands in your inbox. You click Approve or Reject. Nothing runs until you do.</li>
+<li><strong>Signed callback</strong> — result is signed and sent back to the originating pool.</li>
+<li><strong>Audit log</strong> — every step is written append-only on both sides.</li>
+</ol>
+
+<h2>What a cross-pool request looks like on the wire</h2>
+
+<pre><code>POST /v1/federation/admin/request
+Content-Type: application/json
+X-IAMINE-Atom-Id:   3fdcd7c0318d...          # who signs this
+X-IAMINE-Timestamp: 1776358800
+X-IAMINE-Nonce:     a8f3...                  # one-shot
+X-IAMINE-Signature: base64(ed25519_sign(body))
+
+{
+  "request_id":       "fadm_abc123...",
+  "origin_pool_id":   "3fdcd7c0318d...",
+  "action_type":      "query_events",
+  "action_params":    { "limit": 100 },
+  "from_admin_email": "admin@peer-pool.org"   // display only, NEVER used for auth
+}</code></pre>
+
+<div class="warn">
+<strong>Note on the admin email.</strong> The <code>from_admin_email</code> field is <strong>purely cosmetic</strong>. Your pool never uses it to decide whether to accept the request. Only the Ed25519 signature counts. An attacker could put any email — the signature would still have to match the peer's registered public key.
+</div>
+
+<h2>Future: separate admin key (Phase 2.2)</h2>
+
+<p>Today, admin requests are signed with the <strong>pool's identity key</strong>. Tomorrow, a <strong>separate admin key</strong> will be required — so if the pool key is compromised, the attacker still can't push admin actions without also owning the admin key.</p>
+
+<p>The <code>federation_admin_identities</code> table already exists in the schema (migration 023). When Phase 2.2 ships, enabling <em>write</em> actions on a pool will require registering at least one admin Ed25519 key <em>distinct from the pool key</em>. No admin key → no writes. This is guardian invariant #12.</p>
+
+<h2>Disabling federation completely</h2>
+
+<p>If you ever want to cut your pool off:</p>
+
+<pre><code># Kill switch — instantly stops all federation traffic
+sudo touch /etc/iamine/fed_disable
+
+# Remove kill switch to resume
+sudo rm /etc/iamine/fed_disable</code></pre>
+
+<p>The kill switch is checked on every single federated endpoint. No configuration, no restart, instant effect.</p>
+
+<h2>TL;DR</h2>
+
+<ul style="margin: 1rem 0 1rem 2rem; line-height: 2;">
+<li>🔐 <strong>Everything is signed</strong> — Ed25519, nonces, trust levels.</li>
+<li>👁 <strong>Read is ON by default</strong> — it helps the community, doesn't touch money.</li>
+<li>🔒 <strong>Write is OFF by default</strong> — it can touch money, so you opt in knowingly.</li>
+<li>🤝 <strong>Nothing runs automatically</strong> — every incoming action waits for your manual approve.</li>
+<li>🚪 <strong>You can kill federation instantly</strong> — touch a file, done.</li>
+<li>📜 <strong>Everything is logged</strong> — append-only, both sides, forever.</li>
+</ul>
+
+<p><a href="https://github.com/celluleai/pool">→ See the source on GitHub</a> · <a href="/docs/pool-docker.html">→ Run your own pool</a> · <a href="/admin">→ Open admin</a></p>
+
+<p class="footer">Cellule.ai — AI belongs to those who run it. Federation protocol LIVE since 2026-04-10, Phase 2.1 (read/write split) since 2026-04-15.</p>
+</div>
+</body>
+</html>

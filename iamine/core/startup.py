@@ -69,6 +69,15 @@ async def initialize_pool(pool) -> None:
     except Exception as _re:
         log.warning(f"M11.2 gossip loop schedule failed (non-fatal): {_re}")
 
+    # 5ter. M11.5 Phase 2 — memory gossip loop (conversations + T3/T4/episodes).
+    # No-op unless MEMORY_REPLICATION_ENABLED=true AND MEMORY_GOSSIP_LOOP_ENABLED=true.
+    try:
+        from ..core.memory_replication import memory_gossip_loop
+        asyncio.create_task(memory_gossip_loop(pool))
+        log.info("M11.5 memory gossip loop scheduled (flag-gated)")
+    except Exception as _re:
+        log.warning(f"M11.5 gossip loop schedule failed (non-fatal): {_re}")
+
     # 6. Sync les tokens avec les comptes au démarrage (différé 10s)
     from ..core.accounts import _sync_account_tokens
     asyncio.get_event_loop().call_later(10, _sync_account_tokens)

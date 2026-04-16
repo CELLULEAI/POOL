@@ -197,11 +197,11 @@ async def _check_admin(request: Request, pool_instance=None) -> str | None:
 # ---------------------------------------------------------------------------
 _load_accounts()
 
-_PSEUDO_DEFAULTS = {
-    "david.mourgues@gmail.com": "HARPERSAT",
-    "david@iamine.org": "HARPERSAT",
-    "red@iamine.org": "RED",
-}
+# Mapping email -> pseudo par defaut, charge depuis env IAMINE_PSEUDO_DEFAULTS
+# (JSON string). Utilise uniquement pour migration initiale. Le prod definit
+# les pseudos en DB, ce dict est un fallback vide si la variable n est pas set.
+import json as _json
+_PSEUDO_DEFAULTS = _json.loads(os.environ.get("IAMINE_PSEUDO_DEFAULTS", "{}"))
 _migrated = False
 for _acc in _accounts.values():
     if "pseudo" not in _acc:

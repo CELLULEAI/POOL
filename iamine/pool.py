@@ -69,6 +69,19 @@ app = FastAPI(title="IAMINE Pool", version=__version__)
 # Servir les fichiers statiques (page web)
 static_dir = Path(__file__).parent / "static"
 if static_dir.exists():
+    # Auto-recover: si index.html manque dans le source, copier depuis le wheel installe
+    _wheel_static = Path(__file__).resolve().parent / "static"
+    import importlib.util as _ilu
+    _spec = _ilu.find_spec("iamine")
+    if _spec and _spec.origin:
+        _wheel_static = Path(_spec.origin).parent / "static"
+    if not (static_dir / "index.html").exists() and (_wheel_static / "index.html").exists():
+        import shutil
+        log.warning("static/index.html missing from source — recovering from installed wheel")
+        for _f in _wheel_static.iterdir():
+            if _f.is_file() and not (static_dir / _f.name).exists():
+                shutil.copy2(str(_f), str(static_dir / _f.name))
+                log.info(f"  recovered: {_f.name}")
     app.mount("/static", StaticFiles(directory=str(static_dir), html=True), name="static")
 
 
