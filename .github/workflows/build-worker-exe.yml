@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       iamine_version:
-        description: "iamine-ai version to bundle (blank = latest from cellule.ai pypi)"
+        description: "iamine-ai version to bundle (blank = latest)"
         required: false
         default: ""
       cpu_variant:
-        description: "CPU variant (cpu, cuda)"
+        description: "Variant (used when triggered manually). Tag push builds both."
         required: true
         default: "cpu"
         type: choice
@@ -24,9 +24,13 @@ permissions:
 
 jobs:
   build:
-    name: Build cellule-worker.exe (${{ inputs.cpu_variant || 'cpu' }})
+    name: Build cellule-worker-${{ matrix.variant }}.exe
     runs-on: windows-latest
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: ${{ startsWith(github.ref, 'refs/tags/v') && fromJson('["cpu","cuda"]') || fromJson(format('["{0}"]', inputs.cpu_variant || 'cpu')) }}
 
     steps:
       - name: Checkout repo
@@ -44,7 +48,7 @@ jobs:
           python -m pip install pyinstaller==6.10.0
 
       - name: Install CUDA Toolkit (if cuda variant)
-        if: inputs.cpu_variant == 'cuda'
+        if: matrix.variant == 'cuda'
         uses: Jimver/cuda-toolkit@v0.2.19
         with:
           cuda: '12.5.0'
@@ -54,20 +58,17 @@ jobs:
       - name: Install llama-cpp-python (compile from source)
         shell: pwsh
         env:
-          CPU_VARIANT: ${{ inputs.cpu_variant }}
+          CPU_VARIANT: ${{ matrix.variant }}
         run: |
           if ($env:CPU_VARIANT -eq 'cuda') {
             Write-Host "Building llama-cpp-python with CUDA support"
             $env:CMAKE_ARGS = "-DGGML_CUDA=on"
             $env:FORCE_CMAKE = "1"
-            Write-Host "CMAKE_ARGS=$env:CMAKE_ARGS"
-            Write-Host "CUDA_PATH=$env:CUDA_PATH"
           } else {
             Write-Host "Building llama-cpp-python CPU-only"
           }
           python -m pip install llama-cpp-python --verbose
           if ($env:CPU_VARIANT -eq 'cuda') {
-            Write-Host "Skipping llama_cpp import test (CUDA build, no GPU on runner)"
             python -c "import importlib.util; spec = importlib.util.find_spec('llama_cpp'); print('llama_cpp_module_found' if spec else 'llama_cpp_module_missing')"
           } else {
             python -c "import llama_cpp; print('llama_cpp_imported_ok', getattr(llama_cpp, '__version__', 'unknown'))"
@@ -76,44 +77,31 @@ jobs:
       - name: Install iamine-ai (retry x3)
         shell: pwsh
         env:
-          CPU_VARIANT: ${{ inputs.cpu_variant }}
+          CPU_VARIANT: ${{ matrix.variant }}
         run: |
           $version = "${{ inputs.iamine_version }}"
           $installed = $false
           for ($i = 1; $i -le 3; $i++) {
-            Write-Host "attempt $i/3 ..."
             if ([string]::IsNullOrEmpty($version)) {
-              python -m pip install iamine-ai `
-                --index-url https://cellule.ai/pypi `
-                --extra-index-url https://pypi.org/simple
+              python -m pip install iamine-ai --index-url https://cellule.ai/pypi --extra-index-url https://pypi.org/simple
             } else {
-              python -m pip install "iamine-ai==$version" `
-                --index-url https://cellule.ai/pypi `
-                --extra-index-url https://pypi.org/simple
+              python -m pip install "iamine-ai==$version" --index-url https://cellule.ai/pypi --extra-index-url https://pypi.org/simple
             }
-            if ($LASTEXITCODE -eq 0) {
-              $installed = $true
-              break
-            }
-            Write-Host "retry in 10s..."
+            if ($LASTEXITCODE -eq 0) { $installed = $true; break }
             Start-Sleep -Seconds 10
           }
-          if (-not $installed) {
-            Write-Error "iamine-ai install failed after 3 attempts"
-            exit 1
-          }
+          if (-not $installed) { Write-Error "iamine-ai install failed"; exit 1 }
           if ($env:CPU_VARIANT -ne 'cuda') {
             python -c "import iamine; print('iamine_imported_ok', iamine.__version__)"
           } else {
             python -c "import importlib.util; spec = importlib.util.find_spec('iamine'); print('iamine_module_found' if spec else 'iamine_module_missing')"
           }
 
-      - name: Build .exe (enum DLLs + PyInstaller in one step)
+      - name: Build .exe
         shell: pwsh
         env:
-          CPU_VARIANT: ${{ inputs.cpu_variant }}
+          CPU_VARIANT: ${{ matrix.variant }}
         run: |
-          # Entry-point stub
           $content = @'
           import sys
           from iamine.__main__ import main
@@ -124,23 +112,17 @@ jobs:
           '@
           $content | Out-File -Encoding ascii worker_entry.py
 
-          # Locate llama_cpp DLLs
-          # Use find_spec to locate llama_cpp WITHOUT importing it (CUDA needs a GPU at import)
           $llamaPath = python -c "import importlib.util, os; spec = importlib.util.find_spec('llama_cpp'); print(os.path.dirname(spec.origin))"
           Write-Host "llama_cpp path: $llamaPath"
           $libDir = Join-Path $llamaPath "lib"
-          if (-not (Test-Path $libDir)) {
-            Write-Error "llama_cpp/lib missing"
-            exit 1
-          }
+          if (-not (Test-Path $libDir)) { Write-Error "llama_cpp/lib missing"; exit 1 }
           $dlls = Get-ChildItem $libDir -Filter *.dll
-          Write-Host "Found $($dlls.Count) DLLs in $libDir :"
-          $dlls | ForEach-Object { Write-Host "  $($_.Name) $([math]::Round($_.Length / 1MB, 1)) MB" }
+          Write-Host "Found $($dlls.Count) DLLs"
 
-          # Build PyInstaller args (one add-binary per DLL)
+          $exeName = "cellule-worker-$env:CPU_VARIANT"
           $pyinstArgs = @(
             "--onefile",
-            "--name", "cellule-worker",
+            "--name", $exeName,
             "--paths", $llamaPath,
             "--collect-all", "iamine",
             "--collect-all", "llama_cpp",
@@ -157,55 +139,57 @@ jobs:
             $pyinstArgs += "$($dll.FullName);llama_cpp/lib"
           }
           $pyinstArgs += "worker_entry.py"
-
-          Write-Host "pyinstaller arg count: $($pyinstArgs.Count)"
           & pyinstaller @pyinstArgs
-          if ($LASTEXITCODE -ne 0) {
-            Write-Error "pyinstaller failed exit $LASTEXITCODE"
-            exit 1
-          }
+          if ($LASTEXITCODE -ne 0) { Write-Error "pyinstaller failed"; exit 1 }
           Get-ChildItem dist/
 
       - name: Smoke test .exe (skipped on CUDA - no GPU on runner)
-        if: inputs.cpu_variant != 'cuda'
+        if: matrix.variant != 'cuda'
         shell: pwsh
+        env:
+          CPU_VARIANT: ${{ matrix.variant }}
         run: |
-          .\dist\cellule-worker.exe --help
-          if ($LASTEXITCODE -ne 0) {
-            Write-Error "cellule-worker.exe --help failed"
-            exit 1
-          }
+          $exe = "dist/cellule-worker-$env:CPU_VARIANT.exe"
+          & $exe --help
+          if ($LASTEXITCODE -ne 0) { Write-Error "exe --help failed"; exit 1 }
 
       - name: Report size + fail if too small
         shell: pwsh
+        env:
+          CPU_VARIANT: ${{ matrix.variant }}
         run: |
-          $size = (Get-Item dist/cellule-worker.exe).Length / 1MB
-          Write-Host ("cellule-worker.exe size: {0:N1} MB" -f $size)
+          $exe = "dist/cellule-worker-$env:CPU_VARIANT.exe"
+          $size = (Get-Item $exe).Length / 1MB
+          Write-Host ("{0} size: {1:N1} MB" -f $exe, $size)
           $minSize = 30
-          if ("${{ inputs.cpu_variant }}" -eq 'cuda') { $minSize = 100 }
-          if ($size -lt $minSize) {
-            Write-Error "exe too small ($size MB, expected >=$minSize MB) - DLLs missing"
-            exit 1
-          }
+          if ($env:CPU_VARIANT -eq 'cuda') { $minSize = 100 }
+          if ($size -lt $minSize) { Write-Error "exe too small ($size MB, need >=$minSize)"; exit 1 }
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: cellule-worker-${{ inputs.cpu_variant || 'cpu' }}-windows
-          path: dist/cellule-worker.exe
+          name: cellule-worker-${{ matrix.variant }}-windows
+          path: dist/cellule-worker-${{ matrix.variant }}.exe
           retention-days: 30
 
-      - name: Create GitHub Release (only on tag push)
+      - name: Attach to GitHub Release (only on tag push)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           name: Cellule Worker ${{ github.ref_name }}
           body: |
-            Standalone Windows worker executable (CPU).
-            Install: download cellule-worker.exe and double-click to start.
-            Source: https://github.com/CELLULEAI/POOL
-            Docs: https://cellule.ai/docs/install-worker.html
-          files: dist/cellule-worker.exe
+            Standalone Windows worker executables — PREPROD / BETA.
+
+            - `cellule-worker-cpu.exe` (~45 MB) : any Windows 10/11 PC, no GPU required
+            - `cellule-worker-cuda.exe` (~455 MB) : NVIDIA GPU (CUDA 12.5 runtime bundled)
+
+            Install : download the right file, right-click &rarr; Properties &rarr; Unblock,
+            double-click to start. Worker auto-joins the network.
+
+            Source : https://github.com/CELLULEAI/POOL
+            Docs   : https://cellule.ai/docs/install-worker.html
+            Feedback : please open an issue for any bug or success story.
+          files: dist/cellule-worker-${{ matrix.variant }}.exe
           fail_on_unmatched_files: true
           draft: false
-          prerelease: false
+          prerelease: true
