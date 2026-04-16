@@ -64,6 +64,9 @@ class Conversation:
     meta_compactions: int = 0  # nombre de meta-compactages du resume
     _summary: str = ""    # resume des messages compactes
     _l3_summary: str = ""  # resume recupere depuis PostgreSQL (L3)
+    # Smart routing Phase 5 : tracker le dernier job pour detecter re-prompts rapides
+    last_job_id: str = ""
+    last_response_ts: float = 0.0
 
     # Seuil de meta-compaction : quand le resume depasse ~1500 tokens (~6000 chars)
     SUMMARY_MAX_CHARS: int = 6000

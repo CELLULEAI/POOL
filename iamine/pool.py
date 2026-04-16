@@ -567,6 +567,20 @@ class Pool:
         # Conversation tracking
         conv = self.router.get_or_create_conversation(conv_id, api_token)
 
+        # === SMART ROUTING Phase 5 — detection re-prompt rapide ===
+        # Si l'utilisateur relance une requete <30s apres la reponse precedente,
+        # c'est un signal fort que le routing etait mal adapte (LLM trop petit,
+        # reponse insatisfaisante, erreur de tier). On flag le job precedent
+        # via routing_feedback — ces jobs seront exclus du vote KNN futur.
+        if not tools and conv.last_job_id and conv.last_response_ts > 0:
+            elapsed = time.time() - conv.last_response_ts
+            if 0 < elapsed < 30.0:
+                asyncio.create_task(self.store.log_routing_feedback(
+                    conv.last_job_id, "reprompt_fast",
+                    {"elapsed_sec": round(elapsed, 1), "conv_id": conv.conv_id},
+                ))
+                log.info(f"Phase 5 flag: job {conv.last_job_id} reprompt_fast in {elapsed:.1f}s (conv={conv.conv_id})")
+
         # === SMART ROUTING Phase 2+3+4 — classification du prompt ===
         # Phase 2 : heuristique lexicale (rapide, locale, ~1ms).
         # Phase 3 : KNN pgvector sur jobs.prompt_embedding (~10-50ms).
@@ -909,6 +923,11 @@ class Pool:
                         except Exception:
                             pass
                         break
+
+        # Smart routing Phase 5 : tracker le dernier job pour detecter re-prompts
+        if conv_id:
+            conv.last_job_id = job_id
+            conv.last_response_ts = time.time()
 
         # === SAUVEGARDE CONVERSATION PERSISTANTE (acc_* uniquement, memory_enabled) ===
         if conv_id and conv.api_token and conv.api_token.startswith("acc_") and self._is_memory_enabled(conv.api_token):

@@ -2117,3 +2117,19 @@ async def molecule_events_list(request: Request):
         return {"events": out, "count": len(out)}
     except Exception as e:
         return JSONResponse({"error": str(e)[:200]}, status_code=500)
+
+
+@router.get("/v1/admin/routing_stats")
+async def admin_routing_stats(request: Request):
+    """Smart routing Phase 5 — distribution par tier + mis-routed rate."""
+    admin = await _check_admin(request)
+    if not admin:
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    pool = _pool()
+    hours = int(request.query_params.get("hours", "24") or 24)
+    hours = min(max(hours, 1), 720)
+    try:
+        stats = await pool.store.routing_stats(since_hours=hours)
+        return stats
+    except Exception as e:
+        return JSONResponse({"error": str(e)[:200]}, status_code=500)

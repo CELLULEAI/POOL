@@ -1008,6 +1008,10 @@ class PostgresStore(Store):
         """KNN vote pour smart routing Phase 3.
 
         Query les k voisins les plus proches via ivfflat cosine, vote majorite.
+        Exclut les jobs flags reprompt_fast (Phase 5 feedback loop) car un
+        re-prompt rapide indique que le routing precedent etait mauvais — on
+        ne veut pas propager la mauvaise decision dans le KNN.
+
         Retourne (tier, confidence, n_found) ou None si cold start.
         """
         if not embedding or len(embedding) != 384:
@@ -1016,12 +1020,17 @@ class PostgresStore(Store):
         async with self.pool.acquire() as conn:
             rows = await conn.fetch(
                 """
-                SELECT routed_tier
-                FROM jobs
-                WHERE prompt_embedding IS NOT NULL
-                  AND routed_tier IS NOT NULL
-                  AND route_method IN ('heuristic', 'llm_idle', 'knn')
-                ORDER BY prompt_embedding <=> $1::vector
+                SELECT j.routed_tier
+                FROM jobs j
+                LEFT JOIN (
+                    SELECT DISTINCT job_id FROM routing_feedback
+                    WHERE feedback_signal = 'reprompt_fast'
+                ) f ON f.job_id = j.job_id
+                WHERE j.prompt_embedding IS NOT NULL
+                  AND j.routed_tier IS NOT NULL
+                  AND j.route_method IN ('heuristic', 'llm_idle', 'knn')
+                  AND f.job_id IS NULL
+                ORDER BY j.prompt_embedding <=> $1::vector
                 LIMIT $2
                 """,
                 emb_literal, k,
@@ -1034,6 +1043,62 @@ class PostgresStore(Store):
         top_tier, top_n = max(counts.items(), key=lambda kv: kv[1])
         conf = top_n / len(rows)
         return top_tier, conf, len(rows)
+
+    async def log_routing_feedback(self, job_id: str, signal: str, metadata: dict | None = None) -> None:
+        """Enregistre un signal de feedback sur le routing d'un job (Phase 5).
+
+        Signaux : reprompt_fast | regenerate | user_flag | success
+        """
+        import json as _json
+        meta_json = _json.dumps(metadata) if metadata else None
+        async with self.pool.acquire() as conn:
+            try:
+                await conn.execute(
+                    "INSERT INTO routing_feedback (job_id, feedback_signal, metadata) VALUES ($1, $2, $3::jsonb)",
+                    job_id, signal, meta_json,
+                )
+            except Exception as e:
+                log.debug(f"log_routing_feedback failed (non-blocking): {e}")
+
+    async def routing_stats(self, since_hours: int = 24) -> dict:
+        """Agregats pour /v1/admin/routing_stats (Phase 5)."""
+        async with self.pool.acquire() as conn:
+            distribution = await conn.fetch(
+                f"""
+                SELECT routed_tier, route_method, COUNT(*) as n,
+                       ROUND(AVG(duration_sec)::numeric, 2) as avg_duration,
+                       ROUND(AVG(tokens_per_sec)::numeric, 1) as avg_tps
+                FROM jobs
+                WHERE created > NOW() - INTERVAL '{int(since_hours)} hours'
+                  AND routed_tier IS NOT NULL
+                GROUP BY routed_tier, route_method
+                ORDER BY n DESC
+                """,
+            )
+            mis_routed = await conn.fetchrow(
+                f"""
+                SELECT COUNT(DISTINCT f.job_id) as flagged,
+                       (SELECT COUNT(*) FROM jobs WHERE created > NOW() - INTERVAL '{int(since_hours)} hours') as total
+                FROM routing_feedback f
+                JOIN jobs j ON j.job_id = f.job_id
+                WHERE f.feedback_signal = 'reprompt_fast'
+                  AND j.created > NOW() - INTERVAL '{int(since_hours)} hours'
+                """,
+            )
+        total = mis_routed["total"] or 0
+        flagged = mis_routed["flagged"] or 0
+        return {
+            "window_hours": since_hours,
+            "total_jobs": total,
+            "mis_routed_count": flagged,
+            "mis_routed_rate": round(flagged / total, 3) if total else 0.0,
+            "distribution": [
+                {"routed_tier": r["routed_tier"], "route_method": r["route_method"],
+                 "n": r["n"], "avg_duration": float(r["avg_duration"] or 0),
+                 "avg_tps": float(r["avg_tps"] or 0)}
+                for r in distribution
+            ],
+        }
 
     async def get_job_count(self) -> int:
         async with self.pool.acquire() as conn:
