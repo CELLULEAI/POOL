@@ -52,6 +52,11 @@ foreach ($f in $pyFiles) {
 Get-ChildItem -Path $llamaPath -Filter __pycache__ -Recurse -Directory | Remove-Item -Recurse -Force
 
 # Verify : Python should import llama_cpp as package correctly
+# CUDA variants need cudart DLLs in PATH to load llama.dll
+if ($env:CUDA_PATH -and (Test-Path "$env:CUDA_PATHin")) {
+    $env:Path = "$env:CUDA_PATHin;$env:Path"
+    Write-Host "CUDA_PATH added to PATH for import verify"
+}
 python -c @"
 import llama_cpp
 import llama_cpp._ctypes_extensions
