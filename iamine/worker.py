@@ -226,16 +226,16 @@ class Worker:
     def _restart_self(self) -> None:
         """Relance le process worker (fonctionne sur Linux/systemd ET Windows/manuel)."""
         log.info("Restarting worker process...")
-        # Reconstruire la commande avec -m iamine pour eviter l'erreur
-        # "relative import with no known parent package" sur Windows
-        # sys.argv typique : ['.../__main__.py', 'worker', '-c', 'config.json']
-        # On garde les args apres le nom du script
         args = sys.argv[1:] if sys.argv else []
-        cmd = [sys.executable, "-m", "iamine"] + args
+        # Frozen exe (PyInstaller) : sys.executable EST le binaire iamine.
+        # Ne pas prepender "-m iamine" (argparse verrait "iamine" comme commande).
+        if getattr(sys, "frozen", False):
+            cmd = [sys.executable] + args
+        else:
+            cmd = [sys.executable, "-m", "iamine"] + args
         try:
             os.execv(sys.executable, cmd)
         except Exception:
-            # Fallback Windows : subprocess + exit
             import subprocess
             subprocess.Popen(cmd)
             sys.exit(0)
@@ -387,6 +387,13 @@ class Worker:
     async def _cmd_self_update(self, ws) -> None:
         """Met a jour le package iamine-ai depuis le PyPI prive."""
         import subprocess
+        # Frozen exe (PyInstaller) : pip n'existe pas dans le bundle.
+        # L'utilisateur doit re-telecharger l'exe depuis cellule.ai.
+        if getattr(sys, "frozen", False):
+            log.info("Self-update skipped: running as bundled exe. "
+                     "Re-download latest from https://cellule.ai/docs/install-worker.html")
+            await self._send(ws, {"type": "command_ack", "cmd": "self_update", "status": "skipped_frozen"})
+            return
         log.info("Self-update: pip install --upgrade iamine-ai...")
         await self._send(ws, {"type": "command_ack", "cmd": "self_update", "status": "updating"})
         # Detecter si on est dans un venv (pas besoin de --break-system-packages)
