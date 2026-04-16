@@ -30,6 +30,7 @@ include = ["iamine*"]
 
 [tool.setuptools.package-data]
 iamine = [
+    "*.ico",
     "static/*.html",
     "static/*.js",
     "static/*.css",
