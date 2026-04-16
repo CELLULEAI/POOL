@@ -567,24 +567,43 @@ class Pool:
         # Conversation tracking
         conv = self.router.get_or_create_conversation(conv_id, api_token)
 
-        # === SMART ROUTING Phase 2 — classification heuristique du prompt ===
-        # On classe le dernier message user pour guider le router.
+        # === SMART ROUTING Phase 2+4 — classification du prompt ===
+        # Phase 2 : heuristique lexicale (rapide, locale).
+        # Phase 4 : si heuristique ambigue (confidence < 0.7), demander a un
+        # worker LLM idle de classifier. Doctrine "pool travaille".
         # Skip pour les tool-calls (le client gere son propre contexte/prompt).
         classified_tier = ""
         classified_conf: float | None = None
+        classified_method = ""
+        last_user_for_classify = ""
         if not tools:
             try:
                 from .core.routing_heuristic import classify_prompt
-                last_user = ""
                 for m in reversed(messages):
                     if m.get("role") == "user":
-                        last_user = m.get("content", "") or ""
+                        last_user_for_classify = m.get("content", "") or ""
                         break
-                if last_user:
-                    classified_tier, classified_conf = classify_prompt(last_user)
+                if last_user_for_classify:
+                    classified_tier, classified_conf = classify_prompt(last_user_for_classify)
+                    classified_method = "heuristic"
             except Exception as e:
                 log.warning(f"classify_prompt failed (non-blocking): {e}")
-                classified_tier, classified_conf = "", None
+
+            # Phase 4 : fallback LLM idle classifier si heuristique ambigue
+            if last_user_for_classify and classified_conf is not None and classified_conf < 0.7:
+                try:
+                    from .core.routing_llm_classify import classify_via_idle_worker
+                    llm_result = await classify_via_idle_worker(self, last_user_for_classify)
+                    if llm_result:
+                        llm_tier, llm_conf, clf_wid = llm_result
+                        # override uniquement si la confidence LLM > heuristique
+                        if llm_conf > (classified_conf or 0):
+                            log.info(f"LLM classify override: {classified_tier}({classified_conf:.2f}) -> {llm_tier}({llm_conf:.2f}) via {clf_wid}")
+                            classified_tier = llm_tier
+                            classified_conf = llm_conf
+                            classified_method = "llm_idle"
+                except Exception as e:
+                    log.warning(f"classify_via_idle failed (non-blocking): {e}")
 
         # --- M13: Trigger consolidation if pending observations ---
         if AGENT_MEMORY_ENABLED and api_token:
@@ -883,7 +902,7 @@ class Pool:
             from .db import JobRecord
             if classified_tier:
                 logged_tier = classified_tier
-                logged_method = "heuristic"
+                logged_method = classified_method or "heuristic"
                 logged_conf = classified_conf
             else:
                 model_path_log = (worker.info.get("model_path") or "").lower()

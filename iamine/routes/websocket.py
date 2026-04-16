@@ -153,6 +153,15 @@ async def worker_ws(ws: WebSocket):
                 status = msg.get("status", "?")
                 log.info(f"Command ACK from {worker_id}: {cmd} → {status}")
 
+            elif msg_type == "classify_result":
+                # Smart routing Phase 4 — reponse d'un worker idle classifier
+                task_id = msg.get("task_id", "")
+                if task_id and hasattr(pool, "_classify_futures"):
+                    future = pool._classify_futures.pop(task_id, None)
+                    if future and not future.done():
+                        future.set_result(msg)
+                log.debug(f"classify_result from {worker_id} task={task_id} tier={msg.get('tier')}")
+
     except WebSocketDisconnect:
         pass
     finally:

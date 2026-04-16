@@ -135,7 +135,7 @@ class Worker:
             async for raw in ws:
                 msg = json.loads(raw)
                 msg_type = msg.get("type")
-                if msg_type in ("job", "delegate"):
+                if msg_type in ("job", "delegate", "classify_task"):
                     # Executer en parallele — ne bloque pas la boucle de messages
                     asyncio.create_task(self._handle_message(ws, msg))
                 else:
@@ -153,6 +153,10 @@ class Worker:
             task = msg.get("task_type", "?")
             log.info(f"DELEGATE from {src} ({task}) — helping...")
             await self._handle_job(ws, msg)
+        elif msg_type == "classify_task":
+            # Smart routing Phase 4 : le pool demande une classification de prompt.
+            # Le pool ne l'envoie qu'aux workers idle (doctrine : pool travaille).
+            asyncio.create_task(self._handle_classify(ws, msg))
         elif msg_type == "reward":
             amount = msg.get("amount", 0)
             label = msg.get("label", "REWARD")
@@ -236,6 +240,68 @@ class Worker:
             })
 
         self.state = WorkerState.IDLE
+
+    async def _handle_classify(self, ws, msg: dict) -> None:
+        """Smart routing Phase 4 — classifie un prompt user en tier.
+
+        Le pool envoie ce message quand l'heuristique lexicale est ambigue
+        (confidence < 0.7). Le worker (idle, typiquement le plus petit dispo)
+        repond avec tier + confidence. Bypass job_id / credits : ce n'est pas
+        un vrai job, juste une micro-inference de triage.
+
+        Doctrine David : tout le pool travaille, pas de worker dedie.
+        """
+        task_id = msg.get("task_id", "?")
+        prompt = (msg.get("prompt") or "")[:500]  # cap input
+        timeout_ms = int(msg.get("timeout_ms", 3000))
+
+        classifier_prompt = (
+            "You are a prompt classifier. Classify the user prompt into exactly ONE of these categories:\n"
+            "- small  : trivial chat, greeting, short Q&A (2B sufficient)\n"
+            "- medium : general question, explanation, chat (9B)\n"
+            "- code   : code writing, debug, refactor, API (Coder/30B+)\n"
+            "- large  : long analysis, complex reasoning (27B+)\n\n"
+            "Respond with ONE WORD ONLY : small, medium, code, or large.\n\n"
+            f"USER PROMPT: \"{prompt}\"\n\n"
+            "CATEGORY:"
+        )
+        try:
+            loop = asyncio.get_event_loop()
+            result = await asyncio.wait_for(
+                loop.run_in_executor(
+                    None, self.engine.generate,
+                    [{"role": "user", "content": classifier_prompt}],
+                    10, None,
+                ),
+                timeout=max(1.0, timeout_ms / 1000.0),
+            )
+            raw = (getattr(result, "text", "") or "").strip().lower()
+            tier = ""
+            for k in ("small", "medium", "code", "large"):
+                if k in raw:
+                    tier = k
+                    break
+            await self._send(ws, {
+                "type": "classify_result",
+                "task_id": task_id,
+                "worker_id": self.config.pool.worker_id,
+                "tier": tier,
+                "confidence": 0.85 if tier else 0.0,
+                "raw": raw[:60],
+            })
+            log.debug(f"classify task_id={task_id} -> tier={tier} raw={raw[:40]!r}")
+        except asyncio.TimeoutError:
+            await self._send(ws, {
+                "type": "classify_result", "task_id": task_id,
+                "worker_id": self.config.pool.worker_id,
+                "tier": "", "confidence": 0.0, "error": "timeout",
+            })
+        except Exception as e:
+            await self._send(ws, {
+                "type": "classify_result", "task_id": task_id,
+                "worker_id": self.config.pool.worker_id,
+                "tier": "", "confidence": 0.0, "error": str(e)[:80],
+            })
 
     def _restart_self(self) -> None:
         """Relance le process worker (Linux/systemd, Windows frozen, Windows dev)."""
