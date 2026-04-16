@@ -149,6 +149,7 @@ jobs:
             "--onefile",
             "--name", $exeName,
             "--collect-all", "iamine",
+            "--collect-all", "numpy",
             "--collect-submodules", "iamine",
             "--hidden-import=aiohttp",
             "--hidden-import=websockets",
