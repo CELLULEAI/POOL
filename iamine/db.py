@@ -172,6 +172,9 @@ class JobRecord:
     model: str = ""
     credits_earned: float = 0.0
     created: float = 0.0
+    routed_tier: str = ""                 # small | medium | large | code
+    route_confidence: float | None = None  # [0.0, 1.0] — None si pas classifié
+    route_method: str = ""                 # passive | heuristic | knn | llm_idle | fallback
 
 
 @dataclass
@@ -987,10 +990,12 @@ class PostgresStore(Store):
     async def log_job(self, record: JobRecord) -> None:
         async with self.pool.acquire() as conn:
             await conn.execute("""
-                INSERT INTO jobs (job_id, worker_id, tokens_generated, tokens_per_sec, duration_sec, model, credits_earned)
-                VALUES ($1,$2,$3,$4,$5,$6,$7)
+                INSERT INTO jobs (job_id, worker_id, tokens_generated, tokens_per_sec, duration_sec, model, credits_earned,
+                                  routed_tier, route_confidence, route_method)
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
             """, record.job_id, record.worker_id, record.tokens_generated,
-                record.tokens_per_sec, record.duration_sec, record.model, record.credits_earned)
+                record.tokens_per_sec, record.duration_sec, record.model, record.credits_earned,
+                record.routed_tier or None, record.route_confidence, record.route_method or None)
             await conn.execute("UPDATE workers SET total_jobs=total_jobs+1 WHERE worker_id=$1", record.worker_id)
 
     async def get_job_count(self) -> int:

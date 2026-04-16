@@ -850,6 +850,39 @@ class Pool:
         if conv_id and conv.api_token and conv.api_token.startswith("acc_") and self._is_memory_enabled(conv.api_token):
             asyncio.create_task(self._save_conv_background(conv))
 
+        # === SMART ROUTING — Phase 1 : instrumentation passive ===
+        # Log chaque job avec le tier effectivement servi (pas de classification encore,
+        # on mesure la distribution actuelle pour valider le gap avant Phase 2+).
+        # Voir project_todo_smart_routing.md
+        try:
+            from .db import JobRecord
+            model_path_log = (worker.info.get("model_path") or "").lower()
+            params_log = (worker.info.get("params") or "").upper()
+            if "coder" in model_path_log:
+                served_tier = "code"
+            elif "35b" in model_path_log or "27b" in model_path_log or params_log in ("27B", "35B"):
+                served_tier = "large"
+            elif "9b" in model_path_log or params_log == "9B":
+                served_tier = "medium"
+            elif "2b" in model_path_log or "4b" in model_path_log or params_log in ("2B", "4B"):
+                served_tier = "small"
+            else:
+                served_tier = ""
+            asyncio.create_task(self.store.log_job(JobRecord(
+                job_id=job_id,
+                worker_id=worker.worker_id,
+                tokens_generated=tokens_gen,
+                tokens_per_sec=float(job_tps or 0),
+                duration_sec=float(result.get("duration_sec", 0) or 0),
+                model=result.get("model", "") or worker.info.get("model_path", ""),
+                credits_earned=float(result.get("credits_earned", 0) or 0),
+                routed_tier=served_tier,
+                route_confidence=None,
+                route_method="passive",
+            )))
+        except Exception as e:
+            log.warning(f"log_job (routing instrumentation) failed: {e}")
+
         result["conv_id"] = conv.conv_id
         result["worker_id"] = worker.worker_id
 
