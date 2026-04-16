@@ -241,6 +241,12 @@ launchctl load ~/Library/LaunchAgents/ai.cellule.worker.plist</code></pre>
 <td style="padding:.5rem;">~300–500 MB</td>
 <td style="padding:.5rem;" data-i18n="cuda_speed">50–200 t/s on NVIDIA RTX (Qwen 4B–14B)</td>
 </tr>
+<tr style="background:rgba(251,191,36,0.04);">
+<td style="padding:.5rem;"><code>cellule-proxy.exe</code></td>
+<td style="padding:.5rem;" data-i18n="proxy_for">You already run your own LLM (llama-server / Ollama / vLLM / LocalAI)</td>
+<td style="padding:.5rem;">~15–25 MB</td>
+<td style="padding:.5rem;" data-i18n="proxy_speed">Depends on your upstream LLM (you bring it)</td>
+</tr>
 </tbody>
 </table>
 
@@ -438,6 +444,8 @@ var I18N = {
         cpu_speed: "5\u201315 t/s on modern CPUs (Qwen 2B\u20134B)",
         cuda_for: "Windows PC with NVIDIA GPU (CUDA 12+)",
         cuda_speed: "50\u2013200 t/s on NVIDIA RTX (Qwen 4B\u201314B)",
+        proxy_for: "You already run your own LLM (llama-server / Ollama / vLLM / LocalAI)",
+        proxy_speed: "Depends on your upstream LLM (you bring it)",
         no_gpu_cta: "No GPU ? No problem.",
         no_gpu_body: "The <strong>CPU</strong> build runs on any Windows 10/11 machine \u2014 the network needs contributors of all kinds, not just gaming rigs. Your idle office laptop, your old desktop, your mini PC : all of them can serve inferences on Qwen 2B/4B at honest speed. Every worker strengthens the molecule.",
         which_q: "Got an NVIDIA GPU ?",
@@ -530,6 +538,8 @@ var I18N = {
         cpu_speed: "5\u201315 t/s sur CPU moderne (Qwen 2B\u20134B)",
         cuda_for: "PC Windows avec GPU NVIDIA (CUDA 12+)",
         cuda_speed: "50\u2013200 t/s sur NVIDIA RTX (Qwen 4B\u201314B)",
+        proxy_for: "Tu fais d\u00e9j\u00e0 tourner ton propre LLM (llama-server / Ollama / vLLM / LocalAI)",
+        proxy_speed: "D\u00e9pend de ton LLM amont (c\u0027est toi qui l\u0027apportes)",
         no_gpu_cta: "Pas de GPU ? Pas de souci.",
         no_gpu_body: "La version <strong>CPU</strong> tourne sur n'importe quel Windows 10/11 \u2014 le r\u00e9seau a besoin de contributeurs de toutes sortes, pas seulement des PC gamer. Ton laptop pro inactif, ton vieux desktop, ton mini-PC : tous peuvent servir des inf\u00e9rences Qwen 2B/4B \u00e0 vitesse honn\u00eate. Chaque worker renforce la mol\u00e9cule.",
         which_q: "Tu as un GPU NVIDIA ?",
