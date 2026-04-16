@@ -227,12 +227,14 @@ class Worker:
         """Relance le process worker (fonctionne sur Linux/systemd ET Windows/manuel)."""
         log.info("Restarting worker process...")
         args = sys.argv[1:] if sys.argv else []
-        # Frozen exe (PyInstaller) : sys.executable EST le binaire iamine.
-        # Ne pas prepender "-m iamine" (argparse verrait "iamine" comme commande).
+        # Frozen exe (PyInstaller one-file) : sys.executable EST le binaire iamine.
+        # os.execv sur Windows casse le cleanup _MEI (module unicodedata introuvable
+        # apres restart). Sortir proprement + spawn fresh process.
         if getattr(sys, "frozen", False):
-            cmd = [sys.executable] + args
-        else:
-            cmd = [sys.executable, "-m", "iamine"] + args
+            import subprocess
+            subprocess.Popen([sys.executable] + args)
+            sys.exit(0)
+        cmd = [sys.executable, "-m", "iamine"] + args
         try:
             os.execv(sys.executable, cmd)
         except Exception:
