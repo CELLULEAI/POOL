@@ -1,35 +1,37 @@
 name: Build Windows Worker .exe
 
-# Triggers:
-#   - manual dispatch (workflow_dispatch) - anytime
-#   - tag push matching "v*-worker" (e.g. v0.2.72-worker)
 on:
   workflow_dispatch:
     inputs:
       iamine_version:
-        description: 'iamine-ai version to bundle (blank = latest from cellule.ai pypi)'
+        description: "iamine-ai version to bundle (blank = latest)"
         required: false
-        default: ''
+        default: ""
       cpu_variant:
-        description: 'CPU variant (cpu, cuda)'
+        description: "Variant (used when triggered manually). Tag push builds all 3."
         required: true
-        default: 'cpu'
+        default: "cpu"
         type: choice
         options:
           - cpu
           - cuda
+          - proxy
   push:
     tags:
-      - 'v*-worker'
+      - "v*-worker"
 
 permissions:
-  contents: write  # needed to create GitHub Releases
+  contents: write
 
 jobs:
   build:
-    name: Build cellule-worker.exe (${{ inputs.cpu_variant || 'cpu' }})
+    name: Build cellule-worker-${{ matrix.variant }}.exe
     runs-on: windows-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: ${{ startsWith(github.ref, 'refs/tags/v') && fromJson('["cpu","cuda","proxy"]') || fromJson(format('["{0}"]', inputs.cpu_variant || 'cpu')) }}
 
     steps:
       - name: Checkout repo
@@ -38,106 +40,234 @@ jobs:
       - name: Setup Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Upgrade pip + install tools
         shell: pwsh
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          python -m pip install pyinstaller==6.10.0
+          python -m pip install pyinstaller==6.13.0
 
-      - name: Install iamine-ai
+      - name: Install CUDA Toolkit (if cuda variant)
+        if: matrix.variant == 'cuda'
+        uses: Jimver/cuda-toolkit@v0.2.19
+        with:
+          cuda: '12.5.0'
+          method: 'network'
+          sub-packages: '["nvcc", "cudart", "cublas", "cublas_dev", "thrust", "curand", "curand_dev", "visual_studio_integration"]'
+
+      - name: Install llama-cpp-python (compile from source)
+        if: matrix.variant != 'proxy'
         shell: pwsh
+        env:
+          CPU_VARIANT: ${{ matrix.variant }}
+        run: |
+          if ($env:CPU_VARIANT -eq 'cuda') {
+            Write-Host "Building llama-cpp-python with CUDA support"
+            $env:CMAKE_ARGS = "-DGGML_CUDA=on"
+            $env:FORCE_CMAKE = "1"
+          } else {
+            Write-Host "Building llama-cpp-python CPU-only"
+          }
+          python -m pip install llama-cpp-python --verbose
+          if ($env:CPU_VARIANT -eq 'cuda') {
+            python -c "import importlib.util; spec = importlib.util.find_spec('llama_cpp'); print('llama_cpp_module_found' if spec else 'llama_cpp_module_missing')"
+          } else {
+            python -c "import llama_cpp; print('llama_cpp_imported_ok', getattr(llama_cpp, '__version__', 'unknown'))"
+          }
+
+      - name: Plan B — rename llama_cpp/llama_cpp.py to break PyInstaller collision
+        if: matrix.variant != 'proxy'
+        shell: pwsh
+        run: |
+          & .pyinstaller-hooks/plan_b_rename_llama_cpp.ps1
+
+      - name: Install iamine-ai (retry x3)
+        shell: pwsh
+        env:
+          CPU_VARIANT: ${{ matrix.variant }}
         run: |
           $version = "${{ inputs.iamine_version }}"
-          if ([string]::IsNullOrEmpty($version)) {
-            python -m pip install iamine-ai `
-              --index-url https://iamine.org/pypi `
-              --extra-index-url https://pypi.org/simple
-          } else {
-            python -m pip install "iamine-ai==$version" `
-              --index-url https://iamine.org/pypi `
-              --extra-index-url https://pypi.org/simple
+          $installed = $false
+          for ($i = 1; $i -le 3; $i++) {
+            if ([string]::IsNullOrEmpty($version)) {
+              python -m pip install iamine-ai --index-url https://cellule.ai/pypi --extra-index-url https://pypi.org/simple
+            } else {
+              python -m pip install "iamine-ai==$version" --index-url https://cellule.ai/pypi --extra-index-url https://pypi.org/simple
+            }
+            if ($LASTEXITCODE -eq 0) { $installed = $true; break }
+            Start-Sleep -Seconds 10
           }
-          python -c "import iamine; print('installed iamine', iamine.__version__)"
+          if (-not $installed) { Write-Error "iamine-ai install failed"; exit 1 }
+          if ($env:CPU_VARIANT -ne 'cuda') {
+            python -c "import iamine; print('iamine_imported_ok', iamine.__version__)"
+          } else {
+            python -c "import importlib.util; spec = importlib.util.find_spec('iamine'); print('iamine_module_found' if spec else 'iamine_module_missing')"
+          }
 
-      - name: Write entry-point stub
+      - name: Build .exe
         shell: pwsh
+        env:
+          CPU_VARIANT: ${{ matrix.variant }}
         run: |
-          @'
-          """PyInstaller entry point for cellule-worker.exe.
-
-          Runs the iamine worker in --auto mode by default. Accepts any
-          additional iamine CLI args passed on the command line.
-          """
+          # Entry stub : worker --auto by default, or proxy if variant=proxy
+          if ($env:CPU_VARIANT -eq 'proxy') {
+            $content = @'
           import sys
           from iamine.__main__ import main
-
+          if __name__ == "__main__":
+              if len(sys.argv) == 1:
+                  print("Cellule Proxy - bring your own LLM to the network")
+                  print("")
+                  print("Usage:")
+                  print("  cellule-proxy --upstream http://localhost:8000 --model my-model-name")
+                  print("")
+                  print("Full guide: https://cellule.ai/docs/proxy-mode.html")
+                  sys.exit(0)
+              sys.argv = [sys.argv[0], "proxy"] + sys.argv[1:]
+              main()
+          '@
+            $exeName = "cellule-proxy"
+          } else {
+            $content = @'
+          import sys
+          from iamine.__main__ import main
           if __name__ == "__main__":
               if len(sys.argv) == 1:
                   sys.argv += ["worker", "--auto"]
               main()
-          '@ | Out-File -Encoding ascii worker_entry.py
-          Get-Content worker_entry.py
+          '@
+            $exeName = "cellule-worker-$env:CPU_VARIANT"
+          }
+          $content | Out-File -Encoding ascii worker_entry.py
 
-      - name: Build .exe with PyInstaller
-        shell: pwsh
-        run: |
-          pyinstaller `
-            --onefile `
-            --name cellule-worker `
-            --icon NONE `
-            --collect-all iamine `
-            --collect-all llama_cpp `
-            --collect-submodules iamine `
-            --hidden-import=aiohttp `
-            --hidden-import=websockets `
-            --hidden-import=asyncpg `
-            --hidden-import=cryptography `
-            --console `
-            worker_entry.py
-          Get-ChildItem dist/
+          # Resolve icon path from the installed iamine package
+          $iconPath = python -c "import iamine, os; p = os.path.join(os.path.dirname(iamine.__file__), 'cellule.ico'); print(p if os.path.exists(p) else '')"
+          if ([string]::IsNullOrEmpty($iconPath)) { Write-Host "(no icon found, building without)"; $iconArgs = @() } else { Write-Host "Using icon: $iconPath"; $iconArgs = @("--icon", $iconPath) }
 
-      - name: Smoke test .exe
-        shell: pwsh
-        run: |
-          .\dist\cellule-worker.exe --help
-          if ($LASTEXITCODE -ne 0) {
-            Write-Error "cellule-worker.exe --help failed with exit $LASTEXITCODE"
-            exit 1
+          $pyinstArgs = @(
+            "--onedir",
+            "--contents-directory", "_internal",
+            "--name", $exeName,
+            "--collect-all", "iamine",
+            "--collect-all", "numpy",
+            "--collect-submodules", "iamine",
+            "--hidden-import=aiohttp",
+            "--hidden-import=websockets",
+            "--hidden-import=asyncpg",
+            "--hidden-import=cryptography",
+            "--console"
+          )
+
+          # Bundle llama_cpp DLLs only for worker variants (proxy does not need them)
+          if ($env:CPU_VARIANT -ne 'proxy') {
+            $llamaPath = python -c "import importlib.util, os; spec = importlib.util.find_spec('llama_cpp'); print(os.path.dirname(spec.origin))"
+            Write-Host "llama_cpp path: $llamaPath"
+            $libDir = Join-Path $llamaPath "lib"
+            if (-not (Test-Path $libDir)) { Write-Error "llama_cpp/lib missing"; exit 1 }
+            $dlls = Get-ChildItem $libDir -Filter *.dll
+            Write-Host "Found $($dlls.Count) DLLs"
+            # Fix collision : llama_cpp is both a module file (llama_cpp.py) AND a
+            # package directory. Force PyInstaller to bundle it as a package so
+            # sub-imports like llama_cpp._ctypes_extensions work at runtime.
+            $pyinstArgs += @("--paths", $llamaPath, "--additional-hooks-dir", ".pyinstaller-hooks", "--collect-all", "llama_cpp", "--hidden-import=llama_cpp")
+            foreach ($dll in $dlls) {
+              $pyinstArgs += "--add-binary"
+              $pyinstArgs += "$($dll.FullName);llama_cpp/lib"
+            }
+          } else {
+            Write-Host "Proxy variant : skipping llama_cpp bundling"
           }
 
-      - name: Report size
-        shell: pwsh
-        run: |
-          $size = (Get-Item dist/cellule-worker.exe).Length / 1MB
-          Write-Host ("cellule-worker.exe size: {0:N1} MB" -f $size)
+          $pyinstArgs = $iconArgs + $pyinstArgs
+          $pyinstArgs += "worker_entry.py"
+          & pyinstaller @pyinstArgs
+          if ($LASTEXITCODE -ne 0) { Write-Error "pyinstaller failed"; exit 1 }
+          Get-ChildItem dist/
 
-      - name: Upload artifact (always, even without a tag)
+      - name: Smoke test .exe (skipped on CUDA - no GPU on runner)
+        if: matrix.variant != 'cuda'
+        shell: pwsh
+        env:
+          CPU_VARIANT: ${{ matrix.variant }}
+        run: |
+          if ($env:CPU_VARIANT -eq 'proxy') {
+            $exe = "dist/cellule-proxy/cellule-proxy.exe"
+            # Proxy with no args prints usage and exits 0 -> OK smoke test
+            & $exe
+            if ($LASTEXITCODE -ne 0) { Write-Error "proxy smoke failed"; exit 1 }
+          } else {
+            $exe = "dist/cellule-worker-$env:CPU_VARIANT/cellule-worker-$env:CPU_VARIANT.exe"
+            & $exe --help
+            if ($LASTEXITCODE -ne 0) { Write-Error "exe --help failed"; exit 1 }
+          }
+
+      - name: Report size + fail if too small
+        shell: pwsh
+        env:
+          CPU_VARIANT: ${{ matrix.variant }}
+        run: |
+          if ($env:CPU_VARIANT -eq 'proxy') {
+            $name = "cellule-proxy"
+            $minSize = 30
+          } else {
+            $name = "cellule-worker-$env:CPU_VARIANT"
+            $minSize = 80
+            if ($env:CPU_VARIANT -eq 'cuda') { $minSize = 200 }
+          }
+          $dirPath = "dist/$name"
+          $size = (Get-ChildItem -Path $dirPath -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB
+          Write-Host ("{0}/ size: {1:N1} MB (unzipped)" -f $dirPath, $size)
+          if ($size -lt $minSize) { Write-Error "dist dir too small ($size MB, need >=$minSize)"; exit 1 }
+
+      - name: Pack onedir to ZIP
+        shell: pwsh
+        env:
+          CPU_VARIANT: ${{ matrix.variant }}
+        run: |
+          if ($env:CPU_VARIANT -eq 'proxy') {
+            $name = "cellule-proxy"
+          } else {
+            $name = "cellule-worker-$env:CPU_VARIANT"
+          }
+          $dirPath = "dist/$name"
+          $zipPath = "dist/$name.zip"
+          Compress-Archive -Path $dirPath -DestinationPath $zipPath -CompressionLevel Optimal
+          $zipSize = (Get-Item $zipPath).Length / 1MB
+          Write-Host ("{0} zipped: {1:N1} MB" -f $zipPath, $zipSize)
+
+      - name: Upload artifact (ZIP)
         uses: actions/upload-artifact@v4
         with:
-          name: cellule-worker-${{ inputs.cpu_variant || 'cpu' }}-windows
-          path: dist/cellule-worker.exe
+          name: cellule-${{ matrix.variant == 'proxy' && 'proxy' || format('worker-{0}', matrix.variant) }}-windows
+          path: dist/cellule-${{ matrix.variant == 'proxy' && 'proxy' || format('worker-{0}', matrix.variant) }}.zip
           retention-days: 30
 
-      - name: Create GitHub Release (only on tag push)
+      - name: Attach to GitHub Release (only on tag push)
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           name: Cellule Worker ${{ github.ref_name }}
           body: |
-            Standalone Windows worker executable.
+            Windows worker packages (onedir + ZIP distribution).
 
-            **Install** : download `cellule-worker.exe`, double-click to start.
-            If Windows SmartScreen warns : right-click &rarr; Properties &rarr; Unblock.
+            - `cellule-worker-cpu.zip` (~60 MB) : any Windows 10/11 PC, no GPU required
+            - `cellule-worker-cuda.zip` (~250 MB) : NVIDIA GPU (CUDA 12.5 runtime bundled)
+            - `cellule-proxy.zip` (~40 MB) : bring your own LLM (llama-server / Ollama / vLLM)
 
-            **Variant** : ${{ inputs.cpu_variant || 'cpu' }}
-            **iamine-ai bundled** : `${{ inputs.iamine_version || 'latest from cellule.ai/pypi' }}`
-            **Size** : see artifact metadata
+            **Install** :
+            1. Download the right `.zip`
+            2. Right-click &rarr; Properties &rarr; Unblock (Windows SmartScreen)
+            3. Extract anywhere (keep the folder structure)
+            4. Double-click the `.exe` inside the extracted folder
+            5. Worker variants auto-join. Proxy expects `--upstream URL`.
+
+            **Why onedir/ZIP instead of single .exe ?** PyInstaller --onefile on Windows hits a file-lock race during self-restart after `update_model`. --onedir removes the `_MEI` extraction dir, restart works reliably.
 
             Source : https://github.com/CELLULEAI/POOL
-            Docs : https://cellule.ai/docs/install-worker.html
-          files: dist/cellule-worker.exe
+            Docs   : https://cellule.ai/docs/install-worker.html
+            Feedback : please open an issue for any bug or success story.
+          files: dist/cellule-${{ matrix.variant == 'proxy' && 'proxy' || format('worker-{0}', matrix.variant) }}.zip
           fail_on_unmatched_files: true
           draft: false
-          prerelease: false
+          prerelease: true

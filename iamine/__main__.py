@@ -131,7 +131,8 @@ def _auto_setup(config_path_arg: str = "config.json"):
     # Le pool attribuera le bon modele apres le benchmark
     # Bench sur 2B (pas 0.8B) — le 2B reflète mieux le hardware réel
     # Le 0.8B est trop petit pour stresser cache/RAM/GPU
-    rec = MODEL_REGISTRY[1] if len(MODEL_REGISTRY) > 1 else MODEL_REGISTRY[0]
+    # Bench sur le plus petit modele du registre (2B since sub-2B removed in 0.2.85)
+    rec = MODEL_REGISTRY[0]
     ctx = rec.ctx_default
 
     # Detection GPU minimale (NVIDIA + AMD ROCm)
@@ -221,20 +222,46 @@ def _auto_setup(config_path_arg: str = "config.json"):
             "pause-on-active": False, "log-file": "iamine.log", "verbose": 1,
         }
 
-    # M12: Intelligent pool placement — always discover best pool in --auto mode
-    # Skip discovery only if user explicitly set a local pool (localhost/127.0.0.1)
+    # M12: Intelligent pool placement — prioritize persisted pool.url if reachable,
+    # fresh discovery as fallback. Closes the gap where failover-persisted URL was
+    # ignored at next launch (worker reboot during pool outage would hit the dead
+    # pool first for 35s of retries before discovery kicked in).
     current_url = cfg["pool"].get("url", "")
     is_local = "localhost" in current_url or "127.0.0.1" in current_url
-    if not is_local:
+
+    def _is_pool_reachable(ws_url: str) -> bool:
+        """Quick HEAD check: convert ws(s):// to http(s):// + /v1/status, 1.5s timeout."""
+        if not ws_url:
+            return False
         try:
-            from .pool_discovery import discover_best_pool
-            model_name = Path(model_path_str).stem if model_path_str else ""
-            best_url = discover_best_pool(worker_model=model_name, worker_tps=0.0)
-            cfg["pool"]["url"] = best_url
-            print(f" * DISCOVERY   Selected pool: {best_url}")
-        except Exception as e:
-            print(f" * DISCOVERY   Failed ({e}), falling back to cellule.ai")
-            cfg["pool"]["url"] = "wss://cellule.ai/ws"
+            import urllib.request
+            http_url = ws_url.replace("wss://", "https://").replace("ws://", "http://")
+            # Strip trailing /ws if present, then add /v1/status
+            if http_url.endswith("/ws"):
+                http_url = http_url[:-3]
+            status_url = http_url.rstrip("/") + "/v1/status"
+            req = urllib.request.Request(status_url, method="GET")
+            with urllib.request.urlopen(req, timeout=1.5) as resp:
+                return resp.status == 200
+        except Exception:
+            return False
+
+    if not is_local:
+        # Try persisted URL first
+        if current_url and _is_pool_reachable(current_url):
+            print(f" * DISCOVERY   Using persisted pool: {current_url}")
+        else:
+            if current_url:
+                print(f" * DISCOVERY   Persisted pool unreachable ({current_url}), running fresh discovery")
+            try:
+                from .pool_discovery import discover_best_pool
+                model_name = Path(model_path_str).stem if model_path_str else ""
+                best_url = discover_best_pool(worker_model=model_name, worker_tps=0.0)
+                cfg["pool"]["url"] = best_url
+                print(f" * DISCOVERY   Selected pool: {best_url}")
+            except Exception as e:
+                print(f" * DISCOVERY   Failed ({e}), falling back to cellule.ai")
+                cfg["pool"]["url"] = "wss://cellule.ai/ws"
 
     cfg["model"]["path"] = model_path_str
     cfg["model"]["ctx-size"] = ctx
@@ -257,7 +284,7 @@ def _auto_setup(config_path_arg: str = "config.json"):
         from .engine import InferenceEngine
         from .config import ModelConfig, LimitsConfig
         from .models import MODEL_REGISTRY, REGISTRY_BY_ID
-        MIN_TPS = 5.0
+        MIN_TPS = 8.0
         test_engine = InferenceEngine(
             ModelConfig(path=model_path_str, ctx_size=min(ctx, 2048), threads=cfg["model"]["threads"]),
             LimitsConfig()

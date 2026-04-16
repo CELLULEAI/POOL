@@ -89,6 +89,20 @@ class Worker:
                         if new_url != self.config.pool.url:
                             log.info(f"Failover: migration vers {new_url} (ancien: {self.config.pool.url})")
                             self.config.pool.url = new_url
+                            # Persist to config.json so relaunch does not retry the dead pool
+                            try:
+                                import json as _json
+                                from pathlib import Path as _Path
+                                cp = _Path(self.config_path).resolve()
+                                if cp.exists():
+                                    with open(cp) as _f:
+                                        _cfg = _json.load(_f)
+                                    _cfg.setdefault("pool", {})["url"] = new_url
+                                    with open(cp, "w") as _f:
+                                        _json.dump(_cfg, _f, indent=4)
+                                    log.info(f"Persisted pool.url to {cp}")
+                            except Exception as _pe:
+                                log.debug(f"Persist pool.url failed: {_pe}")
                             backoff = 5  # reset backoff for new pool
                     except Exception as e:
                         log.debug(f"Re-discovery failed: {e}")
@@ -224,18 +238,47 @@ class Worker:
         self.state = WorkerState.IDLE
 
     def _restart_self(self) -> None:
-        """Relance le process worker (fonctionne sur Linux/systemd ET Windows/manuel)."""
+        """Relance le process worker (Linux/systemd, Windows frozen, Windows dev)."""
         log.info("Restarting worker process...")
-        # Reconstruire la commande avec -m iamine pour eviter l'erreur
-        # "relative import with no known parent package" sur Windows
-        # sys.argv typique : ['.../__main__.py', 'worker', '-c', 'config.json']
-        # On garde les args apres le nom du script
         args = sys.argv[1:] if sys.argv else []
+        # Frozen exe on Windows (PyInstaller --onefile) : parent+child extract/cleanup
+        # of the _MEI runtime dir race if we exec/Popen directly (modules like
+        # unicodedata become unloadable in the child). Solution : spawn a COMPLETELY
+        # decoupled batch that sleeps 3s then relaunches the exe. Batch is a shell
+        # process (cmd.exe), not a python child, so no _MEI shared.
+        if getattr(sys, "frozen", False):
+            import os as _os
+            import tempfile
+            import subprocess
+            exe_path = sys.executable
+            # Quote args with embedded spaces
+            quoted_args = " ".join(f"\"{a}\"" if " " in a else a for a in args)
+            batch_content = (
+                "@echo off\r\n"
+                "timeout /t 10 /nobreak > nul\r\n"
+                f"start \"\" \"{exe_path}\" {quoted_args}\r\n"
+            )
+            batch_path = _os.path.join(tempfile.gettempdir(), "cellule-restart.bat")
+            with open(batch_path, "w") as bf:
+                bf.write(batch_content)
+            log.info(f"Spawning decoupled relaunch via {batch_path} (10s delay)")
+            # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP : completely detach from parent
+            DETACHED = 0x00000008
+            NEW_PGROUP = 0x00000200
+            subprocess.Popen(
+                ["cmd", "/c", batch_path],
+                creationflags=DETACHED | NEW_PGROUP,
+                close_fds=True,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            sys.exit(0)
+        # Non-frozen (Linux/dev) : os.execv is fine
         cmd = [sys.executable, "-m", "iamine"] + args
         try:
             os.execv(sys.executable, cmd)
         except Exception:
-            # Fallback Windows : subprocess + exit
             import subprocess
             subprocess.Popen(cmd)
             sys.exit(0)
@@ -387,6 +430,13 @@ class Worker:
     async def _cmd_self_update(self, ws) -> None:
         """Met a jour le package iamine-ai depuis le PyPI prive."""
         import subprocess
+        # Frozen exe (PyInstaller) : pip n'existe pas dans le bundle.
+        # L'utilisateur doit re-telecharger l'exe depuis cellule.ai.
+        if getattr(sys, "frozen", False):
+            log.info("Self-update skipped: running as bundled exe. "
+                     "Re-download latest from https://cellule.ai/docs/install-worker.html")
+            await self._send(ws, {"type": "command_ack", "cmd": "self_update", "status": "skipped_frozen"})
+            return
         log.info("Self-update: pip install --upgrade iamine-ai...")
         await self._send(ws, {"type": "command_ack", "cmd": "self_update", "status": "updating"})
         # Detecter si on est dans un venv (pas besoin de --break-system-packages)

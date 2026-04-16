@@ -118,6 +118,48 @@ async def federation_info():
     return card
 
 
+# ─── GET /v1/federation/worker/known/{worker_id} (anti-farming) ──────────────
+
+@router.get("/v1/federation/worker/known/{worker_id}")
+async def federation_worker_known(worker_id: str, request: Request):
+    """Return whether this pool has ever seen this worker_id.
+
+    Used by peers to cross-check before granting welcome_bonus:
+    if any federated peer confirms the worker has been seen before,
+    the querying pool should skip the bonus (anti-migration-farming).
+
+    No auth: worker_id is public-ish (appears in status), and exposing
+    "known/unknown" is the minimum signal needed. SHA256(token)-based
+    variant to be added later if needed for wallet-level dedup.
+    """
+    if not worker_id or len(worker_id) > 64:
+        return JSONResponse({"error": "invalid worker_id"}, status_code=400)
+
+    pool = _pool()
+    known_local = False
+    try:
+        # In-memory set (current session)
+        if worker_id in getattr(pool, "_known_machines", set()):
+            known_local = True
+    except Exception:
+        pass
+
+    if not known_local and hasattr(pool.store, "pool"):
+        # Check DB persistence (workers table has ever-seen workers)
+        try:
+            async with pool.store.pool.acquire() as conn:
+                row = await conn.fetchrow(
+                    "SELECT 1 FROM workers WHERE worker_id = $1 LIMIT 1",
+                    worker_id,
+                )
+                if row:
+                    known_local = True
+        except Exception:
+            pass
+
+    return JSONResponse({"known": known_local, "pool": getattr(pool, "_pool_name", "unknown")})
+
+
 # ─── GET /v1/federation/pools (public, unsigned) ─────────────────────────────
 # Read-only public view of the federated network for the iamine.org landing
 # page. Returns self identity card + list of non-revoked peers with public

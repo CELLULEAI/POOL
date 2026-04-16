@@ -10,7 +10,7 @@
 <meta property="og:site_name" content="Cellule.ai">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Run a Cellule.ai worker — contribute your idle compute">
-<meta name="twitter:description" content="Install in one line on Linux/macOS, one .exe on Windows.">
+<meta name="twitter:description" content="Install in one line on Linux/macOS, extract a ZIP on Windows.">
 <meta name="twitter:site" content="@moleculeiallm">
 <title>Cellule.ai — Install a Worker</title>
 <style>
@@ -133,7 +133,7 @@ th { color: #00d4ff; font-weight: 600; }
 <li data-i18n="step1">Detects OS + architecture</li>
 <li data-i18n="step2">Verifies Python 3.12+ (suggests apt/dnf/pacman command if missing)</li>
 <li data-i18n="step3">Creates <code>~/.cellule-worker</code> venv</li>
-<li data-i18n="step4">Installs <code>iamine-ai</code> from <code>https://iamine.org/pypi</code></li>
+<li data-i18n="step4">Installs <code>iamine-ai</code> from <code>https://cellule.ai/pypi</code></li>
 <li data-i18n="step5">Writes <code>~/.config/systemd/user/cellule-worker.service</code></li>
 <li data-i18n="step6">Enables linger + starts the service</li>
 </ol>
@@ -142,7 +142,7 @@ th { color: #00d4ff; font-weight: 600; }
 <pre><button class="copy-btn" onclick="copyCode(this)" data-i18n="copy">copy</button><code>python3.12 -m venv ~/.cellule-worker
 source ~/.cellule-worker/bin/activate
 pip install --upgrade pip
-pip install iamine-ai -i https://iamine.org/pypi --extra-index-url https://pypi.org/simple
+pip install iamine-ai -i https://cellule.ai/pypi --extra-index-url https://pypi.org/simple
 python -m iamine worker --auto</code></pre>
 
 <h3 data-i18n="manage_service_linux">Manage the service</h3>
@@ -194,7 +194,7 @@ Apple Silicon (M1/M2/M3/M4) users get Metal GPU acceleration automatically on th
 <pre><button class="copy-btn" onclick="copyCode(this)" data-i18n="copy">copy</button><code>brew install python@3.12
 python3.12 -m venv ~/.cellule-worker
 ~/.cellule-worker/bin/pip install --upgrade pip
-~/.cellule-worker/bin/pip install iamine-ai -i https://iamine.org/pypi --extra-index-url https://pypi.org/simple
+~/.cellule-worker/bin/pip install iamine-ai -i https://cellule.ai/pypi --extra-index-url https://pypi.org/simple
 ~/.cellule-worker/bin/python -m iamine worker --auto</code></pre>
 
 <h3 data-i18n="manage_agent">Manage the agent</h3>
@@ -220,28 +220,39 @@ launchctl load ~/Library/LaunchAgents/ai.cellule.worker.plist</code></pre>
 <h3 data-i18n="win_quick_dl">⬇ Quick download</h3>
 
 <div style="display:flex;flex-wrap:wrap;gap:.8rem;margin:1rem 0;">
-  <a href="https://github.com/CELLULEAI/POOL/releases/download/v0.2.72-worker/cellule-worker-cpu.exe" class="hero-cta" style="flex:1;min-width:240px;display:block;text-decoration:none;color:inherit;padding:1rem;text-align:center;background:rgba(0,255,234,0.06);border-color:rgba(0,255,234,0.4);">
-    <div style="font-family:ui-monospace,monospace;font-size:.9rem;color:#00d4ff;">cellule-worker-cpu.exe</div>
-    <div style="font-size:.78rem;color:rgba(255,255,255,0.6);margin-top:.3rem;" data-i18n="dl_cpu_desc">42 MB — any Windows PC, no GPU</div>
+  <a href="https://github.com/CELLULEAI/POOL/releases/download/v0.2.86-worker/cellule-worker-cpu.zip" class="hero-cta" style="flex:1;min-width:240px;display:block;text-decoration:none;color:inherit;padding:1rem;text-align:center;background:rgba(0,255,234,0.06);border-color:rgba(0,255,234,0.4);">
+    <div style="font-family:ui-monospace,monospace;font-size:.9rem;color:#00d4ff;">cellule-worker-cpu.zip</div>
+    <div style="font-size:.78rem;color:rgba(255,255,255,0.6);margin-top:.3rem;" data-i18n="dl_cpu_desc">~58 MB ZIP — any Windows PC, no GPU</div>
     <div style="font-size:.72rem;color:#00ff88;margin-top:.3rem;font-weight:600;" data-i18n="dl_btn">⬇ Download</div>
   </a>
-  <a href="https://github.com/CELLULEAI/POOL/releases/download/v0.2.72-worker/cellule-worker-cuda.exe" class="hero-cta" style="flex:1;min-width:240px;display:block;text-decoration:none;color:inherit;padding:1rem;text-align:center;background:rgba(0,212,255,0.06);border-color:rgba(0,212,255,0.4);">
-    <div style="font-family:ui-monospace,monospace;font-size:.9rem;color:#00d4ff;">cellule-worker-cuda.exe</div>
-    <div style="font-size:.78rem;color:rgba(255,255,255,0.6);margin-top:.3rem;" data-i18n="dl_cuda_desc">456 MB — NVIDIA GPU (CUDA 12.5)</div>
+  <a href="https://github.com/CELLULEAI/POOL/releases/download/v0.2.86-worker/cellule-worker-cuda.zip" class="hero-cta" style="flex:1;min-width:240px;display:block;text-decoration:none;color:inherit;padding:1rem;text-align:center;background:rgba(0,212,255,0.06);border-color:rgba(0,212,255,0.4);">
+    <div style="font-family:ui-monospace,monospace;font-size:.9rem;color:#00d4ff;">cellule-worker-cuda.zip</div>
+    <div style="font-size:.78rem;color:rgba(255,255,255,0.6);margin-top:.3rem;" data-i18n="dl_cuda_desc">~260 MB ZIP — NVIDIA GPU (CUDA 12.5)</div>
     <div style="font-size:.72rem;color:#00ff88;margin-top:.3rem;font-weight:600;" data-i18n="dl_btn2">⬇ Download</div>
   </a>
-  <a href="https://github.com/CELLULEAI/POOL/releases/download/v0.2.72-worker/cellule-proxy.exe" class="hero-cta" style="flex:1;min-width:240px;display:block;text-decoration:none;color:inherit;padding:1rem;text-align:center;background:rgba(251,191,36,0.06);border-color:rgba(251,191,36,0.4);">
-    <div style="font-family:ui-monospace,monospace;font-size:.9rem;color:#00d4ff;">cellule-proxy.exe</div>
-    <div style="font-size:.78rem;color:rgba(255,255,255,0.6);margin-top:.3rem;" data-i18n="dl_proxy_desc">40 MB — you bring your own LLM</div>
+  <a href="https://github.com/CELLULEAI/POOL/releases/download/v0.2.86-worker/cellule-proxy.zip" class="hero-cta" style="flex:1;min-width:240px;display:block;text-decoration:none;color:inherit;padding:1rem;text-align:center;background:rgba(251,191,36,0.06);border-color:rgba(251,191,36,0.4);">
+    <div style="font-family:ui-monospace,monospace;font-size:.9rem;color:#00d4ff;">cellule-proxy.zip</div>
+    <div style="font-size:.78rem;color:rgba(255,255,255,0.6);margin-top:.3rem;" data-i18n="dl_proxy_desc">~45 MB ZIP — you bring your own LLM</div>
     <div style="font-size:.72rem;color:#00ff88;margin-top:.3rem;font-weight:600;" data-i18n="dl_btn3">⬇ Download</div>
   </a>
 </div>
 
-<p style="font-size:.82rem;color:rgba(255,255,255,0.55);margin:0 0 1.5rem;text-align:center;" data-i18n="dl_note">Direct downloads from GitHub Releases. SmartScreen will warn (binaries unsigned) — right-click → Properties → Unblock if needed. <a href="https://github.com/CELLULEAI/POOL/releases/tag/v0.2.72-worker" target="_blank" style="color:#00d4ff;">See full release</a>.</p>
+<p style="font-size:.82rem;color:rgba(255,255,255,0.55);margin:0 0 1.5rem;text-align:center;" data-i18n="dl_note">Download the ZIP for your variant, right-click → Properties → Unblock (SmartScreen), extract the folder anywhere, and double-click the <code>.exe</code> inside. <a href="https://github.com/CELLULEAI/POOL/releases/tag/v0.2.86-worker" target="_blank" style="color:#00d4ff;">See full release</a>.</p>
+
+<div style="margin:.5rem 0 1.5rem;padding:1rem 1.2rem;background:rgba(0,212,255,0.06);border-left:3px solid #00d4ff;border-radius:4px;font-size:.88rem;line-height:1.55;">
+  <div style="font-weight:600;color:#00d4ff;margin-bottom:.4rem;" data-i18n="exe_behavior_title">How the .exe works (read before running)</div>
+  <p style="margin:0 0 .5rem;" data-i18n="exe_behavior_p1">Extract the ZIP anywhere. Inside the folder you'll find <code>cellule-worker-cpu.exe</code> (or <code>cuda</code>/<code>proxy</code>) plus an <code>_internal</code> folder of dependencies. Double-click the <code>.exe</code>. The folder stays self-contained — you can move or copy it, just keep the structure.</p>
+  <ul style="margin:.4rem 0 .4rem 1.2rem;padding:0;">
+    <li data-i18n="exe_behavior_li1">First launch: benchmarks on Qwen 3.5 2B to score your hardware. Takes 1-2 min on a first-time install (model download).</li>
+    <li data-i18n="exe_behavior_li2">The pool then assigns the best model for your machine and the worker auto-upgrades (downloads + reloads transparently).</li>
+    <li data-i18n="exe_behavior_li3">To reset (fresh onboarding): close the window, delete <code>assigned_model.json</code> and <code>config.json</code> in the exe's folder (or wherever you launched from), relaunch.</li>
+    <li data-i18n="exe_behavior_li4">Uninstall: close the window, delete the extracted folder. That's it — no registry, no services, no admin rights required.</li>
+  </ul>
+</div>
 
 <h3 data-i18n="option_a">Option A: standalone <code>.exe</code> <span style="color:#fbbf24;font-size:.85rem;">— PREPROD / BETA to test</span></h3>
 
-<p data-i18n="option_a_desc">Two pre-built executables are published to GitHub Releases. They bundle Python + iamine + llama.cpp into a single double-clickable file. <strong style="color:#fbbf24;">PREPROD</strong> — please report any issue you hit.</p>
+<p data-i18n="option_a_desc">Three pre-built ZIP archives are published to GitHub Releases. Each contains the .exe plus its dependencies in a self-contained folder. <strong style="color:#fbbf24;">PREPROD</strong> — please report any issue you hit.</p>
 
 <table style="width:100%;border-collapse:collapse;margin:1rem 0;font-size:.88rem;">
 <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.15);">
@@ -252,19 +263,19 @@ launchctl load ~/Library/LaunchAgents/ai.cellule.worker.plist</code></pre>
 </tr></thead>
 <tbody>
 <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
-<td style="padding:.5rem;"><code>cellule-worker-cpu.exe</code></td>
+<td style="padding:.5rem;"><code>cellule-worker-cpu.zip</code></td>
 <td style="padding:.5rem;" data-i18n="cpu_for">Any Windows PC (no GPU required)</td>
 <td style="padding:.5rem;">~45 MB</td>
 <td style="padding:.5rem;" data-i18n="cpu_speed">5–15 t/s on modern CPUs (Qwen 2B–4B)</td>
 </tr>
 <tr>
-<td style="padding:.5rem;"><code>cellule-worker-cuda.exe</code></td>
+<td style="padding:.5rem;"><code>cellule-worker-cuda.zip</code></td>
 <td style="padding:.5rem;" data-i18n="cuda_for">Windows PC with NVIDIA GPU (CUDA 12+)</td>
 <td style="padding:.5rem;">~300–500 MB</td>
 <td style="padding:.5rem;" data-i18n="cuda_speed">50–200 t/s on NVIDIA RTX (Qwen 4B–14B)</td>
 </tr>
 <tr style="background:rgba(251,191,36,0.04);">
-<td style="padding:.5rem;"><code>cellule-proxy.exe</code></td>
+<td style="padding:.5rem;"><code>cellule-proxy.zip</code></td>
 <td style="padding:.5rem;" data-i18n="proxy_for">You already run your own LLM (llama-server / Ollama / vLLM / LocalAI)</td>
 <td style="padding:.5rem;">~15–25 MB</td>
 <td style="padding:.5rem;" data-i18n="proxy_speed">Depends on your upstream LLM (you bring it)</td>
@@ -282,9 +293,9 @@ launchctl load ~/Library/LaunchAgents/ai.cellule.worker.plist</code></pre>
 
 <p data-i18n="when_ready">Installation steps (both variants):</p>
 <ol>
-    <li data-i18n="win_step1">Download the right <code>.exe</code> from <a href="https://github.com/CELLULEAI/POOL/releases" target="_blank">GitHub Releases</a>.</li>
-    <li data-i18n="win_step2">Right-click &rarr; Properties &rarr; Unblock (if Windows SmartScreen prompts)</li>
-    <li data-i18n="win_step3">Double-click to run — the worker benches your hardware, picks a model, and joins the network automatically.</li>
+    <li data-i18n="win_step1">Download the right <code>.zip</code> from <a href="https://github.com/CELLULEAI/POOL/releases" target="_blank">GitHub Releases</a>.</li>
+    <li data-i18n="win_step2">Right-click the ZIP &rarr; Properties &rarr; Unblock (if Windows SmartScreen prompts), then extract the folder anywhere.</li>
+    <li data-i18n="win_step3">Open the extracted folder and double-click the <code>.exe</code> — the worker benches your hardware, picks a model, and joins the network automatically.</li>
 </ol>
 
 <div class="note" style="margin:1rem 0;">
@@ -298,7 +309,7 @@ launchctl load ~/Library/LaunchAgents/ai.cellule.worker.plist</code></pre>
 <pre><button class="copy-btn" onclick="copyCode(this)" data-i18n="copy">copy</button><code># <span data-i18n-comment="install_py">Install Python 3.12 first if missing — winget install Python.Python.3.12</span>
 py -3.12 -m venv "$env:USERPROFILE\.cellule-worker"
 & "$env:USERPROFILE\.cellule-worker\Scripts\pip.exe" install --upgrade pip
-& "$env:USERPROFILE\.cellule-worker\Scripts\pip.exe" install iamine-ai -i https://iamine.org/pypi --extra-index-url https://pypi.org/simple
+& "$env:USERPROFILE\.cellule-worker\Scripts\pip.exe" install iamine-ai -i https://cellule.ai/pypi --extra-index-url https://pypi.org/simple
 & "$env:USERPROFILE\.cellule-worker\Scripts\python.exe" -m iamine worker --auto</code></pre>
 
 <h3 data-i18n="auto_start_boot">Auto-start at boot (Task Scheduler)</h3>
@@ -341,12 +352,24 @@ Register-ScheduledTask -TaskName "CelluleWorker" -Action $action -Trigger $trigg
 
 <h2 data-i18n="req_by_model">Requirements by model</h2>
 
+<div style="margin:1rem 0;padding:1rem 1.2rem;background:rgba(0,255,136,0.04);border-left:3px solid #00ff88;border-radius:4px;font-size:.88rem;line-height:1.55;">
+  <div style="font-weight:600;color:#00ff88;margin-bottom:.4rem;" data-i18n="examples_title">Examples of real hardware</div>
+  <ul style="margin:.4rem 0 .4rem 1.2rem;padding:0;">
+    <li data-i18n="ex_gaming"><strong>Gaming PC with NVIDIA RTX 3060 (16 GB RAM, 8 GB VRAM)</strong>: serves Qwen 3.5 9B at 40-60 t/s with GPU. Very useful to the network.</li>
+    <li data-i18n="ex_office"><strong>Recent office PC (Intel i5 12th gen, 16 GB RAM, no GPU)</strong>: serves Qwen 3.5 2B at 15 t/s, Qwen 3.5 4B at 10 t/s. Solid worker for interactive chat.</li>
+    <li data-i18n="ex_old"><strong>Old PC (Intel i5 8th gen, 8 GB RAM, no GPU)</strong>: likely under 8 t/s on 2B. Borderline &mdash; the pool may reject as too slow for the interactive tier.</li>
+    <li data-i18n="ex_mac"><strong>Apple Silicon (M1/M2/M3/M4, 16 GB+ unified memory)</strong>: llama-cpp Metal gives 20-40 t/s on 2B-4B. Excellent worker.</li>
+  </ul>
+</div>
+
 <table>
 <thead><tr><th data-i18n="col_model">Model</th><th>RAM</th><th data-i18n="col_disk">Disk</th><th data-i18n="col_speed">Speed target (CPU)</th><th>GPU</th></tr></thead>
 <tbody>
-<tr><td>Qwen 3.5 2B</td><td>4 GB+</td><td>1.5 GB</td><td>8+ t/s</td><td data-i18n="optional">optional</td></tr>
-<tr><td>Qwen 3.5 4B</td><td>6 GB+</td><td>2.5 GB</td><td>5+ t/s</td><td data-i18n="optional">optional</td></tr>
-<tr><td>Qwen3 30B A3B (MoE)</td><td>24 GB+</td><td>18 GB</td><td data-i18n="not_feasible">not feasible CPU</td><td data-i18n="recommended">recommended</td></tr>
+<tr><td>Qwen 3.5 2B</td><td>3 GB+</td><td>1.3 GB</td><td>8+ t/s</td><td data-i18n="optional">optional</td></tr>
+<tr><td>Qwen 3.5 4B</td><td>5 GB+</td><td>2.7 GB</td><td>8+ t/s</td><td data-i18n="optional">optional</td></tr>
+<tr><td>Qwen 3.5 9B</td><td>8 GB+</td><td>5.5 GB</td><td>8+ t/s</td><td data-i18n="recommended">recommended</td></tr>
+<tr><td>Qwen 3.5 27B</td><td>20 GB+</td><td>16 GB</td><td>4+ t/s</td><td data-i18n="recommended">recommended</td></tr>
+<tr><td>Qwen 3.5 35B-A3B (MoE)</td><td>25 GB+</td><td>21 GB</td><td>4+ t/s</td><td data-i18n="recommended">recommended</td></tr>
 </tbody>
 </table>
 
@@ -402,7 +425,7 @@ Remove-Item -Recurse -Force "$env:USERPROFILE\.cellule-worker"</code></pre>
     <li data-i18n="ts1_win"><strong>Windows</strong>: Install <a href="https://visualstudio.microsoft.com/visual-cpp-build-tools/" target="_blank">Visual C++ Build Tools</a> (choose "Desktop development with C++")</li>
 </ul>
 
-<h3 data-i18n="ts2_title">Worker doesn't appear in /status</h3>
+<h3 data-i18n="ts2_title">Worker doesn't appear in <a href="https://cellule.ai/v1/status">/v1/status</a></h3>
 <p data-i18n="ts2_body">Check logs (see "Manage the service" above). Common causes: no network to <code>cellule.ai:443</code>, Python version too old, firewall blocking WebSocket.</p>
 
 <h3 data-i18n="ts3_title">Worker hogs my CPU</h3>
@@ -418,7 +441,7 @@ Remove-Item -Recurse -Force "$env:USERPROFILE\.cellule-worker"</code></pre>
 
 <p style="margin-top:2rem;"><a href="/" data-i18n="back_home">&larr; Back to homepage</a> &middot; <a href="/docs/federation.html" data-i18n="fed_link">Federation explained</a> &middot; <a href="/docs/pool-docker.html" data-i18n="pool_link">Run your own pool</a> &middot; <a href="https://github.com/CELLULEAI/POOL" target="_blank">GitHub</a></p>
 
-<p class="footer" data-i18n="footer">Cellule.ai &mdash; AI belongs to those who run it. Worker installer v0.2.72, LIVE 2026-04-15.</p>
+<p class="footer" data-i18n="footer">Cellule.ai &mdash; AI belongs to those who run it. Worker installer v0.2.86, LIVE 2026-04-16.</p>
 </div>
 
 <script>
@@ -443,7 +466,7 @@ var I18N = {
         step1: "Detects OS + architecture",
         step2: "Verifies Python 3.12+ (suggests apt/dnf/pacman command if missing)",
         step3: "Creates <code>~/.cellule-worker</code> venv",
-        step4: "Installs <code>iamine-ai</code> from <code>https://iamine.org/pypi</code>",
+        step4: "Installs <code>iamine-ai</code> from <code>https://cellule.ai/pypi</code>",
         step5: "Writes <code>~/.config/systemd/user/cellule-worker.service</code>",
         step6: "Enables linger + starts the service",
         manual_install: "Manual install (if you prefer)",
@@ -460,15 +483,21 @@ var I18N = {
         mac_req2: "Python 3.12+ \u2014 install with <code>brew install python@3.12</code> if missing",
         mac_req3: "At least 8 GB RAM for the trial 2B model, 16+ GB recommended",
         win_quick_dl: "⬇ Quick download",
-        dl_cpu_desc: "42 MB — any Windows PC, no GPU",
-        dl_cuda_desc: "456 MB — NVIDIA GPU (CUDA 12.5)",
-        dl_proxy_desc: "40 MB — you bring your own LLM",
+        dl_cpu_desc: "~58 MB ZIP — any Windows PC, no GPU",
+        dl_cuda_desc: "~260 MB ZIP — NVIDIA GPU (CUDA 12.5)",
+        dl_proxy_desc: "~45 MB ZIP — you bring your own LLM",
         dl_btn: "⬇ Download",
         dl_btn2: "⬇ Download",
         dl_btn3: "⬇ Download",
-        dl_note: "Direct downloads from GitHub Releases. SmartScreen will warn (binaries unsigned) — right-click → Properties → Unblock if needed. <a href=\"https://github.com/CELLULEAI/POOL/releases/tag/v0.2.72-worker\" target=\"_blank\" style=\"color:#00d4ff;\">See full release</a>.",
+        dl_note: "Download the ZIP for your variant, right-click → Properties → Unblock (SmartScreen), extract the folder anywhere, and double-click the <code>.exe</code> inside. <a href=\"https://github.com/CELLULEAI/POOL/releases/tag/v0.2.86-worker\" target=\"_blank\" style=\"color:#00d4ff;\">See full release</a>.",
+        exe_behavior_title: "How the Windows worker runs",
+        exe_behavior_p1: "Extract the ZIP anywhere. Inside the folder you\'ll find <code>cellule-worker-cpu.exe</code> (or <code>cuda</code>/<code>proxy</code>) plus an <code>_internal</code> folder of dependencies. Double-click the <code>.exe</code>. The folder stays self-contained — you can move or copy it, just keep the structure.",
+        exe_behavior_li1: "First launch: benchmarks on Qwen 3.5 2B to score your hardware. Takes 1-2 min on a first-time install (model download).",
+        exe_behavior_li2: "The pool then assigns the best model for your machine and the worker auto-upgrades (downloads + reloads transparently).",
+        exe_behavior_li3: "To reset (fresh onboarding): close the window, delete <code>assigned_model.json</code> and <code>config.json</code> in the exe\'s folder (or wherever you launched from), relaunch.",
+        exe_behavior_li4: "Uninstall: close the window, delete the extracted folder. That\'s it — no registry, no services, no admin rights required.",
         option_a: "Option A: standalone <code>.exe</code> <span style=\"color:#fbbf24;font-size:.85rem;\">\u2014 PREPROD / BETA to test</span>",
-        option_a_desc: "Two pre-built executables are published to GitHub Releases. They bundle Python + iamine + llama.cpp into a single double-clickable file. <strong style=\"color:#fbbf24;\">PREPROD</strong> \u2014 please report any issue you hit.",
+        option_a_desc: "Three pre-built ZIP archives are published to GitHub Releases. Each contains the .exe plus its dependencies in a self-contained folder. <strong style=\"color:#fbbf24;\">PREPROD</strong> \u2014 please report any issue you hit.",
         col_variant: "Variant", col_for: "For", col_size: "Size", col_speed_typ: "Typical speed",
         cpu_for: "Any Windows PC (no GPU required)",
         cpu_speed: "5\u201315 t/s on modern CPUs (Qwen 2B\u20134B)",
@@ -481,11 +510,11 @@ var I18N = {
         which_q: "Got an NVIDIA GPU ?",
         which_a: "If you have an NVIDIA RTX (20xx / 30xx / 40xx / 50xx), download the <strong>CUDA</strong> build instead \u2014 5\u201310\u00d7 faster, can serve bigger models (Qwen 14B+), more useful to the network. Both are community contributions, pick what matches your hardware.",
         when_ready: "Installation steps (both variants):",
-        win_step1: "Download the right <code>.exe</code> from <a href=\"https://github.com/CELLULEAI/POOL/releases\" target=\"_blank\">GitHub Releases</a>.",
+        win_step1: "Download the right <code>.zip</code> from <a href=\"https://github.com/CELLULEAI/POOL/releases\" target=\"_blank\">GitHub Releases</a>.",
         preprod_note: "PREPROD / BETA notice.",
         preprod_body: "These binaries are unsigned for now (SmartScreen will show a warning). Source is public and auditable on <a href=\"https://github.com/CELLULEAI/POOL\" target=\"_blank\">GitHub</a>. The CI workflow that builds them is at <code>.github/workflows/build-worker-exe.yml</code> \u2014 100% reproducible. If you prefer, use Option B (pip) below to install from source yourself.",
-        win_step2: "Right-click &rarr; Properties &rarr; Unblock (if Windows SmartScreen prompts)",
-        win_step3: "Double-click to run \u2014 worker registers with the network automatically",
+        win_step2: "Right-click the ZIP &rarr; Properties &rarr; Unblock (if Windows SmartScreen prompts), then extract the folder anywhere.",
+        win_step3: "Open the extracted folder and double-click the <code>.exe</code> \u2014 the worker benches your hardware, picks a model, and joins the network automatically.",
         option_b: "Option B: pip install",
         option_b_desc: "Open PowerShell (not cmd.exe) and run:",
         auto_start_boot: "Auto-start at boot (Task Scheduler)",
@@ -512,7 +541,7 @@ var I18N = {
         ts1_linux: "<strong>Linux</strong>: <code>sudo apt install build-essential cmake</code>",
         ts1_mac: "<strong>macOS</strong>: <code>xcode-select --install</code>",
         ts1_win: "<strong>Windows</strong>: Install <a href=\"https://visualstudio.microsoft.com/visual-cpp-build-tools/\" target=\"_blank\">Visual C++ Build Tools</a> (choose \"Desktop development with C++\")",
-        ts2_title: "Worker doesn't appear in <a href=\"https://cellule.ai/status\">/status</a>",
+        ts2_title: "Worker doesn't appear in <a href=\"https://cellule.ai/v1/status\">/v1/status</a>",
         ts2_body: "Check logs (see \"Manage the service\" above). Common causes: no network to <code>cellule.ai:443</code>, Python version too old, firewall blocking WebSocket.",
         ts3_title: "Worker hogs my CPU",
         ts3_body: "The worker only runs inferences when the network routes a job to it. Between jobs it's idle. You can cap CPU via systemd (<code>CPUQuota=50%</code>) or launchd (<code>Nice = 10</code>).",
@@ -524,7 +553,7 @@ var I18N = {
         back_home: "\u2190 Back to homepage",
         fed_link: "Federation explained",
         pool_link: "Run your own pool",
-        footer: "Cellule.ai \u2014 AI belongs to those who run it. Worker installer v0.2.72, LIVE 2026-04-15."
+        footer: "Cellule.ai \u2014 AI belongs to those who run it. Worker installer v0.2.86, LIVE 2026-04-16."
     },
     fr: {
         title: "Installer un worker Cellule.ai",
@@ -545,7 +574,7 @@ var I18N = {
         step1: "D\u00e9tecte l'OS + l'architecture",
         step2: "V\u00e9rifie Python 3.12+ (propose la commande apt/dnf/pacman si manquant)",
         step3: "Cr\u00e9e le venv <code>~/.cellule-worker</code>",
-        step4: "Installe <code>iamine-ai</code> depuis <code>https://iamine.org/pypi</code>",
+        step4: "Installe <code>iamine-ai</code> depuis <code>https://cellule.ai/pypi</code>",
         step5: "\u00c9crit <code>~/.config/systemd/user/cellule-worker.service</code>",
         step6: "Active le linger + d\u00e9marre le service",
         manual_install: "Installation manuelle (si tu pr\u00e9f\u00e8res)",
@@ -562,15 +591,22 @@ var I18N = {
         mac_req2: "Python 3.12+ \u2014 installer avec <code>brew install python@3.12</code> si manquant",
         mac_req3: "Au moins 8 Go de RAM pour le mod\u00e8le trial 2B, 16+ Go recommand\u00e9",
         win_quick_dl: "⬇ Téléchargement direct",
-        dl_cpu_desc: "42 Mo — tout PC Windows, sans GPU",
-        dl_cuda_desc: "456 Mo — GPU NVIDIA (CUDA 12.5)",
-        dl_proxy_desc: "40 Mo — tu apportes ton propre LLM",
+        dl_cpu_desc: "~58 Mo ZIP — n\'importe quel PC Windows, pas de GPU",
+        dl_cuda_desc: "~260 Mo ZIP — GPU NVIDIA (CUDA 12.5)",
+        dl_proxy_desc: "~45 Mo ZIP — tu apportes ton propre LLM",
         dl_btn: "⬇ Télécharger",
         dl_btn2: "⬇ Télécharger",
         dl_btn3: "⬇ Télécharger",
-        dl_note: "Téléchargements directs depuis GitHub Releases. SmartScreen avertira (binaires non signés) — clic droit → Propriétés → Débloquer si besoin. <a href=\"https://github.com/CELLULEAI/POOL/releases/tag/v0.2.72-worker\" target=\"_blank\" style=\"color:#00d4ff;\">Voir la release complète</a>.",
+        dl_note: "Télécharge le ZIP de la variante voulue, clic droit → Propriétés → Débloquer (SmartScreen), extrait le dossier où tu veux, puis double-clic sur le <code>.exe</code> à l\'intérieur. <a href=\"https://github.com/CELLULEAI/POOL/releases/tag/v0.2.86-worker\" target=\"_blank\" style=\"color:#00d4ff;\">Voir la release complète</a>.",
+        exe_behavior_title: "Fonctionnement du worker Windows",
+        exe_behavior_p1: "Extrais le ZIP où tu veux. À l'intérieur du dossier : <code>cellule-worker-cpu.exe</code> (ou <code>cuda</code>/<code>proxy</code>) et un sous-dossier <code>_internal</code> avec les dépendances. Double-clic sur le <code>.exe</code>. Le dossier est auto-suffisant — tu peux le déplacer ou le copier, garde juste la structure intacte.",
+        exe_behavior_li0: "<strong>Zéro modification système</strong> : l'exe lit et écrit uniquement dans son propre dossier (config.json, wallet.json, modèles téléchargés). Pas de registre Windows, pas d'<code>%APPDATA%</code>, pas de droits admin. Supprime le dossier = désinstallé complètement.",
+        exe_behavior_li1: "Premier lancement : bench sur Qwen 3.5 2B pour scorer ton matériel. 1-2 min au premier install (download modèle).",
+        exe_behavior_li2: "Le pool t'assigne ensuite le meilleur modèle pour ta machine et le worker s'auto-upgrade (download + reload transparents).",
+        exe_behavior_li3: "Pour réinitialiser (nouvel onboarding) : ferme la fenêtre, supprime <code>assigned_model.json</code> et <code>config.json</code> dans le dossier de l'exe (ou d'où tu l'as lancé), relance.",
+        exe_behavior_li4: "Désinstallation : ferme la fenêtre, supprime le dossier extrait. C'est tout — pas de registre, pas de service, pas de droits admin requis.",
         option_a: "Option A : <code>.exe</code> autonome <span style=\"color:#fbbf24;font-size:.85rem;\">\u2014 PREPROD / BETA \u00e0 tester</span>",
-        option_a_desc: "Deux ex\u00e9cutables pr\u00e9-compil\u00e9s sont publi\u00e9s sur GitHub Releases. Ils embarquent Python + iamine + llama.cpp dans un seul fichier double-cliquable. <strong style=\"color:#fbbf24;\">PREPROD</strong> \u2014 signalez tout probl\u00e8me rencontr\u00e9.",
+        option_a_desc: "Trois archives ZIP pr\u00e9-compil\u00e9es sont publi\u00e9es sur GitHub Releases. Chacune contient l\u0027exe + ses d\u00e9pendances dans un dossier auto-suffisant. <strong style=\"color:#fbbf24;\">PREPROD</strong> \u2014 signalez tout probl\u00e8me rencontr\u00e9.",
         col_variant: "Variante", col_for: "Pour", col_size: "Taille", col_speed_typ: "Vitesse typique",
         cpu_for: "Tout PC Windows (sans GPU requis)",
         cpu_speed: "5\u201315 t/s sur CPU moderne (Qwen 2B\u20134B)",
@@ -601,11 +637,11 @@ var I18N = {
         which_q: "Tu as un GPU NVIDIA ?",
         which_a: "Si tu as un NVIDIA RTX (20xx / 30xx / 40xx / 50xx), prends plut\u00f4t la version <strong>CUDA</strong> \u2014 5\u201310\u00d7 plus rapide, capable de servir des mod\u00e8les plus gros (Qwen 14B+), plus utile au r\u00e9seau. Les deux sont des contributions communautaires, choisis selon ton hardware.",
         when_ready: "\u00c9tapes d'installation (les deux variantes) :",
-        win_step1: "T\u00e9l\u00e9chargez le bon <code>.exe</code> depuis <a href=\"https://github.com/CELLULEAI/POOL/releases\" target=\"_blank\">GitHub Releases</a>.",
+        win_step1: "T\u00e9l\u00e9charge le bon <code>.zip</code> depuis <a href=\"https://github.com/CELLULEAI/POOL/releases\" target=\"_blank\">GitHub Releases</a>.",
         preprod_note: "Notice PREPROD / BETA.",
         preprod_body: "Ces binaires ne sont pas encore sign\u00e9s (SmartScreen affichera un avertissement). Le code source est public et auditable sur <a href=\"https://github.com/CELLULEAI/POOL\" target=\"_blank\">GitHub</a>. Le workflow CI qui les construit est dans <code>.github/workflows/build-worker-exe.yml</code> \u2014 100% reproductible. Si vous pr\u00e9f\u00e9rez, utilisez l'Option B (pip) ci-dessous pour installer depuis le source.",
-        win_step2: "Clic droit &rarr; Propri\u00e9t\u00e9s &rarr; D\u00e9bloquer (si SmartScreen le demande)",
-        win_step3: "Double-cliquer pour lancer \u2014 le worker rejoint le r\u00e9seau automatiquement",
+        win_step2: "Clic droit sur le ZIP &rarr; Propri\u00e9t\u00e9s &rarr; D\u00e9bloquer (si SmartScreen le demande), puis extrais le dossier o\u00f9 tu veux.",
+        win_step3: "Ouvre le dossier extrait et double-clic sur le <code>.exe</code> \u2014 le worker bench ton mat\u00e9riel, choisit un mod\u00e8le et rejoint le r\u00e9seau automatiquement.",
         option_b: "Option B : pip install",
         option_b_desc: "Ouvrir PowerShell (pas cmd.exe) et ex\u00e9cuter :",
         auto_start_boot: "Auto-d\u00e9marrage au boot (Planificateur de t\u00e2ches)",
@@ -624,6 +660,11 @@ var I18N = {
         req_by_model: "Pr\u00e9requis par mod\u00e8le",
         col_model: "Mod\u00e8le", col_disk: "Disque", col_speed: "Vitesse cible (CPU)",
         optional: "optionnel", not_feasible: "infaisable en CPU", recommended: "recommand\u00e9",
+        examples_title: "Exemples de mat\u00e9riel r\u00e9el",
+        ex_gaming: "<strong>PC gaming avec NVIDIA RTX 3060 (16 Go RAM, 8 Go VRAM)</strong> : sert Qwen 3.5 9B \u00e0 40-60 t/s avec le GPU. Tr\u00e8s utile au r\u00e9seau.",
+        ex_office: "<strong>PC de bureau r\u00e9cent (Intel i5 12e gen, 16 Go RAM, sans GPU)</strong> : sert Qwen 3.5 2B \u00e0 15 t/s, Qwen 3.5 4B \u00e0 10 t/s. Solide worker pour le chat interactif.",
+        ex_old: "<strong>Vieux PC (Intel i5 8e gen, 8 Go RAM, sans GPU)</strong> : probablement en-dessous de 8 t/s sur 2B. Limite \u2014 le pool peut refuser pour cause de vitesse insuffisante au tier interactif.",
+        ex_mac: "<strong>Apple Silicon (M1/M2/M3/M4, 16 Go+ m\u00e9moire unifi\u00e9e)</strong> : llama-cpp Metal donne 20-40 t/s sur 2B-4B. Excellent worker.",
         auto_hint: "Tu ne connais pas tes specs ? Lance le worker en <code>--auto</code> et il choisit le meilleur profil. Trop juste ? Il refuse proprement et te dit pourquoi.",
         uninstall: "D\u00e9sinstallation",
         troubleshoot: "D\u00e9pannage",
@@ -632,7 +673,7 @@ var I18N = {
         ts1_linux: "<strong>Linux</strong> : <code>sudo apt install build-essential cmake</code>",
         ts1_mac: "<strong>macOS</strong> : <code>xcode-select --install</code>",
         ts1_win: "<strong>Windows</strong> : Installe <a href=\"https://visualstudio.microsoft.com/visual-cpp-build-tools/\" target=\"_blank\">Visual C++ Build Tools</a> (choisir \"D\u00e9veloppement Desktop en C++\")",
-        ts2_title: "Le worker n'appara\u00eet pas sur <a href=\"https://cellule.ai/status\">/status</a>",
+        ts2_title: "Le worker n'appara\u00eet pas sur <a href=\"https://cellule.ai/v1/status\">/v1/status</a>",
         ts2_body: "V\u00e9rifie les logs (voir \"G\u00e9rer le service\" ci-dessus). Causes fr\u00e9quentes : pas de r\u00e9seau vers <code>cellule.ai:443</code>, Python trop ancien, pare-feu qui bloque le WebSocket.",
         ts3_title: "Le worker consomme tout mon CPU",
         ts3_body: "Le worker ne tourne que quand le r\u00e9seau lui envoie un job. Entre les jobs il est inactif. Tu peux plafonner le CPU via systemd (<code>CPUQuota=50%</code>) ou launchd (<code>Nice = 10</code>).",
@@ -644,7 +685,7 @@ var I18N = {
         back_home: "\u2190 Retour \u00e0 l'accueil",
         fed_link: "La f\u00e9d\u00e9ration expliqu\u00e9e",
         pool_link: "Monter ton propre pool",
-        footer: "Cellule.ai \u2014 l'IA appartient \u00e0 ceux qui la font tourner. Installeur worker v0.2.72, LIVE 2026-04-15."
+        footer: "Cellule.ai \u2014 l'IA appartient \u00e0 ceux qui la font tourner. Installeur worker v0.2.86, LIVE 2026-04-16."
     }
 };
 

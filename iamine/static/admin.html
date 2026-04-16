@@ -1038,7 +1038,7 @@ Recommandé : le domaine doit être vérifié dans Resend (sinon Resend refusera
 Piège : si le domaine n'est pas vérifié côté Resend, l'envoi échoue silencieusement ou retourne 422.">i</span></label>
             <input id="resend-from" placeholder="Cellule.ai <noreply@cellule.ai>" style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
             <label style="font-size:0.85rem;color:var(--text2);">Destinataire test</label>
-            <input id="resend-test-to" placeholder="david.mourgues@gmail.com" style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+            <input id="resend-test-to" placeholder="admin@example.com" style="padding:0.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;">
         </div>
         <div style="display:flex;gap:0.5rem;">
             <button onclick="saveResend()" class="btn btn-primary btn-sm">Sauvegarder Resend</button>
@@ -1096,7 +1096,7 @@ Piège : si From mismatch avec SMTP login → spam folder.">i</span></label>
 Recommandé : ton email admin perso. Plusieurs adresses possibles séparées par virgule.
 
 Piège : si l'adresse n'existe pas, tu rateras des alertes critiques. Vérifier avec 'Envoyer un test' ci-dessous.">i</span></label>
-            <input id="smtp-to" placeholder="david.mourgues@gmail.com" class="input">
+            <input id="smtp-to" placeholder="admin@example.com" class="input">
         </div>
         <div style="display:flex;gap:0.5rem;">
             <button onclick="saveSmtp()" class="btn btn-primary">Sauvegarder SMTP</button>

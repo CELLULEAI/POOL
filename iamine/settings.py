@@ -10,7 +10,7 @@ import os
 
 # --- Bascule MVP / Production ---
 USE_POSTGRES = os.environ.get("IAMINE_DB") == "postgres"
-DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://iamine:iamine@localhost:5432/iamine")
+DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://user:pass@localhost:5432/dbname")
 
 # --- Pool settings ---
 WELCOME_BONUS = float(os.environ.get("IAMINE_BONUS", "10.0"))
