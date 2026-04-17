@@ -7,11 +7,21 @@
 
 # --- Docs ---
 .gitignore
+GITHUB_WHITELIST.txt
+CHANGELOG.md
 README.md
 ARCHITECTURE.md
 ROADMAP.md
 API.md
 docs/MCP_MEMORY_SERVER.md
+docs/GOVERNANCE.md
+docs/RUNBOOK_1_0_0_MIGRATION.md
+docs/PLAN_1_0_0.md
+
+# --- Supply chain (1.0.0 release signing) ---
+MAINTAINERS
+scripts/sign_release.py
+scripts/build_release.sh
 
 # --- Build ---
 Dockerfile
@@ -50,7 +60,11 @@ iamine/core/compaction.py
 iamine/core/credits.py
 iamine/core/assignment.py
 iamine/core/federation.py
+iamine/core/federation_admin.py
 iamine/core/federation_merkle.py
+iamine/core/release_signing.py
+iamine/core/startup.py
+iamine/routes/admin.py
 
 # --- M13 Agent Memory ---
 iamine/core/agent_memory.py

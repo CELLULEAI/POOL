@@ -62,12 +62,16 @@ async def _config_get(pool, key: str, default=None):
 async def is_query_enabled(pool) -> bool:
     """Phase 2.1 : read-only actions (query_events). Default TRUE (token-guardian invariant 11).
 
-    Migration 024 copies the legacy federation_admin_actions_enabled value to query_enabled
-    for existing pools (invariant 13 conservative). New installs get TRUE.
+    1.0.0 fix : default is genuinely TRUE now. Previously the fallback resolved to "false"
+    when both config keys were absent, masking the intended reciprocity default. Existing
+    pools that explicitly set the flag are respected; only fresh installs flip to True.
+    Trust>=3 gate and field allowlist still enforced at the route layer.
     """
     val = await _config_get(pool, "federation_admin_query_enabled", None)
     if val is None:
-        val = await _config_get(pool, "federation_admin_actions_enabled", "false")
+        val = await _config_get(pool, "federation_admin_actions_enabled", None)
+    if val is None:
+        return True
     return str(val).lower() == "true"
 
 

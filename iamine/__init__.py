@@ -1,3 +1,3 @@
 """IAMINE — Distributed AI inference network."""
 
-__version__ = "0.2.89"
+__version__ = "1.0.0"

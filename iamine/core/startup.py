@@ -12,6 +12,17 @@ log = logging.getLogger("iamine.pool")
 async def initialize_pool(pool) -> None:
     """Bootstrap complet du pool — appelé par @app.on_event("startup")."""
 
+    # 0. Verify release signature (worker-first: WARNING-only, never blocks boot).
+    #    Strict mode via IAMINE_STRICT_SIGNING=1 turns warnings into fatal exits.
+    try:
+        from ..core.release_signing import verify_release_at_boot
+        pool._release_signature = verify_release_at_boot()
+    except SystemExit:
+        raise
+    except Exception as e:
+        log.debug(f"release signing check skipped: {e}")
+        pool._release_signature = {"status": "error", "reason": str(e)[:200]}
+
     # 1. Init PostgresStore si configuré
     if os.environ.get("IAMINE_DB") == "postgres":
         from ..db import PostgresStore

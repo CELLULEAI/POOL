@@ -790,7 +790,12 @@ async def admin_remove_admin(email: str, request: Request):
     admin_email = await _check_admin(request)
     if not admin_email:
         return JSONResponse({"error": "unauthorized"}, status_code=401)
-    if email == "david.mourgues@gmail.com":
+    # Root admins protected from removal (instance-configurable).
+    # Format : comma-separated emails in ROOT_ADMIN_EMAILS env var.
+    root_admins = {
+        e.strip().lower() for e in os.environ.get("ROOT_ADMIN_EMAILS", "").split(",") if e.strip()
+    }
+    if email.strip().lower() in root_admins:
         return JSONResponse({"error": "Cannot remove root admin"}, status_code=403)
     pool = _pool()
     async with pool.store.pool.acquire() as conn:
@@ -955,8 +960,11 @@ async def admin_alert(request: Request):
         smtp_port = int(smtp_cfg.get("smtp_port") or os.environ.get("SMTP_PORT", "587"))
         smtp_user = smtp_cfg.get("smtp_user") or os.environ.get("SMTP_USER", "")
         smtp_pass = smtp_cfg.get("smtp_pass") or os.environ.get("SMTP_PASS", "")
-        smtp_from = smtp_cfg.get("smtp_from") or os.environ.get("SMTP_FROM", "contact@iamine.org")
-        to_email = smtp_cfg.get("alert_email") or os.environ.get("ALERT_EMAIL", "david.mourgues@gmail.com")
+        smtp_from = smtp_cfg.get("smtp_from") or os.environ.get("SMTP_FROM", "")
+        to_email = smtp_cfg.get("alert_email") or os.environ.get("ALERT_EMAIL", "")
+        if not smtp_from or not to_email:
+            log.warning("SMTP_FROM or ALERT_EMAIL not configured, skipping alert email")
+            return {"ok": False, "error": "smtp_from or alert_email not configured"}
 
         msg = MIMEText(f"[{level.upper()}] {source}\n\n{body}\n\n— IAMINE Pool v{__version__}")
         msg["Subject"] = f"[IAMINE] {subject}"

@@ -1,0 +1,21 @@
+# Cellule.ai maintainers — release signing keys
+#
+# This file lists the Ed25519 public keys authorized to sign official
+# releases (Python wheel + Docker image). It is a SUPPLY-CHAIN file,
+# not a governance file — a key in MAINTAINERS grants zero privilege
+# on the network itself. Pool nodes function normally without it.
+#
+# Format (one maintainer per non-comment line):
+#   <nickname> <pubkey_hex_64> <added_date_YYYY-MM-DD> [<contact>]
+#
+# Rules:
+#   - Bootstrap: K=1 (David only). Transitional, not decentralized.
+#   - :stable channel requires K >= 2 signatures before publication.
+#   - Key rotation requires quorum signature from current maintainers.
+#   - Pool verification is WARNING-only (never rejects a release) so
+#     a signing-key loss never takes a worker offline. Operators who
+#     want strict verification can set IAMINE_STRICT_SIGNING=1.
+#
+# See docs/GOVERNANCE.md for the full rationale.
+
+molecule 9e64a7bb2a20d4c293188d6e346f64e0918b91882b8075ba52ec31981ecfc79b 2026-04-17 maintainers@cellule.ai

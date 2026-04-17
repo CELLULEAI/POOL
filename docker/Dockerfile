@@ -1,15 +1,17 @@
 # Cellule.ai Pool — multi-stage Docker image
-# Version: 0.2.89 (Smart Routing Phase 3 KNN embedder pre-baked)
+# Version: 1.0.0 (first community-governed release)
 # Usage:
 #   docker run -d --name iamine-pool -p 8080:8080 \
 #     -e POOL_NAME=my-pool -e POOL_URL=http://my-public-url:8080 \
 #     -e DB_HOST=iamine-pg -e DB_PASS=strong_pg_pass \
-#     celluleai/pool:0.2.89
+#     celluleai/pool:1.0.0
 #
-# Recommended: use docker-compose.yml which spins up postgres pgvector.
+# Release signing: this image embeds the signed wheel + sig + MAINTAINERS
+# in /opt/cellule/. Pool verifies at boot and logs the result (warning-only
+# unless IAMINE_STRICT_SIGNING=1). See docs/GOVERNANCE.md for the rationale.
 
 # ============================================================
-# Stage 1: builder — install iamine-ai[pool] + pre-download embedder
+# Stage 1: builder — install from local signed wheel
 # ============================================================
 FROM python:3.12-slim-bookworm AS builder
 
@@ -31,11 +33,11 @@ RUN pip install --no-cache-dir \
     --index-url https://download.pytorch.org/whl/cpu \
     torch
 
-# iamine-ai + [pool] extras = sentence-transformers (Smart Routing Phase 3 KNN)
+# Install from locally-built signed wheel (built by scripts/build_release.sh)
+COPY dist/iamine_ai-1.0.0-py3-none-any.whl /tmp/
 RUN pip install --no-cache-dir \
-    --index-url https://cellule.ai/pypi \
     --extra-index-url https://pypi.org/simple \
-    "iamine-ai[pool]==0.2.89"
+    "/tmp/iamine_ai-1.0.0-py3-none-any.whl[pool]"
 
 # Pre-download MiniLM-L6-v2 (~90 MB) — instant container boot, no internet at runtime
 RUN mkdir -p /root/.cache/iamine-embedder && \
@@ -44,7 +46,7 @@ m = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2'); \
 m.save('/root/.cache/iamine-embedder')"
 
 # ============================================================
-# Stage 2: runtime — slim image with venv + embedder cache
+# Stage 2: runtime — slim image with venv + embedder cache + signed release
 # ============================================================
 FROM python:3.12-slim-bookworm
 
@@ -58,6 +60,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=builder /opt/venv /opt/venv
 COPY --from=builder /root/.cache/iamine-embedder /root/.cache/iamine-embedder
 ENV PATH="/opt/venv/bin:$PATH"
+
+# Release signing artifacts (verified at boot by iamine.core.release_signing)
+RUN mkdir -p /opt/cellule
+COPY dist/iamine_ai-1.0.0-py3-none-any.whl           /opt/cellule/
+COPY dist/iamine_ai-1.0.0-py3-none-any.whl.sig       /opt/cellule/
+COPY MAINTAINERS                                      /opt/cellule/
+
+# Env vars consumed by iamine.core.release_signing.verify_release_at_boot
+ENV IAMINE_MAINTAINERS=/opt/cellule/MAINTAINERS \
+    IAMINE_RELEASE_SIG=/opt/cellule/iamine_ai-1.0.0-py3-none-any.whl.sig \
+    IAMINE_RELEASE_ARTIFACT=/opt/cellule/iamine_ai-1.0.0-py3-none-any.whl
 
 WORKDIR /opt/iamine
 COPY docker-entrypoint.sh /opt/iamine/docker-entrypoint.sh

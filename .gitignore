@@ -66,9 +66,13 @@ deploy/
 mobile/
 tests/
 
-# Docs: public architecture diagrams allowed, rest excluded
+# Docs: public architecture diagrams + 1.0.0 governance + MCP guide
 docs/*
 !docs/architecture/
 !docs/architecture/**
+!docs/GOVERNANCE.md
+!docs/PLAN_1_0_0.md
+!docs/RUNBOOK_1_0_0_MIGRATION.md
+!docs/MCP_MEMORY_SERVER.md
 *.apk
 iamine/static/OLD/

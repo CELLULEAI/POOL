@@ -25,6 +25,11 @@ echo ">>> POOL_NAME=${POOL_NAME}"
 echo ">>> POOL_URL=${POOL_URL}"
 echo ">>> DB_HOST=${DB_HOST}:${DB_PORT}/${DB_NAME}"
 
+# Release signing verification runs inside initialize_pool() at boot (WARNING-only).
+# Env vars IAMINE_MAINTAINERS, IAMINE_RELEASE_SIG, IAMINE_RELEASE_ARTIFACT are
+# set by the Dockerfile. Operators who want strict enforcement can pass
+# -e IAMINE_STRICT_SIGNING=1 to refuse to boot on unsigned/tampered images.
+
 # Wait up to 60s for postgres to accept connections
 MAX_TRIES=60
 TRIES=0
