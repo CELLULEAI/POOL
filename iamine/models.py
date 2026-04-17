@@ -168,7 +168,7 @@ def best_model_from_bench(bench_tps: float, ram_gb: float, has_gpu: bool = False
         for m in MODEL_REGISTRY:
             tps_est = bench_tps * (BENCH_MODEL_SIZE / m.size_gb) * GPU_BOOST if m.size_gb > 0 else 0
             min_tps = MIN_TPS_BY_SIZE.get(m.size_gb, DEFAULT_MIN_TPS)
-            vram_margin = max(0.5, m.size_gb * 0.2)
+            vram_margin = max(0.4, m.size_gb * 0.05)
             if (m.size_gb + vram_margin <= gpu_vram_gb
                     and m.quality_score > best.quality_score
                     and tps_est >= min_tps):
