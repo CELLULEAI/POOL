@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "iamine-ai"
-version = "0.2.88"
+version = "0.2.89"
 description = "IAMINE — Distributed AI inference network"
 readme = "CLAUDE.md"
 requires-python = ">=3.10"
@@ -20,6 +20,14 @@ dependencies = [
     "passlib>=1.7.0",
     "argon2-cffi>=21.0.0",
     "asyncpg>=0.29.0",
+]
+
+
+[project.optional-dependencies]
+# Pool with Smart Routing Phase 3 (KNN pgvector embeddings)
+# Install: pip install iamine-ai[pool]
+pool = [
+    "sentence-transformers>=3.0.0",
 ]
 
 [project.scripts]
