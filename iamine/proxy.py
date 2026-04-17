@@ -330,8 +330,26 @@ class ProxyWorker:
     _ALLOWED_CMD_PREFIXES = ("curl", "python3", "cat")
 
     async def _cmd_self_update(self) -> None:
-        """Upgrade the iamine-ai package via pip and re-exec the proxy."""
-        import subprocess, sys, os
+        """Upgrade the iamine-ai package via pip and re-exec the proxy.
+
+        Writes a persistent trace to /tmp/iamine_self_update.log at every
+        step, so diagnosis is possible even when the process runs outside
+        systemd and the journal is empty (see project memory
+        feedback_z2_proxy_systemd_check).
+        """
+        import subprocess, sys, os, datetime, tempfile
+        from pathlib import Path
+
+        trace_path = Path(tempfile.gettempdir()) / "iamine_self_update.log"
+
+        def _trace(msg: str) -> None:
+            try:
+                ts = datetime.datetime.utcnow().isoformat(timespec="seconds") + "Z"
+                with trace_path.open("a", encoding="utf-8") as f:
+                    f.write(f"{ts} [proxy] {msg}\n")
+            except Exception:
+                pass  # never let tracing break the update path
+
         try:
             in_venv = hasattr(sys, "real_prefix") or (
                 hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix)
@@ -343,16 +361,25 @@ class ProxyWorker:
             if not in_venv:
                 cmd.insert(4, "--user")
                 cmd.insert(4, "--break-system-packages")
+
+            _trace(f"start pip in_venv={in_venv} python={sys.executable}")
             r = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+            _trace(f"pip done rc={r.returncode} stderr={r.stderr[:300]!r}")
+
             if r.returncode == 0:
                 log.info(f"self_update pip ok — re-exec proxy...")
-                # Re-exec ourselves to pick up the new code
+                _trace("pre-execv")
+                # Re-exec ourselves to pick up the new code. If execv raises,
+                # the exception handler below captures it; if execv succeeds
+                # this process is replaced and the next run of the new binary
+                # can log "post-execv ok" by checking the trace file mtime.
                 os.execv(sys.executable,
                           [sys.executable, "-m", "iamine", "proxy",
                            "-c", getattr(self, "config_path", "proxy.json")])
             else:
                 log.warning(f"self_update pip failed: {r.stderr[:300]}")
         except Exception as e:
+            _trace(f"error: {type(e).__name__}: {e}")
             log.warning(f"self_update error: {e}")
 
     def _exec_cmd(self, cmd: str) -> str:
