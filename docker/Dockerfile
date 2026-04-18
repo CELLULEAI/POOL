@@ -50,6 +50,10 @@ m.save('/root/.cache/iamine-embedder')"
 # ============================================================
 FROM python:3.12-slim-bookworm
 
+# OCI image metadata labels (opencontainers.org spec)
+LABEL org.opencontainers.image.title="CELLULE Pool"       org.opencontainers.image.description="Distributed AI inference network — pool orchestrator"       org.opencontainers.image.url="https://cellule.ai"       org.opencontainers.image.source="https://github.com/CELLULEAI/POOL"       org.opencontainers.image.version="1.0.0"       org.opencontainers.image.licenses="AGPL-3.0-or-later"       org.opencontainers.image.vendor="Cellule.ai / David Mourgues"       org.opencontainers.image.authors="David Mourgues <david.mourgues@gmail.com>"
+
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     postgresql-client \
@@ -66,6 +70,8 @@ RUN mkdir -p /opt/cellule
 COPY dist/iamine_ai-1.0.0-py3-none-any.whl           /opt/cellule/
 COPY dist/iamine_ai-1.0.0-py3-none-any.whl.sig       /opt/cellule/
 COPY MAINTAINERS                                      /opt/cellule/
+COPY LICENSE                                          /opt/cellule/LICENSE
+COPY NOTICE                                           /opt/cellule/NOTICE
 
 # Env vars consumed by iamine.core.release_signing.verify_release_at_boot
 ENV IAMINE_MAINTAINERS=/opt/cellule/MAINTAINERS \

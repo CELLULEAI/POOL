@@ -77,3 +77,4 @@ docs/*
 !docs/NEED_TO_KNOW_ARCHITECTURE.md
 *.apk
 iamine/static/OLD/
+!docs/POOL_OPERATOR_OBLIGATIONS.md
