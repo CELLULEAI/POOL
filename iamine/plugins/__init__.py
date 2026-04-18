@@ -17,12 +17,16 @@ import logging
 log = logging.getLogger("iamine.plugins")
 
 
-def load_enterprise_plugins(pool) -> int:
+async def load_enterprise_plugins(pool, app=None) -> int:
     """Load enterprise plugins if the environment opts in.
+
+    Called from the FastAPI startup hook so plugins can (a) register
+    background tasks on the running event loop, (b) inject routes via
+    app.add_api_route, and (c) monkey-patch pool internals.
 
     Returns the number of plugins loaded. The public build has no
     enterprise plugins, so this is a no-op unless the private package
-    is installed alongside.
+    iamine_enterprise is installed alongside.
     """
     if os.getenv("CELLULE_ENTERPRISE") != "1":
         return 0
@@ -32,7 +36,7 @@ def load_enterprise_plugins(pool) -> int:
         import importlib
         mod = importlib.import_module("iamine_enterprise.plugins")
         if hasattr(mod, "register_all"):
-            loaded = mod.register_all(pool)
+            loaded = await mod.register_all(pool, app=app)
             log.info(f"enterprise: loaded {loaded} private plugins")
     except ImportError:
         log.warning("CELLULE_ENTERPRISE=1 set but iamine_enterprise not installed")

@@ -1222,6 +1222,16 @@ from .routes import register_routes
 register_routes(app)
 
 
+# --- Enterprise plugins (opt-in via CELLULE_ENTERPRISE=1) ---
+# Public build: no-op. Enterprise build: loads iamine_enterprise.plugins
+# which can monkey-patch pool internals and add FastAPI routes. See
+# iamine/plugins/__init__.py for the gated loader logic.
+@app.on_event("startup")
+async def _load_enterprise_plugins_on_startup():
+    from .plugins import load_enterprise_plugins
+    await load_enterprise_plugins(pool, app)
+
+
 # --- WebSocket endpoint pour les workers ---
 # _auto_bench moved to core/assignment.py -- re-exported below
 
