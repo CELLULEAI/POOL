@@ -175,9 +175,8 @@ async def consolidate_to_episode(
     try:
         worker = pool.get_idle_worker(prefer_stronger=True)
         if worker:
-            from ..core.assist import delegate_task
-            summary_text = await delegate_task(
-                pool, worker=worker, helper=worker,
+            summary_text = await pool.delegate_task(
+                helper=worker,
                 task_type="memory_consolidation",
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=256

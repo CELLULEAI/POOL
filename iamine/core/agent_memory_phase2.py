@@ -85,9 +85,8 @@ async def extract_semantic_facts(pool, store, api_token: str,
     try:
         worker = pool.get_idle_worker(prefer_stronger=True)
         if worker:
-            from ..core.assist import delegate_task
-            extracted_text = await delegate_task(
-                pool, worker=worker, helper=worker,
+            extracted_text = await pool.delegate_task(
+                helper=worker,
                 task_type="semantic_extraction",
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=512
@@ -271,9 +270,8 @@ async def extract_procedures(pool, store, api_token: str,
     try:
         worker = pool.get_idle_worker(prefer_stronger=True)
         if worker:
-            from ..core.assist import delegate_task
-            result_text = await delegate_task(
-                pool, worker=worker, helper=worker,
+            result_text = await pool.delegate_task(
+                helper=worker,
                 task_type="procedure_extraction",
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=512
