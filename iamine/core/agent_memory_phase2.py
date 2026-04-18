@@ -520,18 +520,8 @@ async def apply_decay(store, token_hash_val: str,
     affected = 0
     try:
         async with store.pool.acquire() as conn:
-            # Decay episodes
-            affected += int((await conn.execute("""
-                UPDATE agent_episodes
-                SET decay_factor = GREATEST(0.01,
-                    decay_factor * POWER(0.5,
-                        EXTRACT(EPOCH FROM (NOW() - COALESCE(last_accessed, created_at)))
-                        / ($2 * 3600.0)
-                    )
-                )
-                WHERE token_hash = $1 AND decay_factor > 0.01
-            """, token_hash_val, half_life_hours)).split()[-1])
-
+            # Lock ordering fix: always acquire user_memories lock BEFORE agent_episodes
+            # (hybrid_retrieve does user_memories then agent_episodes — must match).
             # Decay semantic facts
             affected += int((await conn.execute("""
                 UPDATE user_memories
@@ -544,17 +534,30 @@ async def apply_decay(store, token_hash_val: str,
                 WHERE token_hash = $1 AND decay_factor > 0.01
             """, token_hash_val, half_life_hours)).split()[-1])
 
-            # Boost recently accessed (access_count > 5 bumps decay back up)
+            # Boost recently accessed semantic facts
             await conn.execute("""
-                UPDATE agent_episodes
+                UPDATE user_memories
                 SET decay_factor = LEAST(1.0, decay_factor * 1.5)
                 WHERE token_hash = $1
                   AND last_accessed > NOW() - INTERVAL '24 hours'
                   AND access_count > 5
             """, token_hash_val)
 
+            # Decay episodes
+            affected += int((await conn.execute("""
+                UPDATE agent_episodes
+                SET decay_factor = GREATEST(0.01,
+                    decay_factor * POWER(0.5,
+                        EXTRACT(EPOCH FROM (NOW() - COALESCE(last_accessed, created_at)))
+                        / ($2 * 3600.0)
+                    )
+                )
+                WHERE token_hash = $1 AND decay_factor > 0.01
+            """, token_hash_val, half_life_hours)).split()[-1])
+
+            # Boost recently accessed episodes
             await conn.execute("""
-                UPDATE user_memories
+                UPDATE agent_episodes
                 SET decay_factor = LEAST(1.0, decay_factor * 1.5)
                 WHERE token_hash = $1
                   AND last_accessed > NOW() - INTERVAL '24 hours'
