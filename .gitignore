@@ -74,5 +74,6 @@ docs/*
 !docs/PLAN_1_0_0.md
 !docs/RUNBOOK_1_0_0_MIGRATION.md
 !docs/MCP_MEMORY_SERVER.md
+!docs/NEED_TO_KNOW_ARCHITECTURE.md
 *.apk
 iamine/static/OLD/

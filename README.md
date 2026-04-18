@@ -165,3 +165,7 @@ The project is in **alpha**. The network is live with federated pools and active
 **AGPL-3.0-or-later** — see [LICENSE](./LICENSE) and [NOTICE](./NOTICE).
 
 If you run a modified version of this software as a network service (e.g. a pool), you must make your source available to your users (AGPLv3 section 13).
+
+Commercial licenses are available for enterprise deployments that cannot accept the copyleft/network-use obligations of AGPLv3. Contact david.mourgues@gmail.com.
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for contribution guidelines, [CLA.md](./CLA.md) for the contributor license agreement, and [docs/NEED_TO_KNOW_ARCHITECTURE.md](./docs/NEED_TO_KNOW_ARCHITECTURE.md) for the dual-tier architecture (public AGPLv3 + private commercial).
