@@ -220,24 +220,24 @@ launchctl load ~/Library/LaunchAgents/ai.cellule.worker.plist</code></pre>
 <h3 data-i18n="win_quick_dl">⬇ Quick download</h3>
 
 <div style="display:flex;flex-wrap:wrap;gap:.8rem;margin:1rem 0;">
-  <a href="https://github.com/CELLULEAI/POOL/releases/download/v0.2.86-worker/cellule-worker-cpu.zip" class="hero-cta" style="flex:1;min-width:240px;display:block;text-decoration:none;color:inherit;padding:1rem;text-align:center;background:rgba(0,255,234,0.06);border-color:rgba(0,255,234,0.4);">
+  <a href="https://github.com/CELLULEAI/POOL/releases/download/v1.0.0-worker/cellule-worker-cpu.zip" class="hero-cta" style="flex:1;min-width:240px;display:block;text-decoration:none;color:inherit;padding:1rem;text-align:center;background:rgba(0,255,234,0.06);border-color:rgba(0,255,234,0.4);">
     <div style="font-family:ui-monospace,monospace;font-size:.9rem;color:#00d4ff;">cellule-worker-cpu.zip</div>
-    <div style="font-size:.78rem;color:rgba(255,255,255,0.6);margin-top:.3rem;" data-i18n="dl_cpu_desc">~58 MB ZIP — any Windows PC, no GPU</div>
+    <div style="font-size:.78rem;color:rgba(255,255,255,0.6);margin-top:.3rem;" data-i18n="dl_cpu_desc">~47 MB ZIP — any Windows PC, no GPU</div>
     <div style="font-size:.72rem;color:#00ff88;margin-top:.3rem;font-weight:600;" data-i18n="dl_btn">⬇ Download</div>
   </a>
   <a href="https://github.com/CELLULEAI/POOL/releases/download/v0.2.86-worker/cellule-worker-cuda.zip" class="hero-cta" style="flex:1;min-width:240px;display:block;text-decoration:none;color:inherit;padding:1rem;text-align:center;background:rgba(0,212,255,0.06);border-color:rgba(0,212,255,0.4);">
     <div style="font-family:ui-monospace,monospace;font-size:.9rem;color:#00d4ff;">cellule-worker-cuda.zip</div>
-    <div style="font-size:.78rem;color:rgba(255,255,255,0.6);margin-top:.3rem;" data-i18n="dl_cuda_desc">~260 MB ZIP — NVIDIA GPU (CUDA 12.5)</div>
+    <div style="font-size:.78rem;color:rgba(255,255,255,0.6);margin-top:.3rem;" data-i18n="dl_cuda_desc">~260 MB ZIP — NVIDIA GPU (CUDA 12.5, v0.2.86 — v1.0.0 build in debug)</div>
     <div style="font-size:.72rem;color:#00ff88;margin-top:.3rem;font-weight:600;" data-i18n="dl_btn2">⬇ Download</div>
   </a>
-  <a href="https://github.com/CELLULEAI/POOL/releases/download/v0.2.86-worker/cellule-proxy.zip" class="hero-cta" style="flex:1;min-width:240px;display:block;text-decoration:none;color:inherit;padding:1rem;text-align:center;background:rgba(251,191,36,0.06);border-color:rgba(251,191,36,0.4);">
+  <a href="https://github.com/CELLULEAI/POOL/releases/download/v1.0.0-worker/cellule-proxy.zip" class="hero-cta" style="flex:1;min-width:240px;display:block;text-decoration:none;color:inherit;padding:1rem;text-align:center;background:rgba(251,191,36,0.06);border-color:rgba(251,191,36,0.4);">
     <div style="font-family:ui-monospace,monospace;font-size:.9rem;color:#00d4ff;">cellule-proxy.zip</div>
     <div style="font-size:.78rem;color:rgba(255,255,255,0.6);margin-top:.3rem;" data-i18n="dl_proxy_desc">~45 MB ZIP — you bring your own LLM</div>
     <div style="font-size:.72rem;color:#00ff88;margin-top:.3rem;font-weight:600;" data-i18n="dl_btn3">⬇ Download</div>
   </a>
 </div>
 
-<p style="font-size:.82rem;color:rgba(255,255,255,0.55);margin:0 0 1.5rem;text-align:center;" data-i18n="dl_note">Download the ZIP for your variant, right-click → Properties → Unblock (SmartScreen), extract the folder anywhere, and double-click the <code>.exe</code> inside. <a href="https://github.com/CELLULEAI/POOL/releases/tag/v0.2.86-worker" target="_blank" style="color:#00d4ff;">See full release</a>.</p>
+<p style="font-size:.82rem;color:rgba(255,255,255,0.55);margin:0 0 1.5rem;text-align:center;" data-i18n="dl_note">Download the ZIP for your variant, right-click → Properties → Unblock (SmartScreen), extract the folder anywhere, and double-click the <code>.exe</code> inside. <a href="https://github.com/CELLULEAI/POOL/releases/tag/v1.0.0-worker" target="_blank" style="color:#00d4ff;">See full release</a>.</p>
 
 <div style="margin:.5rem 0 1.5rem;padding:1rem 1.2rem;background:rgba(0,212,255,0.06);border-left:3px solid #00d4ff;border-radius:4px;font-size:.88rem;line-height:1.55;">
   <div style="font-weight:600;color:#00d4ff;margin-bottom:.4rem;" data-i18n="exe_behavior_title">How the .exe works (read before running)</div>
@@ -265,7 +265,7 @@ launchctl load ~/Library/LaunchAgents/ai.cellule.worker.plist</code></pre>
 <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
 <td style="padding:.5rem;"><code>cellule-worker-cpu.zip</code></td>
 <td style="padding:.5rem;" data-i18n="cpu_for">Any Windows PC (no GPU required)</td>
-<td style="padding:.5rem;">~45 MB</td>
+<td style="padding:.5rem;">~47 MB</td>
 <td style="padding:.5rem;" data-i18n="cpu_speed">5–15 t/s on modern CPUs (Qwen 2B–4B)</td>
 </tr>
 <tr>
@@ -441,7 +441,7 @@ Remove-Item -Recurse -Force "$env:USERPROFILE\.cellule-worker"</code></pre>
 
 <p style="margin-top:2rem;"><a href="/" data-i18n="back_home">&larr; Back to homepage</a> &middot; <a href="/docs/federation.html" data-i18n="fed_link">Federation explained</a> &middot; <a href="/docs/pool-docker.html" data-i18n="pool_link">Run your own pool</a> &middot; <a href="https://github.com/CELLULEAI/POOL" target="_blank">GitHub</a></p>
 
-<p class="footer" data-i18n="footer">Cellule.ai &mdash; AI belongs to those who run it. Worker installer v0.2.86, LIVE 2026-04-16.</p>
+<p class="footer" data-i18n="footer">Cellule.ai &mdash; AI belongs to those who run it. Worker installer v1.0.0, LIVE 2026-04-17.</p>
 </div>
 
 <script>
@@ -483,13 +483,13 @@ var I18N = {
         mac_req2: "Python 3.12+ \u2014 install with <code>brew install python@3.12</code> if missing",
         mac_req3: "At least 8 GB RAM for the trial 2B model, 16+ GB recommended",
         win_quick_dl: "⬇ Quick download",
-        dl_cpu_desc: "~58 MB ZIP — any Windows PC, no GPU",
-        dl_cuda_desc: "~260 MB ZIP — NVIDIA GPU (CUDA 12.5)",
+        dl_cpu_desc: "~47 MB ZIP — any Windows PC, no GPU",
+        dl_cuda_desc: "~260 MB ZIP — NVIDIA GPU (CUDA 12.5, v0.2.86 — v1.0.0 build in debug)",
         dl_proxy_desc: "~45 MB ZIP — you bring your own LLM",
         dl_btn: "⬇ Download",
         dl_btn2: "⬇ Download",
         dl_btn3: "⬇ Download",
-        dl_note: "Download the ZIP for your variant, right-click → Properties → Unblock (SmartScreen), extract the folder anywhere, and double-click the <code>.exe</code> inside. <a href=\"https://github.com/CELLULEAI/POOL/releases/tag/v0.2.86-worker\" target=\"_blank\" style=\"color:#00d4ff;\">See full release</a>.",
+        dl_note: "Download the ZIP for your variant, right-click → Properties → Unblock (SmartScreen), extract the folder anywhere, and double-click the <code>.exe</code> inside. <a href=\"https://github.com/CELLULEAI/POOL/releases/tag/v1.0.0-worker\" target=\"_blank\" style=\"color:#00d4ff;\">See full release</a>.",
         exe_behavior_title: "How the Windows worker runs",
         exe_behavior_p1: "Extract the ZIP anywhere. Inside the folder you\'ll find <code>cellule-worker-cpu.exe</code> (or <code>cuda</code>/<code>proxy</code>) plus an <code>_internal</code> folder of dependencies. Double-click the <code>.exe</code>. The folder stays self-contained — you can move or copy it, just keep the structure.",
         exe_behavior_li1: "First launch: benchmarks on Qwen 3.5 2B to score your hardware. Takes 1-2 min on a first-time install (model download).",
@@ -553,7 +553,7 @@ var I18N = {
         back_home: "\u2190 Back to homepage",
         fed_link: "Federation explained",
         pool_link: "Run your own pool",
-        footer: "Cellule.ai \u2014 AI belongs to those who run it. Worker installer v0.2.86, LIVE 2026-04-16."
+        footer: "Cellule.ai \u2014 AI belongs to those who run it. Worker installer v1.0.0, LIVE 2026-04-17."
     },
     fr: {
         title: "Installer un worker Cellule.ai",
@@ -591,13 +591,13 @@ var I18N = {
         mac_req2: "Python 3.12+ \u2014 installer avec <code>brew install python@3.12</code> si manquant",
         mac_req3: "Au moins 8 Go de RAM pour le mod\u00e8le trial 2B, 16+ Go recommand\u00e9",
         win_quick_dl: "⬇ Téléchargement direct",
-        dl_cpu_desc: "~58 Mo ZIP — n\'importe quel PC Windows, pas de GPU",
-        dl_cuda_desc: "~260 Mo ZIP — GPU NVIDIA (CUDA 12.5)",
+        dl_cpu_desc: "~47 Mo ZIP — n\'importe quel PC Windows, pas de GPU",
+        dl_cuda_desc: "~260 Mo ZIP — GPU NVIDIA (CUDA 12.5, v0.2.86 — build v1.0.0 en cours de debug)",
         dl_proxy_desc: "~45 Mo ZIP — tu apportes ton propre LLM",
         dl_btn: "⬇ Télécharger",
         dl_btn2: "⬇ Télécharger",
         dl_btn3: "⬇ Télécharger",
-        dl_note: "Télécharge le ZIP de la variante voulue, clic droit → Propriétés → Débloquer (SmartScreen), extrait le dossier où tu veux, puis double-clic sur le <code>.exe</code> à l\'intérieur. <a href=\"https://github.com/CELLULEAI/POOL/releases/tag/v0.2.86-worker\" target=\"_blank\" style=\"color:#00d4ff;\">Voir la release complète</a>.",
+        dl_note: "Télécharge le ZIP de la variante voulue, clic droit → Propriétés → Débloquer (SmartScreen), extrait le dossier où tu veux, puis double-clic sur le <code>.exe</code> à l\'intérieur. <a href=\"https://github.com/CELLULEAI/POOL/releases/tag/v1.0.0-worker\" target=\"_blank\" style=\"color:#00d4ff;\">Voir la release complète</a>.",
         exe_behavior_title: "Fonctionnement du worker Windows",
         exe_behavior_p1: "Extrais le ZIP où tu veux. À l'intérieur du dossier : <code>cellule-worker-cpu.exe</code> (ou <code>cuda</code>/<code>proxy</code>) et un sous-dossier <code>_internal</code> avec les dépendances. Double-clic sur le <code>.exe</code>. Le dossier est auto-suffisant — tu peux le déplacer ou le copier, garde juste la structure intacte.",
         exe_behavior_li0: "<strong>Zéro modification système</strong> : l'exe lit et écrit uniquement dans son propre dossier (config.json, wallet.json, modèles téléchargés). Pas de registre Windows, pas d'<code>%APPDATA%</code>, pas de droits admin. Supprime le dossier = désinstallé complètement.",
@@ -685,7 +685,7 @@ var I18N = {
         back_home: "\u2190 Retour \u00e0 l'accueil",
         fed_link: "La f\u00e9d\u00e9ration expliqu\u00e9e",
         pool_link: "Monter ton propre pool",
-        footer: "Cellule.ai \u2014 l'IA appartient \u00e0 ceux qui la font tourner. Installeur worker v0.2.86, LIVE 2026-04-16."
+        footer: "Cellule.ai \u2014 l'IA appartient \u00e0 ceux qui la font tourner. Installeur worker v1.0.0, LIVE 2026-04-17."
     }
 };
 

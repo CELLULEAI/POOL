@@ -817,13 +817,23 @@ class Pool:
             else:
                 worker_messages.insert(0, {"role": "system", "content": rag_context})
         # === Option B: adaptive /no_think injection (speed up simple chat) ===
+        # 4B Qwen3.5 ignores /no_think when placed in the system message (chat
+        # template behavior). Prepend it to the LAST user message instead —
+        # works across all Qwen3 model sizes. Diagnosed 2026-04-18 during load
+        # audit : 4B kept generating "Analyze the Request:..." despite the flag
+        # being in system. Tested live : /no_think in user -> 9 tokens reply in
+        # 4.2s instead of 500 tokens of thinking in 28s.
         if should_disable_thinking(worker.info.get("model_path", ""), worker_messages, bool(tools)):
-            if worker_messages and worker_messages[0].get("role") == "system":
-                if "/no_think" not in worker_messages[0].get("content", ""):
-                    worker_messages[0]["content"] = worker_messages[0]["content"].rstrip() + "\n\n/no_think"
-            else:
-                worker_messages.insert(0, {"role": "system", "content": "/no_think"})
-            log.debug(f"Option B: /no_think injected for {worker.worker_id}")
+            last_user_idx = -1
+            for i in range(len(worker_messages) - 1, -1, -1):
+                if worker_messages[i].get("role") == "user":
+                    last_user_idx = i
+                    break
+            if last_user_idx >= 0:
+                current = worker_messages[last_user_idx].get("content", "") or ""
+                if "/no_think" not in current:
+                    worker_messages[last_user_idx]["content"] = "/no_think " + current
+                log.debug(f"Option B: /no_think prepended to user msg for {worker.worker_id}")
 
         job_payload = {
             "type": "job",

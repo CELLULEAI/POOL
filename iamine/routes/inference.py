@@ -678,7 +678,7 @@ async def chat_completions(http_request: Request):
             }
         ],
         "usage": usage,
-        "conv_id": result.get("conv_id"),
+        "conv_id": result.get("conv_id") or conv_id,
         "iamine": {
             "worker_id": result.get("worker_id"),
             "tokens_per_sec": result.get("tokens_per_sec"),
@@ -786,6 +786,7 @@ async def api_chat(request: dict):
                     "choices": [{"index": 0, "message": {"role": "assistant",
                         "content": "Requête en file d'attente. Pollez GET /v1/jobs/" + job_id},
                         "finish_reason": "stop"}],
+                    "conv_id": conv_id,
                     "iamine": {"pending": True, "job_id": job_id,
                                "queue_depth": stats["pending"]},
                 }
@@ -799,6 +800,7 @@ async def api_chat(request: dict):
             "choices": [{"index": 0, "message": {"role": "assistant",
                 "content": "Le pool est temporairement chargé. Réessayez dans quelques instants."},
                 "finish_reason": "stop"}],
+            "conv_id": conv_id,
             "iamine": {"overloaded": True, "error": error_msg},
         }
 
@@ -817,6 +819,7 @@ async def api_chat(request: dict):
             "finish_reason": "stop",
         }],
         "usage": {"completion_tokens": result.get("tokens_generated", 0)},
+        "conv_id": result.get("conv_id") or conv_id,
         "iamine": {
             "worker_id": result.get("worker_id"),
             "tokens_per_sec": result.get("tokens_per_sec"),
