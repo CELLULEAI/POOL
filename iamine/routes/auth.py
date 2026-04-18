@@ -273,7 +273,7 @@ async def auth_register(data: dict):
                 "pseudo": pseudo,
                 "eth_address": None,
                 "account_token": account_token,
-                "memory_enabled": False,
+                "memory_enabled": True,
                 "created": accounts[account_id].get("created"),
             }
             asyncio.create_task(_repl.replicate_account_to_peers(pool, account_row_for_push, min_trust=2))
