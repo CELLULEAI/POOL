@@ -1280,25 +1280,32 @@ class PostgresStore(Store):
         encrypted = f.encrypt(fact_text.encode("utf-8")).decode("ascii")
         salt_b64 = base64.urlsafe_b64encode(salt).decode("ascii")
         async with self.pool.acquire() as conn:
-            row = await conn.fetchrow("""
-                INSERT INTO user_memories (token_hash, embedding, fact_text_enc, salt, conv_id)
-                VALUES ($1, $2::vector, $3, $4, $5)
-                RETURNING id
-            """, token_hash, str(embedding), encrypted, salt_b64, conv_id)
-            # #32 Supersede: mark older similar facts (same category, cosine >= 0.90)
-            # as superseded_by the new row. Keeps retrieval filtered to fresh facts.
-            try:
-                await conn.execute("""
-                    UPDATE user_memories
-                       SET superseded_by = $1
-                     WHERE token_hash = $2
-                       AND id != $1
-                       AND superseded_by IS NULL
-                       AND category = (SELECT category FROM user_memories WHERE id = $1)
-                       AND (1 - (embedding <=> $3::vector)) >= $4
-                """, row['id'], token_hash, str(embedding), 0.90)
-            except Exception as _e:
-                log.debug(f'supersede skip id={row["id"]}: {_e}')
+            # Wrap in transaction so pg_advisory_xact_lock holds across
+            # INSERT + supersede UPDATE.
+            async with conn.transaction():
+                # Advisory lock: serialize store_memory + supersede with concurrent
+                # apply_decay (agent_memory_phase2). Same-user contention on
+                # user_memories rows is the deadlock source.
+                await conn.execute("SELECT pg_advisory_xact_lock(hashtext($1))", token_hash)
+                row = await conn.fetchrow("""
+                    INSERT INTO user_memories (token_hash, embedding, fact_text_enc, salt, conv_id)
+                    VALUES ($1, $2::vector, $3, $4, $5)
+                    RETURNING id
+                """, token_hash, str(embedding), encrypted, salt_b64, conv_id)
+                # #32 Supersede: mark older similar facts (same category, cosine >= 0.90)
+                # as superseded_by the new row. Keeps retrieval filtered to fresh facts.
+                try:
+                    await conn.execute("""
+                        UPDATE user_memories
+                           SET superseded_by = $1
+                         WHERE token_hash = $2
+                           AND id != $1
+                           AND superseded_by IS NULL
+                           AND category = (SELECT category FROM user_memories WHERE id = $1)
+                           AND (1 - (embedding <=> $3::vector)) >= $4
+                    """, row['id'], token_hash, str(embedding), 0.90)
+                except Exception as _e:
+                    log.debug(f'supersede skip id={row["id"]}: {_e}')
 
     async def search_memories(self, token_hash: str, query_embedding: list[float],
                               limit: int = 5, min_similarity: float = 0.35,
