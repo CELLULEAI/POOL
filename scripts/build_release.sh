@@ -102,8 +102,10 @@ DOCKER_TAG_PINNED="${IMAGE_REPO}:pinned-${VERSION}"
 DOCKER_TAG_LATEST="${IMAGE_REPO}:latest"
 
 cp MAINTAINERS docker/MAINTAINERS
+cp LICENSE docker/LICENSE
+cp NOTICE docker/NOTICE
 cp -r dist docker/dist
-trap 'rm -rf docker/MAINTAINERS docker/dist' EXIT
+trap 'rm -rf docker/MAINTAINERS docker/LICENSE docker/NOTICE docker/dist' EXIT
 
 docker build -f docker/Dockerfile \
     -t "$DOCKER_TAG_PINNED" \
