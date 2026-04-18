@@ -28,6 +28,9 @@ async def async_compact(pool, helper, prompt, conv_id, conv, source_worker):
             archived = conv.compact(summary)
             if archived and conv.api_token:
                 await pool.store.archive_messages(conv_id, archived, summary, conv.api_token)
+            # RAG: vectorise facts in background (parity with handle_compaction immediate path)
+            if conv.api_token and conv.api_token.startswith("acc_") and pool._is_memory_enabled(conv.api_token):
+                asyncio.create_task(pool._embed_facts(conv.api_token, summary, conv_id))
             log.info(f"Async compaction done for {conv_id}")
         else:
             conv.compact("Previous conversation context.")
