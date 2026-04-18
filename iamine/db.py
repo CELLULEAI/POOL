@@ -1117,7 +1117,7 @@ class PostgresStore(Store):
             blob_json = json.dumps([encrypted_blob])
             await conn.execute("""
                 INSERT INTO conversations (conv_id, api_token, messages, expires)
-                VALUES ($1, $2, $3::jsonb,
+                VALUES ($1, $2::text, $3::jsonb,
                         CASE WHEN $2::text LIKE 'acc_%' THEN NOW() + INTERVAL '10 years' ELSE NOW() + INTERVAL '1 hour' END)
                 ON CONFLICT (conv_id) DO UPDATE SET
                     messages = conversations.messages || $3::jsonb,
