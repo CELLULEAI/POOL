@@ -162,4 +162,6 @@ The project is in **alpha**. The network is live with federated pools and active
 
 ## License
 
-MIT
+**AGPL-3.0-or-later** — see [LICENSE](./LICENSE) and [NOTICE](./NOTICE).
+
+If you run a modified version of this software as a network service (e.g. a pool), you must make your source available to your users (AGPLv3 section 13).

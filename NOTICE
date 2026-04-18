@@ -1,0 +1,32 @@
+CELLULE — Distributed AI inference network
+Copyright (C) 2026 David Mourgues <david.mourgues@gmail.com>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version. See LICENSE for the full text.
+
+====================================================================
+NETWORK USE CLAUSE (AGPLv3 section 13)
+====================================================================
+If you operate a modified version of this software as a network
+service — including but not limited to a Cellule.ai pool or any
+derivative inference service — you must offer the complete
+corresponding source code of your modified version to users
+interacting with it over a network, at no additional charge.
+
+====================================================================
+PATENT NOTICE
+====================================================================
+Cellule.ai and David Mourgues reserve all patent rights not expressly
+granted by the AGPLv3. No patent license is granted beyond the scope
+of AGPLv3 section 11 reciprocal patent clause. Any pending or issued
+patents covering this software remain the exclusive property of
+their respective holders.
+
+====================================================================
+TRADEMARK NOTICE
+====================================================================
+CELLULE, Cellule.ai, and the CELLULE logo are trademarks of David
+Mourgues. The AGPLv3 does not grant any trademark license. You may
+not use these marks to endorse or promote forks or derivative works.
