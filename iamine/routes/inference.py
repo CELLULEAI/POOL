@@ -532,11 +532,21 @@ async def chat_completions(http_request: Request):
         if not isinstance(msg, dict) or "content" not in msg:
             return JSONResponse({"error": "chaque message doit contenir une clé 'content'"}, status_code=400)
 
-    # Uniformisation comportement — doctrine cellule.ai : l'API doit
-    # retourner une UX identique peu importe la cible (worker local,
-    # proxy, peer forward). Les tunings /no_think + strip_thinking
-    # s'appliquent ICI (pas seulement dans pool.py::submit_job) pour
-    # que le chemin forward ne bypasse plus les normalisations.
+    # Uniformisation comportement — doctrine cellule.ai : le VPS est
+    # l'ordonnateur de l'API. Il normalise TOUS les paramètres avant
+    # dispatch, que le job tombe sur un worker local ou soit forwardé
+    # à un peer. Les peers deviennent de purs exécuteurs.
+    #
+    # 1. System prompt VPS : prepend si absent (et pas de tools).
+    #    Si présent, submit_job local + submit_job peer le voient via
+    #    has_system=True et SKIPPENT leur propre injection → pas de
+    #    double décoration, peer applique la directive VPS.
+    _has_system = any(m.get("role") == "system" for m in messages)
+    if not _has_system and not tools and getattr(p, "SYSTEM_PROMPT", None):
+        messages = [{"role": "system", "content": p.SYSTEM_PROMPT}] + messages
+    # 2. /no_think : injection adaptative selon modèle + contenu.
+    #    Portée au forward peer + respectée par submit_job local via
+    #    la garde "/no_think not in current" (idempotent).
     if should_disable_thinking(requested_model or "", messages, bool(tools)):
         for _i in range(len(messages) - 1, -1, -1):
             if messages[_i].get("role") == "user":
