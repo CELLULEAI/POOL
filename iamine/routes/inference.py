@@ -13,7 +13,7 @@ import json
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
-from iamine.core.utils import strip_thinking
+from iamine.core.utils import strip_thinking, should_disable_thinking
 
 
 router = APIRouter()
@@ -532,6 +532,19 @@ async def chat_completions(http_request: Request):
         if not isinstance(msg, dict) or "content" not in msg:
             return JSONResponse({"error": "chaque message doit contenir une clé 'content'"}, status_code=400)
 
+    # Uniformisation comportement — doctrine cellule.ai : l'API doit
+    # retourner une UX identique peu importe la cible (worker local,
+    # proxy, peer forward). Les tunings /no_think + strip_thinking
+    # s'appliquent ICI (pas seulement dans pool.py::submit_job) pour
+    # que le chemin forward ne bypasse plus les normalisations.
+    if should_disable_thinking(requested_model or "", messages, bool(tools)):
+        for _i in range(len(messages) - 1, -1, -1):
+            if messages[_i].get("role") == "user":
+                _cur = messages[_i].get("content", "") or ""
+                if isinstance(_cur, str) and "/no_think" not in _cur:
+                    messages[_i]["content"] = "/no_think " + _cur
+                break
+
     # M7a — Forwarding hook (opt-in via FORWARDING_ENABLED). Placed AFTER auth
     # and BEFORE model validation so we can forward models we don't have locally.
     # Fallback doctrine: any exception → log + continue local routing.
@@ -547,8 +560,12 @@ async def chat_completions(http_request: Request):
                     try:
                         fwd_result = await _fwd.forward_job(p, _peer, requested_model, messages, max_tokens, conv_id=conv_id, api_token=api_token)
                         log.info(f"M7a forward ok: peer={_peer['name']!r} tokens_out={fwd_result.get('tokens_out')}")
+                        # strip_thinking uniforme : idempotent, nettoie
+                        # quelle que soit la source (peer pool peut-être pas
+                        # encore à jour, ou peer qui ne stripe pas).
+                        _clean = strip_thinking(fwd_result.get('response', '') or '')
                         return {
-                            'choices': [{'message': {'role': 'assistant', 'content': fwd_result.get('response', '')}, 'finish_reason': 'stop'}],
+                            'choices': [{'message': {'role': 'assistant', 'content': _clean}, 'finish_reason': 'stop'}],
                             'model': requested_model or 'iamine/auto',
                             'usage': {'prompt_tokens': fwd_result.get('tokens_in', 0), 'completion_tokens': fwd_result.get('tokens_out', 0), 'total_tokens': fwd_result.get('tokens_out', 0)},
                             'forwarded_to': _peer.get('name'),
