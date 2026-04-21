@@ -277,17 +277,26 @@ async def docs_architecture(subpath: str = ""):
     iamine/static/docs/. Here we allow sub-paths (en/, fr/, layer-*.html)
     while keeping protection against path traversal. Restored 2026-04-20
     after the 2026-04-17 VPS crash wiped the on-disk checkout.
+
+    Racine sans subpath : aucun index.html à la racine (seulement fr/ et
+    en/). On redirige 302 vers la langue par défaut (fr) plutôt que
+    renvoyer 404. Le JS côté index.html force ensuite /en/ selon
+    window.currentLang si l'utilisateur est en anglais.
     """
-    from fastapi.responses import FileResponse, JSONResponse
+    from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
     from pathlib import Path
 
     if '..' in subpath:
         return JSONResponse({'error': 'invalid path'}, status_code=400)
 
+    # Racine → redirect 302 vers /fr/ (langue par défaut du site)
+    if not subpath or subpath == '/':
+        return RedirectResponse(url="/docs/architecture/fr/index.html", status_code=302)
+
     repo_root = Path(__file__).resolve().parent.parent.parent
     base = (repo_root / 'docs' / 'architecture').resolve()
 
-    target = base if not subpath else (base / subpath).resolve()
+    target = (base / subpath).resolve()
     try:
         target.relative_to(base)
     except ValueError:
