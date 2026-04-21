@@ -175,6 +175,61 @@ async def chat_completions(http_request: Request):
         requested_model = p.tool_routing_model  # configurable via dashboard admin
         log.info(f"Tool-call detected ({len(tools)} tools) — routing to {requested_model}")
 
+    # Trial chat cascade — cross-federation (doctrine : "pools s'entraident,
+    # API = point d'entrée"). Le trial de cellule.ai envoie 'qwen3.5-2b'
+    # mais la fédération peut n'avoir que du 4B (Gladiator) ou du 9B (Scout-z2).
+    # Cascade stricte 2B → 4B → 9B, JAMAIS 30B-Coder ni 35B-A3B (réservés
+    # au routage intent-based). Cf. memory project_trial_chat_model_design.
+    # Résolution AVANT forwarding hook → le should_forward() voit le modèle
+    # effectif et peut Case A vers Gladiator.
+    TRIAL_MODEL_CASCADE = {
+        "qwen3.5-2b": ["qwen3.5-2b", "qwen3.5-4b", "qwen3.5-9b"],
+        "qwen3.5-4b": ["qwen3.5-4b", "qwen3.5-2b", "qwen3.5-9b"],
+    }
+    def _local_has_model(m: str) -> bool:
+        ml = m.lower()
+        return any(
+            ml in (w.info.get("model_path", "") or "").lower()
+            or ml in (w.worker_id or "").lower()
+            for w in p.workers.values()
+        )
+    async def _resolve_trial_cascade(requested: str, include_peers: bool) -> str:
+        """Return the best cascade candidate, or the original if none match.
+        include_peers=False → local-only (fallback après forward échoué).
+        """
+        cascade = TRIAL_MODEL_CASCADE.get(requested.lower())
+        if not cascade:
+            return requested
+        peer_models: set = set()
+        if include_peers:
+            try:
+                from ..core import federation as _fed
+                for peer in await _fed.list_molecule_peers(p, min_trust=2):
+                    caps = peer.get("capabilities") or []
+                    if isinstance(caps, str):
+                        try:
+                            caps = json.loads(caps)
+                        except Exception:
+                            caps = []
+                    for cap in caps:
+                        if isinstance(cap, dict) and str(cap.get("kind", "")).startswith("llm.chat"):
+                            peer_models.add(str(cap.get("model", "")).lower())
+            except Exception as e:
+                log.debug(f"trial cascade: peer discovery failed (non-fatal): {e}")
+        def _peer_has(m: str) -> bool:
+            ml = m.lower()
+            return any(ml in pm or pm in ml for pm in peer_models if pm)
+        for candidate in cascade:
+            if _local_has_model(candidate) or (include_peers and _peer_has(candidate)):
+                if candidate.lower() != requested.lower():
+                    scope = "local" if _local_has_model(candidate) else "peer"
+                    log.info(f"trial cascade {scope}: {requested!r} → {candidate!r}")
+                return candidate
+        return requested  # pas de match → fallthrough au 400 downstream
+
+    if requested_model and requested_model.lower() in TRIAL_MODEL_CASCADE:
+        requested_model = await _resolve_trial_cascade(requested_model, include_peers=True)
+
     # Auto conv_id for OpenAI-compatible clients that don't send one
     session_id = http_request.headers.get("x-session-id", "")
     if not conv_id and api_token:
@@ -493,6 +548,10 @@ async def chat_completions(http_request: Request):
                         }
                     except Exception as _fwe:
                         log.warning(f"M7a forward failed, falling back to local: {_fwe}")
+                        # Si le modèle résolu par cascade était peer-only,
+                        # re-résoudre local-only pour tomber sur Scout-9B.
+                        if requested_model and requested_model.lower() in TRIAL_MODEL_CASCADE:
+                            requested_model = await _resolve_trial_cascade(requested_model, include_peers=False)
     except Exception as _fwh:
         log.warning(f"M7a forwarding hook exception (non-fatal): {_fwh}")
 
