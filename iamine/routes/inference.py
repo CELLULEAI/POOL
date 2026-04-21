@@ -13,7 +13,7 @@ import json
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
-from iamine.core.utils import strip_thinking
+from iamine.core.utils import strip_thinking, should_disable_thinking
 
 
 router = APIRouter()
@@ -174,6 +174,74 @@ async def chat_completions(http_request: Request):
     if tools and not requested_model and p.tool_routing_model:
         requested_model = p.tool_routing_model  # configurable via dashboard admin
         log.info(f"Tool-call detected ({len(tools)} tools) — routing to {requested_model}")
+
+    # Trial chat cascade — cross-federation (doctrine : "pools s'entraident,
+    # API = point d'entrée"). Le trial de cellule.ai envoie 'qwen3.5-2b'
+    # mais la fédération peut n'avoir que du 4B (Gladiator) ou du 9B (Scout-z2).
+    # Cascade stricte 2B → 4B → 9B, JAMAIS 30B-Coder ni 35B-A3B (réservés
+    # au routage intent-based). Cf. memory project_trial_chat_model_design.
+    # Résolution AVANT forwarding hook → le should_forward() voit le modèle
+    # effectif et peut Case A vers Gladiator.
+    TRIAL_MODEL_CASCADE = {
+        "qwen3.5-2b": ["qwen3.5-2b", "qwen3.5-4b", "qwen3.5-9b"],
+        "qwen3.5-4b": ["qwen3.5-4b", "qwen3.5-2b", "qwen3.5-9b"],
+    }
+    def _local_has_model(m: str) -> bool:
+        ml = m.lower()
+        return any(
+            ml in (w.info.get("model_path", "") or "").lower()
+            or ml in (w.worker_id or "").lower()
+            for w in p.workers.values()
+        )
+    async def _resolve_trial_cascade(requested: str, include_peers: bool) -> str:
+        """Return the best cascade candidate, or the original if none match.
+        include_peers=False → local-only (fallback après forward échoué).
+        """
+        cascade = TRIAL_MODEL_CASCADE.get(requested.lower())
+        if not cascade:
+            return requested
+        peer_models: set = set()
+        if include_peers:
+            try:
+                from ..core import federation as _fed
+                for peer in await _fed.list_molecule_peers(p, min_trust=2):
+                    caps = peer.get("capabilities") or []
+                    if isinstance(caps, str):
+                        try:
+                            caps = json.loads(caps)
+                        except Exception:
+                            caps = []
+                    for cap in caps:
+                        if isinstance(cap, dict) and str(cap.get("kind", "")).startswith("llm.chat"):
+                            peer_models.add(str(cap.get("model", "")).lower())
+            except Exception as e:
+                log.debug(f"trial cascade: peer discovery failed (non-fatal): {e}")
+        def _peer_has(m: str) -> bool:
+            ml = m.lower()
+            return any(ml in pm or pm in ml for pm in peer_models if pm)
+        # Pass 1 — prefer local : évite le hop HTTP + bénéficie de /no_think,
+        # strip_thinking, system prompt à jour côté workers locaux.
+        for candidate in cascade:
+            if _local_has_model(candidate):
+                if candidate.lower() != requested.lower():
+                    log.info(f"trial cascade local: {requested!r} → {candidate!r}")
+                return candidate
+        # Pass 2 — fallback peer (forward) : M7a Case A authentique, quand
+        # aucun candidat cascade n'est local. Tuning peer-side non garanti.
+        if include_peers:
+            for candidate in cascade:
+                if _peer_has(candidate):
+                    log.info(f"trial cascade peer: {requested!r} → {candidate!r}")
+                    return candidate
+        return requested  # pas de match → fallthrough au 400 downstream
+
+    # Cascade trial = UNIQUEMENT pour anonymes (pas d'api_token) : le
+    # trial de cellule.ai hardcode 'qwen3.5-2b' → on fallback local.
+    # API authentifiés qui demandent 'qwen3.5-4b' explicitement doivent
+    # obtenir du 4B (local ou forward M7a), pas un rewrite silencieux
+    # vers 9B.
+    if requested_model and requested_model.lower() in TRIAL_MODEL_CASCADE and not api_token:
+        requested_model = await _resolve_trial_cascade(requested_model, include_peers=True)
 
     # Auto conv_id for OpenAI-compatible clients that don't send one
     session_id = http_request.headers.get("x-session-id", "")
@@ -469,6 +537,29 @@ async def chat_completions(http_request: Request):
         if not isinstance(msg, dict) or "content" not in msg:
             return JSONResponse({"error": "chaque message doit contenir une clé 'content'"}, status_code=400)
 
+    # Uniformisation comportement — doctrine cellule.ai : le VPS est
+    # l'ordonnateur de l'API. Il normalise TOUS les paramètres avant
+    # dispatch, que le job tombe sur un worker local ou soit forwardé
+    # à un peer. Les peers deviennent de purs exécuteurs.
+    #
+    # 1. System prompt VPS : prepend si absent (et pas de tools).
+    #    Si présent, submit_job local + submit_job peer le voient via
+    #    has_system=True et SKIPPENT leur propre injection → pas de
+    #    double décoration, peer applique la directive VPS.
+    _has_system = any(m.get("role") == "system" for m in messages)
+    if not _has_system and not tools and getattr(p, "SYSTEM_PROMPT", None):
+        messages = [{"role": "system", "content": p.SYSTEM_PROMPT}] + messages
+    # 2. /no_think : injection adaptative selon modèle + contenu.
+    #    Portée au forward peer + respectée par submit_job local via
+    #    la garde "/no_think not in current" (idempotent).
+    if should_disable_thinking(requested_model or "", messages, bool(tools)):
+        for _i in range(len(messages) - 1, -1, -1):
+            if messages[_i].get("role") == "user":
+                _cur = messages[_i].get("content", "") or ""
+                if isinstance(_cur, str) and "/no_think" not in _cur:
+                    messages[_i]["content"] = "/no_think " + _cur
+                break
+
     # M7a — Forwarding hook (opt-in via FORWARDING_ENABLED). Placed AFTER auth
     # and BEFORE model validation so we can forward models we don't have locally.
     # Fallback doctrine: any exception → log + continue local routing.
@@ -484,8 +575,12 @@ async def chat_completions(http_request: Request):
                     try:
                         fwd_result = await _fwd.forward_job(p, _peer, requested_model, messages, max_tokens, conv_id=conv_id, api_token=api_token)
                         log.info(f"M7a forward ok: peer={_peer['name']!r} tokens_out={fwd_result.get('tokens_out')}")
+                        # strip_thinking uniforme : idempotent, nettoie
+                        # quelle que soit la source (peer pool peut-être pas
+                        # encore à jour, ou peer qui ne stripe pas).
+                        _clean = strip_thinking(fwd_result.get('response', '') or '')
                         return {
-                            'choices': [{'message': {'role': 'assistant', 'content': fwd_result.get('response', '')}, 'finish_reason': 'stop'}],
+                            'choices': [{'message': {'role': 'assistant', 'content': _clean}, 'finish_reason': 'stop'}],
                             'model': requested_model or 'iamine/auto',
                             'usage': {'prompt_tokens': fwd_result.get('tokens_in', 0), 'completion_tokens': fwd_result.get('tokens_out', 0), 'total_tokens': fwd_result.get('tokens_out', 0)},
                             'forwarded_to': _peer.get('name'),
@@ -493,6 +588,10 @@ async def chat_completions(http_request: Request):
                         }
                     except Exception as _fwe:
                         log.warning(f"M7a forward failed, falling back to local: {_fwe}")
+                        # Si le modèle résolu par cascade était peer-only,
+                        # re-résoudre local-only pour tomber sur Scout-9B.
+                        if requested_model and requested_model.lower() in TRIAL_MODEL_CASCADE:
+                            requested_model = await _resolve_trial_cascade(requested_model, include_peers=False)
     except Exception as _fwh:
         log.warning(f"M7a forwarding hook exception (non-fatal): {_fwh}")
 

@@ -191,6 +191,23 @@ async def install_script_win():
     return JSONResponse({"error": "install.ps1 not found"}, status_code=404)
 
 
+@router.get("/install-worker.sh")
+async def install_worker_script():
+    """One-liner installer Linux+macOS workers.
+    Usage : curl -sSL https://cellule.ai/install-worker.sh | bash
+    Cf. memory project_doctrine_pools_sentraident_settled + doctrine UX
+    compliqué-de-faire-simple : installation 1-ligne load-bearing pour
+    l'onboarding communautaire.
+    Le fichier vit à la racine du repo (iamine-work/install-worker.sh),
+    d'où le .parent.parent.parent pour remonter depuis routes/static.py.
+    """
+    from fastapi.responses import FileResponse as FR
+    script = Path(__file__).parent.parent.parent / "install-worker.sh"
+    if script.exists():
+        return FR(str(script), media_type="text/x-shellscript", filename="install-worker.sh")
+    return JSONResponse({"error": "install-worker.sh not found"}, status_code=404)
+
+
 # --- Contact ---
 @router.post("/v1/contact")
 async def contact(data: dict):
