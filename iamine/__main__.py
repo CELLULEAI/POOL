@@ -360,13 +360,17 @@ def _find_model_files(pool_url: str, hf_file: str) -> list[str]:
 
 
 def _download_progress(block_num, block_size, total_size):
-    """Affiche la progression du telechargement."""
+    """Affiche la progression du telechargement.
+    Format avec 1 decimale pour voir du progres immediat : {mb:.1f}
+    evite l'impression d'un blocage a "0 MB" pendant les premiers MB
+    (avec {:.0f} un download de 0-999 KB s'affichait toujours "0 MB").
+    """
     downloaded = block_num * block_size
     if total_size > 0:
         pct = min(100, downloaded * 100 / total_size)
         mb = downloaded / (1024**2)
         total_mb = total_size / (1024**2)
-        print(f"\r * AUTO        {mb:.0f}/{total_mb:.0f} MB ({pct:.0f}%)", end="", flush=True)
+        print(f"\r * AUTO        {mb:.1f}/{total_mb:.1f} MB ({pct:.1f}%)", end="", flush=True)
 
 
 def cmd_pool(args):
