@@ -249,6 +249,47 @@ async def opencode_md_template():
 
 
 
+# ── /docs/architecture/* — bilingual architecture diagrams (EN + FR)
+@router.get("/docs/architecture")
+@router.get("/docs/architecture/")
+@router.get("/docs/architecture/{subpath:path}")
+async def docs_architecture(subpath: str = ""):
+    """Serve files from repo_root/docs/architecture/.
+
+    Distinct from /docs/{filename} which rejects paths with '/' and serves
+    iamine/static/docs/. Here we allow sub-paths (en/, fr/, layer-*.html)
+    while keeping protection against path traversal. Restored 2026-04-20
+    after the 2026-04-17 VPS crash wiped the on-disk checkout.
+    """
+    from fastapi.responses import FileResponse, JSONResponse
+    from pathlib import Path
+
+    if '..' in subpath:
+        return JSONResponse({'error': 'invalid path'}, status_code=400)
+
+    repo_root = Path(__file__).resolve().parent.parent.parent
+    base = (repo_root / 'docs' / 'architecture').resolve()
+
+    target = base if not subpath else (base / subpath).resolve()
+    try:
+        target.relative_to(base)
+    except ValueError:
+        return JSONResponse({'error': 'forbidden'}, status_code=403)
+
+    if target.is_dir():
+        target = target / 'index.html'
+
+    if not target.exists() or not target.is_file():
+        return JSONResponse({'error': 'not found'}, status_code=404)
+
+    suffix = target.suffix.lower()
+    media = 'text/html' if suffix == '.html' else (
+            'text/css' if suffix == '.css' else (
+            'application/javascript' if suffix == '.js' else (
+            'image/svg+xml' if suffix == '.svg' else 'text/plain')))
+    return FileResponse(str(target), media_type=media)
+
+
 # ── /docs/* — Serve static pool docs (landing pages, docker compose, etc.)
 @router.get("/docs/{filename:path}")
 async def docs_static(filename: str):

@@ -1805,6 +1805,10 @@ footer {
         <a href="#contribute" data-i18n="nav_contribute">Contribute</a>
     </div>
     <div class="nav-right">
+        <a href="/docs/architecture/fr/index.html"
+           onclick="this.href='/docs/architecture/'+(window.currentLang||'fr')+'/index.html'"
+           data-i18n="nav_architecture"
+           style="color:#ffd700; text-decoration:none; padding:0.35rem 0.8rem; font-weight:600; margin-right:6px;">Architecture</a>
         <button class="btn-lang" id="btn-en" onclick="setLang('en')">EN</button>
         <button class="btn-lang active" id="btn-fr" onclick="setLang('fr')">FR</button>
         <div id="nav-auth-area" style="display:inline-flex;align-items:center;gap:8px;"><a href="#" class="btn-small" onclick="openLoginModal();return false;" data-i18n="nav_login">Login</a></div>
@@ -2600,6 +2604,7 @@ var L = {
         nav_pool: "Network",
         nav_opencode: "Build",
         nav_contribute: "Contribute",
+        nav_architecture: "Architecture",
         nav_api: "API",
         nav_tools: "Tools",
         nav_recruit: "We're hiring",
@@ -2831,6 +2836,7 @@ var L = {
         nav_pool: "R\u00e9seau",
         nav_opencode: "D\u00e9velopper",
         nav_contribute: "Contribuer",
+        nav_architecture: "Architecture",
         nav_api: "API",
         nav_tools: "Outils",
                 nav_recruit: "On recrute",
