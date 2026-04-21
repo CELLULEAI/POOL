@@ -1,0 +1,12 @@
+[Unit]
+Description=Daily timer for Cellule.ai VPS self-backup (runs at 03:00 UTC)
+Requires=vps-self-backup.service
+
+[Timer]
+# Daily at 03:00 UTC + random up to 15min to avoid burst if multiple hosts
+OnCalendar=*-*-* 03:00:00
+RandomizedDelaySec=15m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,17 @@
+[Unit]
+Description=Cellule.ai VPS self-backup (PostgreSQL + secrets + configs + pool-private)
+Documentation=https://cellule.ai
+After=postgresql.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/vps-self-backup.sh
+# Low IO priority to not impact pool performance
+IOSchedulingClass=idle
+Nice=10
+# Stdout/stderr to journalctl
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

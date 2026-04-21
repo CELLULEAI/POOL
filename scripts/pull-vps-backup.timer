@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily pull of VPS backup (05:00 UTC, 2h after VPS dump)
+Requires=pull-vps-backup.service
+
+[Timer]
+OnCalendar=*-*-* 05:00:00
+RandomizedDelaySec=15m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,15 @@
+[Unit]
+Description=Z2 daily pull of cellule.ai VPS self-backup
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/pull-vps-backup.sh
+IOSchedulingClass=idle
+Nice=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
