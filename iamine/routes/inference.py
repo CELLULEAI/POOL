@@ -235,7 +235,12 @@ async def chat_completions(http_request: Request):
                     return candidate
         return requested  # pas de match → fallthrough au 400 downstream
 
-    if requested_model and requested_model.lower() in TRIAL_MODEL_CASCADE:
+    # Cascade trial = UNIQUEMENT pour anonymes (pas d'api_token) : le
+    # trial de cellule.ai hardcode 'qwen3.5-2b' → on fallback local.
+    # API authentifiés qui demandent 'qwen3.5-4b' explicitement doivent
+    # obtenir du 4B (local ou forward M7a), pas un rewrite silencieux
+    # vers 9B.
+    if requested_model and requested_model.lower() in TRIAL_MODEL_CASCADE and not api_token:
         requested_model = await _resolve_trial_cascade(requested_model, include_peers=True)
 
     # Auto conv_id for OpenAI-compatible clients that don't send one
