@@ -219,12 +219,20 @@ async def chat_completions(http_request: Request):
         def _peer_has(m: str) -> bool:
             ml = m.lower()
             return any(ml in pm or pm in ml for pm in peer_models if pm)
+        # Pass 1 — prefer local : évite le hop HTTP + bénéficie de /no_think,
+        # strip_thinking, system prompt à jour côté workers locaux.
         for candidate in cascade:
-            if _local_has_model(candidate) or (include_peers and _peer_has(candidate)):
+            if _local_has_model(candidate):
                 if candidate.lower() != requested.lower():
-                    scope = "local" if _local_has_model(candidate) else "peer"
-                    log.info(f"trial cascade {scope}: {requested!r} → {candidate!r}")
+                    log.info(f"trial cascade local: {requested!r} → {candidate!r}")
                 return candidate
+        # Pass 2 — fallback peer (forward) : M7a Case A authentique, quand
+        # aucun candidat cascade n'est local. Tuning peer-side non garanti.
+        if include_peers:
+            for candidate in cascade:
+                if _peer_has(candidate):
+                    log.info(f"trial cascade peer: {requested!r} → {candidate!r}")
+                    return candidate
         return requested  # pas de match → fallthrough au 400 downstream
 
     if requested_model and requested_model.lower() in TRIAL_MODEL_CASCADE:
