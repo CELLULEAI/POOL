@@ -10,6 +10,7 @@ Content-Signal: search=yes, ai-input=yes, ai-train=no
 
 # Surfaces non destinées à l'indexation (API technique, scripts, admin)
 Disallow: /docs
+Allow: /docs/architecture/
 Disallow: /v1/
 Disallow: /pypi/
 Disallow: /install.sh
