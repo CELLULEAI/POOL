@@ -74,6 +74,18 @@ async def sitemap_xml():
     return JSONResponse({"error": "sitemap not found"}, status_code=404)
 
 
+# Sitemap index — sert l'URL héritée /sitemap_index.xml (entrée GSC historique
+# de 2021, ancien site WordPress/Yoast). Pointe vers le sitemap.xml courant pour
+# que l'entrée Search Console existante se répare d'elle-même au prochain crawl.
+@router.get("/sitemap_index.xml")
+async def sitemap_index_xml():
+    from fastapi.responses import FileResponse, JSONResponse
+    f = _static_dir() / "sitemap_index.xml"
+    if f.exists():
+        return FileResponse(str(f), media_type="application/xml")
+    return JSONResponse({"error": "sitemap index not found"}, status_code=404)
+
+
 # --- Mentions légales + politique de confidentialité (RGPD, AGPLv3) ---
 @router.get("/legal")
 @router.get("/mentions-legales")
