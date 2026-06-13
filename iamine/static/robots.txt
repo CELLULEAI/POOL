@@ -1,0 +1,22 @@
+# cellule.ai — réseau LLM décentralisé communautaire (AGPLv3). Indexation bienvenue.
+# Souveraineté du contenu (EU Directive 2019/790 art. 4) :
+#   search=yes    → indexation classique autorisée
+#   ai-input=yes  → réponses IA (RAG, grounding) autorisées
+#   ai-train=no   → PAS d'entraînement / fine-tuning de modèles sur ce contenu
+
+User-agent: *
+Allow: /
+Content-Signal: search=yes, ai-input=yes, ai-train=no
+
+# Surfaces non destinées à l'indexation (API technique, scripts, admin)
+Disallow: /docs
+Disallow: /v1/
+Disallow: /pypi/
+Disallow: /install.sh
+Disallow: /install.ps1
+Disallow: /install-worker.sh
+Disallow: /admin
+Disallow: /admin_pool
+Disallow: /admin_molecule
+
+Sitemap: https://cellule.ai/sitemap.xml

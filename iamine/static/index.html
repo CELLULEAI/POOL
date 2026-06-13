@@ -5,17 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cellule.ai — Decentralized LLM Molecule</title>
     <meta name="description" content="Cellule.ai is a decentralized LLM molecule. PREPROD testnet. Run your own pool, contribute your compute, join the federation.">
+
+    <!-- SEO: canonical + hreflang (site bilingue FR/EN servi sur la même URL via i18n JS) -->
+    <link rel="canonical" href="https://cellule.ai/">
+    <link rel="alternate" hreflang="en" href="https://cellule.ai/">
+    <link rel="alternate" hreflang="fr" href="https://cellule.ai/">
+    <link rel="alternate" hreflang="x-default" href="https://cellule.ai/">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="cellule.ai">
     <meta property="og:title" content="Cellule.ai — Decentralized LLM Molecule">
     <meta property="og:description" content="Contribute your compute power. Access decentralized AI. Join the community.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://cellule.ai">
-    <meta property="og:image" content="https://cellule.ai/static/cellule.ico">
+    <meta property="og:url" content="https://cellule.ai/">
+    <meta property="og:image" content="https://cellule.ai/static/og-cover.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+
+    <!-- Twitter card -->
     <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Cellule.ai — Decentralized LLM Molecule">
+    <meta name="twitter:description" content="Contribute your compute power. Access decentralized AI. Join the community.">
+    <meta name="twitter:image" content="https://cellule.ai/static/og-cover.png">
+
     <link rel="icon" href="/static/cellule.ico">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/tsparticles-slim@2/tsparticles.slim.bundle.min.js">
+    <!-- Inter self-hébergé (RGPD : zéro appel tiers, remplace fonts.googleapis.com / fonts.gstatic.com) -->
+    <link rel="stylesheet" href="/static/fonts.css">
+    <!-- tsParticles self-hébergé (RGPD : remplace cdn.jsdelivr.net) -->
+    <script src="/static/lib/tsparticles.slim.bundle.min.js">
 
 </script>
 <style>
@@ -2475,6 +2492,8 @@ footer {
         </div>
         <div class="footer-col">
             <h4 data-i18n="footer_legal_title">Legal</h4>
+            <a href="/legal" data-i18n="footer_link_legal">Legal notice &amp; Privacy</a>
+            <a href="https://github.com/CELLULEAI/POOL/blob/main/LICENSE" target="_blank" rel="noopener" data-i18n="footer_link_license">License (AGPLv3)</a>
         </div>
     </div>
     <div class="footer-bottom">
@@ -2700,6 +2719,8 @@ var L = {
         footer_link_docs: "API Docs",
         footer_link_contact: "Contact",
         footer_legal_title: "Legal",
+        footer_link_legal: "Legal notice & Privacy",
+        footer_link_license: "License (AGPLv3)",
         footer_link_privacy: "Privacy",
         footer_link_terms: "Terms",
         nav_adv: "Advantages",
@@ -2914,6 +2935,8 @@ var L = {
         footer_link_docs: "Docs API",
         footer_link_contact: "Contact",
         footer_legal_title: "L\u00e9gal",
+        footer_link_legal: "Mentions l\u00e9gales & Confidentialit\u00e9",
+        footer_link_license: "Licence (AGPLv3)",
         footer_link_privacy: "Confidentialit\u00e9",
         footer_link_terms: "CGU",
         nav_adv: "Avantages",

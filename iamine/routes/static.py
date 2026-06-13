@@ -52,6 +52,42 @@ async def root():
     return {"message": f"IAMINE Pool v{_version()}", "docs": "/docs", "status": "/v1/status"}
 
 
+# --- SEO : robots.txt + sitemap.xml servis à la racine ---
+# Doivent être à la racine du domaine (un fichier d'origine prend le dessus sur
+# le robots.txt managé par Cloudflare une fois déployé). Le contenu vit dans
+# static/ et est versionné dans le repo (AGPLv3).
+@router.get("/robots.txt")
+async def robots_txt():
+    from fastapi.responses import FileResponse, PlainTextResponse
+    f = _static_dir() / "robots.txt"
+    if f.exists():
+        return FileResponse(str(f), media_type="text/plain")
+    return PlainTextResponse("User-agent: *\nAllow: /\n", media_type="text/plain")
+
+
+@router.get("/sitemap.xml")
+async def sitemap_xml():
+    from fastapi.responses import FileResponse, JSONResponse
+    f = _static_dir() / "sitemap.xml"
+    if f.exists():
+        return FileResponse(str(f), media_type="application/xml")
+    return JSONResponse({"error": "sitemap not found"}, status_code=404)
+
+
+# --- Mentions légales + politique de confidentialité (RGPD, AGPLv3) ---
+@router.get("/legal")
+@router.get("/mentions-legales")
+async def legal_page():
+    if _is_pool_operator_mode():
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url="https://cellule.ai/legal", status_code=302)
+    from fastapi.responses import FileResponse, JSONResponse
+    f = _static_dir() / "legal.html"
+    if f.exists():
+        return FileResponse(str(f), media_type="text/html")
+    return JSONResponse({"error": "legal page not found"}, status_code=404)
+
+
 # --- Serveur de modeles GGUF ---
 @router.get("/v1/models/download/{filename}")
 async def download_model(filename: str):
