@@ -476,6 +476,11 @@ async def admin_set_family(request: Request):
     pool = _pool()
     data = await request.json()
     family = data.get("family", "")
+    # Migration opt-in : par défaut on NE migre PAS les workers actifs.
+    # Doctrine David : activer une famille != forcer les workers en place à changer
+    # de modèle. Les proxies sont indépendants (ils ignorent update_model de toute
+    # façon, cf. proxy.py). Seuls les NOUVEAUX workers prennent la famille active.
+    migrate = bool(data.get("migrate", False))
 
     if family not in MODEL_FAMILIES:
         return JSONResponse({"error": f"Unknown family '{family}'. Available: {list(MODEL_FAMILIES.keys())}"}, status_code=400)
@@ -493,41 +498,43 @@ async def admin_set_family(request: Request):
     except Exception as e:
         log.warning(f"Failed to persist active_family: {e}")
 
-    # Migrer tous les workers vers la nouvelle famille
+    # Migration des workers : UNIQUEMENT si explicitement demandé (migrate=true).
+    # Les workers --auto reçoivent un update_model ; les proxies l'ignorent.
     results = []
-    for wid, w in pool.workers.items():
-        hostname = w.info.get("hostname", "")
-        if hostname == pool._pool_hostname:
-            continue
+    if migrate:
+        for wid, w in pool.workers.items():
+            hostname = w.info.get("hostname", "")
+            if hostname == pool._pool_hostname:
+                continue
 
-        ram = w.info.get("ram_total_gb", 4)
-        threads = w.info.get("cpu_threads", 4)
-        has_gpu = w.info.get("has_gpu", False)
-        gpu_vram = w.info.get("gpu_vram_gb", 0)
+            ram = w.info.get("ram_total_gb", 4)
+            threads = w.info.get("cpu_threads", 4)
+            has_gpu = w.info.get("has_gpu", False)
+            gpu_vram = w.info.get("gpu_vram_gb", 0)
 
-        rec, ctx = recommend_model_for_worker(ram, threads, has_gpu=has_gpu, gpu_vram_gb=gpu_vram)
-        gpu_layers = -1 if has_gpu else 0
+            rec, ctx = recommend_model_for_worker(ram, threads, has_gpu=has_gpu, gpu_vram_gb=gpu_vram)
+            gpu_layers = -1 if has_gpu else 0
 
-        payload = {
-            "type": "command",
-            "cmd": "update_model",
-            "model_url": f"http://dl.iamine.org/v1/models/download/{rec.hf_file}",
-            "model_path": f"models/{rec.hf_file}",
-            "ctx_size": ctx,
-            "gpu_layers": gpu_layers,
-            "threads": min(threads, 16),
-        }
-        try:
-            await w.ws.send_json(payload)
-            await pool.store.update_worker_assignment(
-                wid, rec.id, f"models/{rec.hf_file}", ctx, gpu_layers)
-            results.append({"worker": wid, "model": rec.name, "sent": True})
-        except Exception as e:
-            results.append({"worker": wid, "error": str(e), "sent": False})
+            payload = {
+                "type": "command",
+                "cmd": "update_model",
+                "model_url": f"https://cellule.ai/v1/models/download/{rec.hf_file}",
+                "model_path": f"models/{rec.hf_file}",
+                "ctx_size": ctx,
+                "gpu_layers": gpu_layers,
+                "threads": min(threads, 16),
+            }
+            try:
+                await w.ws.send_json(payload)
+                await pool.store.update_worker_assignment(
+                    wid, rec.id, f"models/{rec.hf_file}", ctx, gpu_layers)
+                results.append({"worker": wid, "model": rec.name, "sent": True})
+            except Exception as e:
+                results.append({"worker": wid, "error": str(e), "sent": False})
 
     migrated = len([r for r in results if r.get("sent")])
-    log.info(f"Family switch: {old_family} -> {family}, {migrated} workers migrated")
-    return {"ok": True, "old_family": old_family, "new_family": family, "migrated": migrated, "details": results}
+    log.info(f"Family switch: {old_family} -> {family} (migrate={migrate}, {migrated} workers migrated)")
+    return {"ok": True, "old_family": old_family, "new_family": family, "migrate": migrate, "migrated": migrated, "details": results}
 
 
 # ─── GET /v1/admin/tasks ─────────────────────────────────────────────────────
