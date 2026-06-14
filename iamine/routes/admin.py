@@ -1673,7 +1673,7 @@ async def pool_settings_set(request: Request):
                 CREATE TABLE IF NOT EXISTS pool_config (
                     key VARCHAR(128) PRIMARY KEY,
                     value TEXT,
-                    updated_at TIMESTAMP DEFAULT now()
+                    updated TIMESTAMP DEFAULT now()
                 )
             """)
             await conn.execute("""
@@ -1794,20 +1794,20 @@ async def admin_resend_config_set(request: Request):
                 CREATE TABLE IF NOT EXISTS pool_config (
                     key VARCHAR(128) PRIMARY KEY,
                     value TEXT,
-                    updated_at TIMESTAMP DEFAULT now()
+                    updated TIMESTAMP DEFAULT now()
                 )
             """)
             if "api_key" in data and data["api_key"]:
                 await conn.execute("""
-                    INSERT INTO pool_config (key, value, updated_at)
+                    INSERT INTO pool_config (key, value, updated)
                     VALUES ('resend_api_key', $1, now())
-                    ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()
+                    ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated = now()
                 """, data["api_key"])
             if "from" in data and data["from"]:
                 await conn.execute("""
-                    INSERT INTO pool_config (key, value, updated_at)
+                    INSERT INTO pool_config (key, value, updated)
                     VALUES ('resend_from', $1, now())
-                    ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()
+                    ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated = now()
                 """, data["from"])
         return {"ok": True}
     except Exception as e:

@@ -931,9 +931,9 @@ class PostgresStore(Store):
     async def set_config(self, key: str, value: str) -> None:
         async with self.pool.acquire() as conn:
             await conn.execute("""
-                INSERT INTO pool_config (key, value, updated_at)
+                INSERT INTO pool_config (key, value, updated)
                 VALUES ($1, $2, NOW())
-                ON CONFLICT (key) DO UPDATE SET value=$2, updated_at=NOW()
+                ON CONFLICT (key) DO UPDATE SET value=$2, updated=NOW()
             """, key, value)
 
     # --- Tokens ---
