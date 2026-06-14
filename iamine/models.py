@@ -109,10 +109,46 @@ FAMILY_QWEN25: list[ModelTier] = [
     ),
 ]
 
+FAMILY_GEMMA3: list[ModelTier] = [
+    ModelTier(
+        id="gemma3-1b-q4", name="Gemma 3 1B",
+        hf_repo="bartowski/google_gemma-3-1b-it-GGUF",
+        hf_file="google_gemma-3-1b-it-Q4_K_M.gguf",
+        size_gb=0.8, ram_required_gb=2.5, ctx_default=4096,
+        params="1B", quality_score=30, min_tps_useful=8.0,
+        earn_per_100tok=1.0, cost_per_request=2.0, generation="3",
+    ),
+    ModelTier(
+        id="gemma3-4b-q4", name="Gemma 3 4B",
+        hf_repo="bartowski/google_gemma-3-4b-it-GGUF",
+        hf_file="google_gemma-3-4b-it-Q4_K_M.gguf",
+        size_gb=2.8, ram_required_gb=5.0, ctx_default=8192,
+        params="4B", quality_score=55, min_tps_useful=8.0,
+        earn_per_100tok=2.0, cost_per_request=3.0, generation="3",
+    ),
+    ModelTier(
+        id="gemma3-12b-q4", name="Gemma 3 12B",
+        hf_repo="bartowski/google_gemma-3-12b-it-GGUF",
+        hf_file="google_gemma-3-12b-it-Q4_K_M.gguf",
+        size_gb=7.3, ram_required_gb=11.0, ctx_default=16384,
+        params="12B", quality_score=80, min_tps_useful=6.0,
+        earn_per_100tok=6.0, cost_per_request=10.0, generation="3",
+    ),
+    ModelTier(
+        id="gemma3-27b-q4", name="Gemma 3 27B",
+        hf_repo="bartowski/google_gemma-3-27b-it-GGUF",
+        hf_file="google_gemma-3-27b-it-Q4_K_M.gguf",
+        size_gb=16.0, ram_required_gb=20.0, ctx_default=32768,
+        params="27B", quality_score=92, min_tps_useful=4.0,
+        earn_per_100tok=15.0, cost_per_request=30.0, generation="3",
+    ),
+]
+
 # Catalogue des familles disponibles
 MODEL_FAMILIES: dict[str, list[ModelTier]] = {
     "qwen3.5": FAMILY_QWEN35,
     "qwen2.5": FAMILY_QWEN25,
+    "gemma3": FAMILY_GEMMA3,
 }
 
 # Famille active par defaut (sera surchargee par la DB au startup)
@@ -150,7 +186,8 @@ def best_model_from_bench(bench_tps: float, ram_gb: float, has_gpu: bool = False
     On prend le plus gros modele qui tient en VRAM (GPU) ou RAM (CPU)
     avec tps_estime >= seuil par tier.
     """
-    MIN_TPS_BY_SIZE = {1.3: 8, 2.7: 8, 5.5: 8, 16: 4, 21: 4}
+    MIN_TPS_BY_SIZE = {1.3: 8, 2.7: 8, 5.5: 8, 16: 4, 21: 4,
+                       0.8: 8, 2.8: 8, 7.3: 6}
     DEFAULT_MIN_TPS = 6.0
     BENCH_MODEL_SIZE = 1.3  # taille du 2B Q4 en GB (modele de bench)
 
@@ -158,6 +195,7 @@ def best_model_from_bench(bench_tps: float, ram_gb: float, has_gpu: bool = False
         "2B": 2048, "4B": 2048,
         "9B": 4096, "27B": 4096, "35B": 4096,
         "3B": 2048, "7B": 2048, "14B": 4096, "32B": 4096,
+        "1B": 2048, "12B": 4096,
     }
 
     # GPU : prendre le plus gros qui rentre en VRAM
@@ -222,11 +260,12 @@ def promote_from_real_tps(
 
     Returns (model, ctx) if a better model is found, None otherwise.
     """
-    MIN_TPS_BY_SIZE = {0.5: 8, 1.3: 6, 2.7: 5, 5.5: 5, 16: 5, 21: 5}
+    MIN_TPS_BY_SIZE = {0.5: 8, 1.3: 6, 2.7: 5, 5.5: 5, 16: 5, 21: 5,
+                       0.8: 6, 2.8: 5, 7.3: 5}
     DEFAULT_MIN_TPS = 6.0
     CTX_BY_PARAMS = {
-        "0.8B": 2048, "2B": 2048, "4B": 2048,
-        "9B": 4096, "27B": 4096, "35B": 4096,
+        "0.8B": 2048, "1B": 2048, "2B": 2048, "4B": 2048,
+        "9B": 4096, "12B": 4096, "27B": 4096, "35B": 4096,
     }
 
     if real_tps <= 0 or current_model_size_gb <= 0:
@@ -299,9 +338,11 @@ def recommend_model_for_worker(
     # Le 35B MoE a 32K : compacteur ideal (qualite 32B, vitesse 3B)
     CTX_BY_PARAMS = {
         "0.8B":  4096,   # 4K — assez pour 2-3 echanges avant compactage
+        "1B":    4096,
         "2B":    4096,
         "4B":    8192,
         "9B":   16384,
+        "12B":  16384,
         "27B":  32768,
         "35B":  32768,   # MoE — compacteur principal du pool
     }
@@ -310,11 +351,11 @@ def recommend_model_for_worker(
     # Pour MoE, le KV cache depend des params totaux, pas des actifs
     def _kv_cache(tier: ModelTier, ctx: int) -> float:
         base = {
-            "0.5B": 0.1, "0.8B": 0.1,
+            "0.5B": 0.1, "0.8B": 0.1, "1B": 0.3,
             "1.5B": 0.4, "2B": 0.5,
             "3B": 0.8, "4B": 1.0,
             "7B": 1.4, "9B": 1.8,
-            "14B": 2.0,
+            "12B": 2.0, "14B": 2.0,
             "27B": 3.0, "32B": 3.5, "35B": 3.5,
             "72B": 6.0,
         }
