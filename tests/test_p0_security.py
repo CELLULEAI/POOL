@@ -346,6 +346,41 @@ def test_login_throttle_blocks_after_max():
 
 # ── sec-pub-09 : verrou anti brute-force du code d'activation ─────────────────
 
+# ── sec-pub-13 : client MCP verifie le TLS par defaut ────────────────────────
+
+def test_mcp_tls_verify_secure_by_default(monkeypatch):
+    try:
+        from iamine import mcp_server as mcp_mod
+    except Exception:
+        pytest.skip("mcp_server indisponible (dependance 'mcp' absente)")
+    monkeypatch.delenv("IAMINE_MCP_CA", raising=False)
+    monkeypatch.delenv("IAMINE_MCP_INSECURE", raising=False)
+    assert mcp_mod._tls_verify() is True
+    monkeypatch.setenv("IAMINE_MCP_CA", "/etc/ssl/ca.pem")
+    assert mcp_mod._tls_verify() == "/etc/ssl/ca.pem"
+    monkeypatch.delenv("IAMINE_MCP_CA", raising=False)
+    monkeypatch.setenv("IAMINE_MCP_INSECURE", "1")
+    assert mcp_mod._tls_verify() is False
+
+
+# ── sec-pub-14 : /v1/contact borne + rate-limite ─────────────────────────────
+
+@pytest.mark.asyncio
+async def test_contact_rate_limited_and_requires_message():
+    from iamine.routes import static as static_mod
+    ip = "203.0.113.7"
+    req = _FakeReq(headers={"cf-connecting-ip": ip})
+    # quota atteint -> 429 (aucune ecriture fichier)
+    static_mod._CONTACT_HITS[ip] = [time.time()] * static_mod._CONTACT_MAX
+    r = await static_mod.contact({"message": "hello"}, req)
+    assert r.status_code == 429
+    static_mod._CONTACT_HITS.pop(ip, None)
+    # message vide -> 400 (retour avant ecriture)
+    r2 = await static_mod.contact({"message": "   "}, req)
+    assert r2.status_code == 400
+    static_mod._CONTACT_HITS.pop(ip, None)
+
+
 @pytest.mark.asyncio
 async def test_activate_code_lockout(monkeypatch):
     acc = {"email": "u@x.com", "email_verified": False,

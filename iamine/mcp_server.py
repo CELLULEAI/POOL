@@ -37,12 +37,23 @@ mcp = FastMCP(
 
 # --- HTTP client for remote mode ---
 
+def _tls_verify():
+    """Reglage de verification TLS du client MCP (cf. audit sec-pub-13).
+
+    Verifie par defaut. Pour un pool a certificat auto-signe : fournir un bundle
+    CA via IAMINE_MCP_CA=/chemin/ca.pem ; en dernier recours, desactiver
+    explicitement avec IAMINE_MCP_INSECURE=1 (deconseille)."""
+    ca = os.environ.get("IAMINE_MCP_CA", "").strip()
+    insecure = os.environ.get("IAMINE_MCP_INSECURE", "").strip() == "1"
+    return False if insecure else (ca or True)
+
+
 def _client() -> httpx.Client:
     return httpx.Client(
         base_url=POOL_URL,
         headers={"Authorization": f"Bearer {API_TOKEN}"},
         timeout=30.0,
-        verify=False,  # Self-signed certs on some pools
+        verify=_tls_verify(),
     )
 
 

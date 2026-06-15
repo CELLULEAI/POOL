@@ -6,11 +6,16 @@ import logging
 import time
 from pathlib import Path
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 router = APIRouter()
 log = logging.getLogger("iamine.pool")
+
+# Rate-limit memoire du formulaire de contact (cf. audit sec-pub-14).
+_CONTACT_HITS: dict[str, list[float]] = {}
+_CONTACT_MAX = 5
+_CONTACT_WINDOW = 600.0  # 10 min
 def _is_pool_operator_mode() -> bool:
     """True if running as a community Docker pool (restricted mode)."""
     import os
@@ -258,20 +263,41 @@ async def install_worker_script():
 
 # --- Contact ---
 @router.post("/v1/contact")
-async def contact(data: dict):
-    """Stocke un message de contact."""
+async def contact(data: dict, request: Request):
+    """Stocke un message de contact (borne + rate-limite, cf. sec-pub-14)."""
     import json as _json
     from pathlib import Path as _Path
+    from iamine.core.credits import client_ip
+
+    ip = client_ip(request)
+    now = time.time()
+    hits = [t for t in _CONTACT_HITS.get(ip, []) if now - t < _CONTACT_WINDOW]
+    if len(hits) >= _CONTACT_MAX:
+        return JSONResponse({"error": "too many messages, retry later"}, status_code=429)
+    hits.append(now)
+    _CONTACT_HITS[ip] = hits
+    if len(_CONTACT_HITS) > 10000:  # garde-fou memoire
+        for k, v in list(_CONTACT_HITS.items()):
+            if not v or now - v[-1] > _CONTACT_WINDOW:
+                _CONTACT_HITS.pop(k, None)
+
+    # Bornage des champs (anti remplissage disque / abus)
+    name = str(data.get("name", ""))[:200]
+    email = str(data.get("email", ""))[:200]
+    message = str(data.get("message", ""))[:5000]
+    if not message.strip():
+        return JSONResponse({"error": "message required"}, status_code=400)
+
     contact_file = _Path("contacts.jsonl")
     entry = {
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-        "name": data.get("name", ""),
-        "email": data.get("email", ""),
-        "message": data.get("message", ""),
+        "name": name,
+        "email": email,
+        "message": message,
     }
     with open(contact_file, "a") as f:
         f.write(_json.dumps(entry) + "\n")
-    log.info(f"Contact from {entry['email']}: {entry['message'][:50]}...")
+    log.info(f"Contact from {email}: {message[:50]}...")
     return {"status": "ok"}
 
 
