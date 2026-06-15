@@ -58,19 +58,27 @@ async def router_stats():
 
 @router.get("/v1/models")
 async def models():
-    """Liste les modeles disponibles - seul iamine (smart routing) est expose."""
+    """Liste les modeles OpenAI-compatibles exposes.
+
+    - "iamine"     : smart routing + memoire long-terme + pipeline assist (mode riche).
+    - "iamine/raw" : mode STATELESS / OpenAI strict (pas de memoire, pas d'assist,
+                     reponse OpenAI pure). Pour Nextcloud integration_openai, Open WebUI
+                     et tout client stateless qui choisit son modele depuis cette liste.
+    """
     pool = _pool()
     n_workers = len([w for w in pool.workers.values() if not w.busy])
+    _model = lambda mid: {
+        "id": mid,
+        "object": "model",
+        "created": 1712534400,
+        "owned_by": "iamine-pool",
+        "workers": n_workers,
+    }
     return {
         "object": "list",
         "data": [
-            {
-                "id": "iamine",
-                "object": "model",
-                "created": 1712534400,
-                "owned_by": "iamine-pool",
-                "workers": n_workers,
-            }
+            _model("iamine"),
+            _model("iamine/raw"),
         ],
     }
 
