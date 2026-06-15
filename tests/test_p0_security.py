@@ -381,6 +381,15 @@ async def test_contact_rate_limited_and_requires_message():
     static_mod._CONTACT_HITS.pop(ip, None)
 
 
+# ── sec-pub-08 (Phase 1) : token de compte aleatoire ─────────────────────────
+
+def test_new_account_token_is_random():
+    t1 = auth_mod._new_account_token()
+    t2 = auth_mod._new_account_token()
+    assert t1.startswith("acc_") and len(t1) == 4 + 32
+    assert t1 != t2  # aleatoire, plus derive de l'email (non forgeable)
+
+
 @pytest.mark.asyncio
 async def test_activate_code_lockout(monkeypatch):
     acc = {"email": "u@x.com", "email_verified": False,

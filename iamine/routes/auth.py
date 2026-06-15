@@ -164,6 +164,16 @@ def _generate_verification_code() -> str:
     return str(secrets.randbelow(900000) + 100000)
 
 
+def _new_account_token() -> str:
+    """Token de compte ALEATOIRE (audit sec-pub-08).
+
+    Remplace l'ancien HMAC(_SERVER_SECRET, email) deterministe : un token aleatoire
+    n'est pas derivable de l'email (non forgeable meme si _SERVER_SECRET fuit) et
+    n'est pas recuperable apres une suppression RGPD (re-inscription => nouveau
+    token => anciennes donnees chiffrees non retrouvees)."""
+    return "acc_" + secrets.token_hex(16)
+
+
 async def _get_smtp_config(pool):
     try:
         async with pool.store.pool.acquire() as conn:
@@ -327,7 +337,7 @@ async def auth_register(data: dict):
     account_id = secrets.token_hex(16)
     password_hash = _argon2.hash(password)
 
-    account_token = _derive_account_token(email)
+    account_token = _new_account_token()
     accounts[account_id] = {
         "account_id": account_id,
         "account_token": account_token,
@@ -531,7 +541,7 @@ async def auth_google(data: dict):
     else:
         # Register automatique
         account_id = secrets.token_hex(16)
-        account_token = _derive_account_token(email)
+        account_token = _new_account_token()
         pseudo = name or email.split("@")[0]
         accounts[account_id] = {
             "account_id": account_id,
