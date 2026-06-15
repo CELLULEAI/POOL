@@ -562,6 +562,7 @@ class Pool:
         self, messages: list[dict], max_tokens: int = 512,
         conv_id: str | None = None, requested_model: str | None = None,
         api_token: str = "", tools: list | None = None,
+        stateless: bool = False,
     ) -> dict:
         """Soumet un job avec smart routing."""
         # Conversation tracking
@@ -648,7 +649,7 @@ class Pool:
                 self, self.store, api_token, conv.conv_id))
 
         # L3 : charger le contexte depuis PostgreSQL si la conversation est vide en RAM
-        if conv_id and conv.api_token and len(conv.messages) <= 1 and not conv._summary and not conv._l3_summary and self._is_memory_enabled(api_token) and not tools:
+        if conv_id and conv.api_token and len(conv.messages) <= 1 and not conv._summary and not conv._l3_summary and self._is_memory_enabled(api_token) and not tools and not stateless:
             try:
                 stored = await self.store.load_conversation(conv.conv_id, conv.api_token)
                 if stored and (stored.get("messages") or stored.get("summary")):
@@ -670,7 +671,7 @@ class Pool:
 
         # === RAG : memoire long-terme vectorisee ===
         rag_context = ""
-        if api_token and api_token.startswith("acc_") and self._is_memory_enabled(api_token) and not tools:
+        if api_token and api_token.startswith("acc_") and self._is_memory_enabled(api_token) and not tools and not stateless:
             try:
                 last_user_msg = ""
                 for m in reversed(messages):
@@ -708,7 +709,7 @@ class Pool:
         # Skip pour les requetes tool-call : le client (OpenCode/Cursor/aider)
         # gere son propre prompt systeme et notre branding pollue les coding agents
         has_system = any(m.get("role") == "system" for m in messages)
-        if not has_system and not tools:
+        if not has_system and not tools and not stateless:
             messages = [{"role": "system", "content": self.SYSTEM_PROMPT}] + messages
 
         # Ne pas accumuler le contexte pour les requetes tool-call
@@ -867,8 +868,9 @@ class Pool:
         worker.jobs_done += 1
         self.pending_jobs.pop(job_id, None)
 
-        # === BOOST MODE (core/assist.py) ===
-        result = await handle_boost(self, result, messages, worker, conv, tools)
+        # === BOOST MODE (core/assist.py) — skip en mode stateless (OpenAI strict) ===
+        if not stateless:
+            result = await handle_boost(self, result, messages, worker, conv, tools)
 
         # Nettoyer le thinking mode des reponses (Qwen 3.5 thinking actif par defaut)
         raw_text = result.get("text", "")
@@ -877,21 +879,21 @@ class Pool:
         # === MEMORIZE TAG : intercepter [MEMORIZE: ...] dans la reponse ===
         import re as _re
         memorize_match = _re.search(r"\[MEMORIZE:\s*(.+?)\]", result["text"])
-        if memorize_match and api_token and api_token.startswith("acc_") and self._is_memory_enabled(api_token) and not tools:
+        if memorize_match and api_token and api_token.startswith("acc_") and self._is_memory_enabled(api_token) and not tools and not stateless:
             fact = memorize_match.group(1).strip()
             asyncio.create_task(self._embed_facts(api_token, fact, conv_id))
             result["text"] = result["text"].replace(memorize_match.group(0), "").strip()
             log.info(f"MEMORIZE: stored fact for {api_token[:12]}... — {fact[:80]}")
 
-        # === THINK TOOL (core/assist.py) ===
-        result = await handle_think(self, result, messages, worker, tools, conv_id, max_tokens)
-
-        # === POOL ASSIST (core/assist.py) ===
-        result = await handle_pool_assist(self, result, messages, worker, tools, conv_id, max_tokens)
-        # === AUTO REVIEW (Phase 1 sub-agents) ===
-        result = await handle_auto_review(self, result, messages, worker, conv_id, max_tokens)
-        # === SUB-AGENT PIPELINE (Phase 3) ===
-        result = await handle_sub_agent_pipeline(self, result, messages, worker, conv_id, max_tokens)
+        # === THINK / POOL ASSIST / AUTO REVIEW / SUB-AGENT (core/assist.py) ===
+        # Skip TOUT le pipeline assist en mode stateless (OpenAI strict) : ces
+        # etapes ajoutent du traitement/structure (follow_ups, sub-agents) qui
+        # casse les clients OpenAI stateless (Nextcloud, Open WebUI).
+        if not stateless:
+            result = await handle_think(self, result, messages, worker, tools, conv_id, max_tokens)
+            result = await handle_pool_assist(self, result, messages, worker, tools, conv_id, max_tokens)
+            result = await handle_auto_review(self, result, messages, worker, conv_id, max_tokens)
+            result = await handle_sub_agent_pipeline(self, result, messages, worker, conv_id, max_tokens)
 
         # === CHECKER LADDER (core/checker.py) ===
         from .core.checker import handle_checker

@@ -85,6 +85,7 @@ OpenAI-compatible chat completion endpoint. Supports streaming, tool calls, and 
   - Model aliases `"auto"`, `"iamine"`, `"pool"` all route to smart routing
   - When `tools` are provided, routing automatically selects the largest capable model
   - `conv_id` is auto-derived from token + `X-Session-Id` header if not provided
+  - **Stateless mode (OpenAI strict):** for stateless clients (Nextcloud `integration_openai`, Open WebUI, ...), send header `X-Iamine-Stateless: 1` **or** use model `iamine/raw`. This disables long-term memory injection, the assist pipeline (sub-agents / auto-review), sticky `conv_id`, and the special memory commands — returning a plain OpenAI response built only from the messages sent. The rich behavior (memory + assist) remains the default for the iamine CLI and clients that don't opt in.
 - **Errors:** 400 (invalid messages/max_tokens), 401 (invalid token), 429 (rate limited)
 
 ---

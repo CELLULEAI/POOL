@@ -170,6 +170,20 @@ async def chat_completions(http_request: Request):
     if requested_model and requested_model.lower() in POOL_ALIASES:
         requested_model = None  # let the pool decide
 
+    # --- Mode OpenAI stateless (Nextcloud integration_openai, Open WebUI, ...) ---
+    # Reponse OpenAI standard pure : PAS d'injection memoire, PAS de pipeline
+    # assist (follow_ups/sub-agents), PAS de conv_id collant, PAS de commandes
+    # memoire. Declenche par l'entete "X-Iamine-Stateless: 1" OU le model
+    # "iamine/raw" / "cellule/raw". Le comportement riche (memoire+assist) reste
+    # actif pour la CLI iamine et les clients qui ne l'activent pas.
+    _raw_models = {"iamine/raw", "cellule/raw", "raw"}
+    stateless = (
+        http_request.headers.get("x-iamine-stateless", "").strip().lower() in ("1", "true", "yes", "on")
+        or (request.get("model") or "").lower() in _raw_models
+    )
+    if (request.get("model") or "").lower() in _raw_models:
+        requested_model = None  # /raw => stateless + smart-routing
+
     # Tool-call routing: force biggest model when client sends tools
     if tools and not requested_model and p.tool_routing_model:
         requested_model = p.tool_routing_model  # configurable via dashboard admin
@@ -245,7 +259,7 @@ async def chat_completions(http_request: Request):
 
     # Auto conv_id for OpenAI-compatible clients that don't send one
     session_id = http_request.headers.get("x-session-id", "")
-    if not conv_id and api_token:
+    if not conv_id and api_token and not stateless:
         conv_id = _derive_conv_id(api_token, session_id)
         log.info(f"Auto conv_id derived: {conv_id} (session={session_id or 'default'})")
         log.info("DEBUG msg roles: " + str([(m.get("role","?"), bool(m.get("tool_calls")), bool(m.get("tool_call_id"))) for m in messages]))
@@ -292,7 +306,7 @@ async def chat_completions(http_request: Request):
         log.info(f"Guest request from {client_ip} ({_guest_usage.get(client_ip, 0)}/{GUEST_MAX_REQUESTS})")
 
     # --- Commande "enregistre" : sauvegarde conversation sans passer par le LLM ---
-    if messages and api_token and api_token.startswith("acc_"):
+    if messages and api_token and api_token.startswith("acc_") and not stateless:
         _save_msg = _get_content_str(messages[-1])
         _save_lower = _save_msg.lower()
         _save_keywords = ["enregistre", "save", "mémorise", "memorise", "sauvegarde",
@@ -325,7 +339,7 @@ async def chat_completions(http_request: Request):
 
 
     # --- Commande "restaure" : lister/charger/supprimer une conversation sauvegardee ---
-    if messages and api_token and api_token.startswith("acc_"):
+    if messages and api_token and api_token.startswith("acc_") and not stateless:
         _rest_msg = _get_content_str(messages[-1])
         _rest_lower = _rest_msg.lower()
         _restore_keywords = ["restaure", "restore", "mes conversations", "my conversations", "historique", "history", "list"]
@@ -612,7 +626,7 @@ async def chat_completions(http_request: Request):
             conv_warning = "Unknown conv_id — starting new conversation"
 
     try:
-        result = await p.submit_job(messages, max_tokens, conv_id=conv_id, requested_model=requested_model, api_token=api_token, tools=tools)
+        result = await p.submit_job(messages, max_tokens, conv_id=conv_id, requested_model=requested_model, api_token=api_token, tools=tools, stateless=stateless)
     except RuntimeError as e:
         # Tampon DB anti-saturation : enqueue au lieu de 503
         error_msg = str(e)
