@@ -101,6 +101,19 @@ docker compose up -d
 
 Docker image: `celluleai/pool` — see [Docker Hub](https://hub.docker.com/r/celluleai/pool)
 
+### Optional hardening (opt-in)
+
+Running a pool stays zero-config — and **contributing as a worker or proxy needs nothing**. The variables below are entirely optional; left unset, the pool behaves as a fully open community pool.
+
+| Env var | Where | Effect (default = unset) |
+|---------|-------|--------------------------|
+| `IAMINE_POOL_JOIN_TOKEN` | pool **and** each worker | Restrict who may join. Set the same value on the pool and on your workers to lock a private pool. Unset → any worker may join (community default). |
+| `ADMIN_PASSWORD` | pool | Token for the admin API / `curl`, sent as `Authorization: Bearer <ADMIN_PASSWORD>`. Admin login also works via the `/admin` setup page. |
+| `IAMINE_DEV` | pool | `=1` enables the internal `/v1/dev/*` debug routes (admin-only). Off by default in production. |
+| `IAMINE_STRICT_SIGNING` | pool / worker | `=1` makes release-signature verification fail-closed. Recommended for production. |
+
+Participation never requires any of these — `pip install iamine-ai && python -m iamine worker --auto` keeps working out of the box.
+
 ## API Usage
 
 ```bash

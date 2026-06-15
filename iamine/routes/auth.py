@@ -39,17 +39,29 @@ def _b64url_decode(segment: str) -> bytes:
 
 
 def _google_jwks() -> list:
-    """Cles publiques Google (cache 1h)."""
+    """Cles publiques Google (cache 1h).
+
+    Robustesse (cf. doctrine "tenir ses promesses") : si le rafraichissement
+    echoue (coupure reseau transitoire), on continue de servir les dernieres
+    cles connues — stale-while-error. La securite n'est PAS affaiblie : ce sont
+    toujours les vraies cles Google, qui ne tournent que sur plusieurs jours avec
+    recouvrement. On ne leve que s'il n'y a AUCUNE cle en cache."""
     now = time.time()
     cache = _GOOGLE_JWKS_CACHE
     if cache["keys"] and (now - cache["fetched_at"]) < _GOOGLE_JWKS_TTL:
         return cache["keys"]
-    with urllib.request.urlopen(_GOOGLE_CERTS_URL, timeout=5) as resp:
-        keys = json.loads(resp.read()).get("keys", [])
-    if keys:
-        cache["keys"] = keys
-        cache["fetched_at"] = now
-    return keys
+    try:
+        with urllib.request.urlopen(_GOOGLE_CERTS_URL, timeout=5) as resp:
+            keys = json.loads(resp.read()).get("keys", [])
+        if keys:
+            cache["keys"] = keys
+            cache["fetched_at"] = now
+            return keys
+    except Exception as e:
+        log.warning(f"Google JWKS refresh failed ({e}) — fallback sur le cache")
+    if cache["keys"]:
+        return cache["keys"]
+    raise RuntimeError("Google JWKS indisponible et aucun cache local")
 
 
 def _verify_google_id_token(credential: str) -> dict:

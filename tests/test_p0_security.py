@@ -64,6 +64,14 @@ def _valid_payload(**over) -> dict:
     return base
 
 
+@pytest.fixture(autouse=True)
+def _reset_jwks_cache():
+    """Evite la pollution inter-tests du cache JWKS module-level."""
+    yield
+    auth_mod._GOOGLE_JWKS_CACHE["keys"] = []
+    auth_mod._GOOGLE_JWKS_CACHE["fetched_at"] = 0.0
+
+
 @pytest.fixture
 def google_key(monkeypatch):
     """Installe une cle RSA locale comme unique cle JWKS Google."""
@@ -133,6 +141,27 @@ def test_oauth_unknown_kid_rejected(google_key):
 def test_oauth_garbage_token_rejected(google_key):
     with pytest.raises(Exception):
         auth_mod._verify_google_id_token("not-a-jwt")
+
+
+def test_jwks_stale_while_error(monkeypatch):
+    # Cache perime + rafraichissement KO -> on sert les dernieres cles connues
+    # (login Google reste fonctionnel pendant une coupure reseau transitoire).
+    auth_mod._GOOGLE_JWKS_CACHE["keys"] = [{"kid": "old"}]
+    auth_mod._GOOGLE_JWKS_CACHE["fetched_at"] = 0.0
+    def _boom(*a, **k):
+        raise OSError("network down")
+    monkeypatch.setattr(auth_mod.urllib.request, "urlopen", _boom)
+    assert auth_mod._google_jwks() == [{"kid": "old"}]
+
+
+def test_jwks_no_cache_and_fetch_fails_raises(monkeypatch):
+    auth_mod._GOOGLE_JWKS_CACHE["keys"] = []
+    auth_mod._GOOGLE_JWKS_CACHE["fetched_at"] = 0.0
+    def _boom(*a, **k):
+        raise OSError("network down")
+    monkeypatch.setattr(auth_mod.urllib.request, "urlopen", _boom)
+    with pytest.raises(Exception):
+        auth_mod._google_jwks()
 
 
 # ── sec-pub-03 : argon2 mots de passe admin ──────────────────────────────────
