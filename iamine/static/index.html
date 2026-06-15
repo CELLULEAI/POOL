@@ -29,6 +29,44 @@
     <meta name="twitter:image" content="https://cellule.ai/static/og-cover.png">
 
     <link rel="icon" href="/static/cellule.ico">
+
+    <!-- SEO : donnees structurees JSON-LD (Organization + WebSite + SoftwareApplication) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://cellule.ai/#org",
+          "name": "Cellule.ai",
+          "url": "https://cellule.ai/",
+          "logo": "https://cellule.ai/static/og-cover.png",
+          "description": "Decentralized, community-powered LLM inference network.",
+          "founder": { "@type": "Person", "name": "David MOURGUES" },
+          "sameAs": ["https://github.com/CELLULEAI/POOL"]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://cellule.ai/#web",
+          "url": "https://cellule.ai/",
+          "name": "Cellule.ai",
+          "inLanguage": "en",
+          "publisher": { "@id": "https://cellule.ai/#org" }
+        },
+        {
+          "@type": "SoftwareApplication",
+          "name": "Cellule.ai Pool",
+          "applicationCategory": "DeveloperApplication",
+          "operatingSystem": "Linux, macOS, Windows",
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+          "license": "https://www.gnu.org/licenses/agpl-3.0.html",
+          "softwareVersion": "1.0.1",
+          "url": "https://cellule.ai/",
+          "description": "Run a pool or contribute compute to a decentralized AI inference network. OpenAI-compatible API, federated pools, agent memory."
+        }
+      ]
+    }
+    </script>
     <!-- Inter self-hébergé (RGPD : zéro appel tiers, remplace fonts.googleapis.com / fonts.gstatic.com) -->
     <link rel="stylesheet" href="/static/fonts.css">
     <!-- tsParticles self-hébergé (RGPD : remplace cdn.jsdelivr.net) -->
