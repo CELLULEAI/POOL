@@ -1,5 +1,56 @@
 # Changelog
 
+## 1.0.1 — 2026-06-15
+
+Security release — addresses the 2026-06-15 internal security audit (findings sec-pub-01..14).
+No breaking API changes for users. Pools auto-apply DB migrations 027/028 at startup.
+
+### Security fixes
+
+- **Admin API** — every `/admin/api/*` mutator now requires admin authentication
+  (`require_admin` dependency). Closes unauthenticated remote worker control.
+- **Google OAuth** — the `id_token` RS256 signature is now verified against Google's
+  JWKS (issuer/audience/expiry too). Previously the payload was decoded without
+  signature verification (account-takeover risk). Stale-JWKS tolerant for resilience.
+- **Admin passwords** — hashed with argon2 (were stored and compared in clear).
+- **Sessions/cookies** — admin token no longer accepted via `?token=` (log/referer
+  leak); use `Authorization: Bearer`. Admin cookies set `httponly` + `samesite=strict`.
+- **Worker admission** — optional `IAMINE_POOL_JOIN_TOKEN` gates `/ws`. **Off by
+  default — the public pool stays open to volunteer workers.**
+- **Dev routes** — `/v1/dev/*` are admin-gated and only registered when `IAMINE_DEV=1`
+  (404 in production by default).
+- **Brute-force** — per-IP login throttling + activation-code lockout; `CF-Connecting-IP`
+  preferred as the client identifier (anti-spoof behind Cloudflare).
+- **MCP client** — TLS verified by default (`IAMINE_MCP_CA` / `IAMINE_MCP_INSECURE`
+  to override for self-signed pools).
+- **/v1/contact** — field size bounds + per-IP rate limiting.
+
+### Account token hardening (sec-pub-08)
+
+- Account tokens are now **random** (no longer derived from email): non-forgeable,
+  and not recoverable after account deletion.
+- A **dedicated per-account encryption key** (`accounts.enc_key`) is decoupled from
+  the bearer token — a leaked bearer no longer yields the decryption key, and the
+  bearer can be rotated without re-encrypting memories.
+- **Bearer rotation** on password change (revokes the old token; `account_id` and
+  `enc_key` are preserved so no data is orphaned).
+- Memory isolation moved from `sha256(token)` to the stable `account_id`, which also
+  fixes a latent cross-pool memory-orphaning bug.
+
+### Database migrations (auto-applied at pool startup)
+
+- `027_sec_pub_08_account_isolation.sql` — adds `accounts.enc_key`.
+- `028_sec_pub_08_rekey_memories.sql` — re-keys existing memories from
+  `sha256(token)` to `account_id`, then purges memories of deleted accounts
+  (completes RGPD deletion the previous code silently failed to do).
+
+### Docker
+
+| Tag | Use |
+|-----|-----|
+| `:pinned-1.0.1` | reproducible, immutable (single-maintainer signed) |
+| `:latest` | rolling |
+
 ## 1.0.0 — 2026-04-17
 
 First community-governed release.
