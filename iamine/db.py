@@ -77,12 +77,33 @@ _PBKDF2_ITERATIONS = 100_000
 _SALT_SIZE = 16  # 16 bytes de sel aléatoire
 
 
-def _derive_key(api_token: str, salt: bytes) -> bytes:
-    """Derive une cle Fernet via PBKDF2-SHA256 avec sel unique."""
+def _derive_key(key_material: str, salt: bytes) -> bytes:
+    """Derive une cle Fernet via PBKDF2-SHA256 avec sel unique.
+
+    key_material = enc_key dediee du compte pour les MEMOIRES (sec-pub-08), ou le
+    bearer pour les conversations / comptes legacy sans enc_key."""
     from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
     from cryptography.hazmat.primitives import hashes
     kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=_PBKDF2_ITERATIONS)
-    return base64.urlsafe_b64encode(kdf.derive(api_token.encode()))
+    return base64.urlsafe_b64encode(kdf.derive(key_material.encode()))
+
+
+def _memory_key(api_token: str) -> str:
+    """Materiel de chiffrement des MEMOIRES (sec-pub-08, Phase 2a).
+
+    Retourne la cle de chiffrement dediee (accounts.enc_key) du compte si elle
+    existe, sinon le bearer lui-meme (fallback : comptes legacy sans enc_key, ou
+    tokens non-compte). Chiffrement ET dechiffrement passent tous deux par ici,
+    donc la valeur reste coherente pour un meme compte. Decouple la cle de
+    chiffrement du bearer => rotation du bearer possible sans re-chiffrement."""
+    try:
+        from iamine.core.accounts import resolve_identity
+        ident = resolve_identity(api_token)
+        if ident and ident.get("enc_key"):
+            return ident["enc_key"]
+    except Exception:
+        pass
+    return api_token
 
 
 def _encrypt_messages(messages: list[dict], api_token: str) -> str:
@@ -126,7 +147,7 @@ def _decrypt_fact(fact_text_enc: str, salt_b64: str, api_token: str) -> str:
     from cryptography.fernet import Fernet, InvalidToken
     try:
         salt = base64.urlsafe_b64decode(salt_b64)
-        key = _derive_key(api_token, salt)
+        key = _derive_key(_memory_key(api_token), salt)
         f = Fernet(key)
         return f.decrypt(fact_text_enc.encode("ascii")).decode("utf-8")
     except (InvalidToken, Exception):
@@ -1274,7 +1295,7 @@ class PostgresStore(Store):
         """Stocke un fait vectorise chiffre pour un utilisateur."""
         import os as _os
         salt = _os.urandom(_SALT_SIZE)
-        key = _derive_key(api_token, salt)
+        key = _derive_key(_memory_key(api_token), salt)
         from cryptography.fernet import Fernet
         f = Fernet(key)
         encrypted = f.encrypt(fact_text.encode("utf-8")).decode("ascii")

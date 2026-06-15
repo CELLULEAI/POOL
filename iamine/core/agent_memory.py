@@ -28,9 +28,9 @@ ENABLED = os.environ.get("AGENT_MEMORY_ENABLED", "").lower() in ("1", "true", "y
 def _encrypt(text: str, api_token: str) -> tuple[str, str]:
     """Encrypt text with PBKDF2 + random salt. Returns (ciphertext, salt_b64)."""
     import base64
-    from ..db import _derive_key, _SALT_SIZE
+    from ..db import _derive_key, _memory_key, _SALT_SIZE
     salt = os.urandom(_SALT_SIZE)
-    key = _derive_key(api_token, salt)
+    key = _derive_key(_memory_key(api_token), salt)
     from cryptography.fernet import Fernet
     f = Fernet(key)
     encrypted = f.encrypt(text.encode("utf-8")).decode("ascii")

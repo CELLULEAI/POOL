@@ -91,6 +91,7 @@ async def _load_accounts_from_db(pool_instance=None):
                     "worker_ids": _j.loads(r.get("worker_ids") or "[]") if isinstance(r.get("worker_ids"), str) else [],
                     "created": r["created"].timestamp() if r.get("created") else 0,
                     "memory_enabled": bool(r.get("memory_enabled", False)),
+                    "enc_key": r.get("enc_key"),
                 }
             if rows:
                 log.info(f"Loaded {len(rows)} accounts from PostgreSQL")
@@ -129,15 +130,16 @@ async def _save_account_to_db(acc_id: str, pool_instance=None):
             await conn.execute("""
                 INSERT INTO accounts (account_id, email, password_hash, display_name, pseudo,
                                       account_token, eth_address, total_credits, total_earned,
-                                      total_spent, worker_ids, created, memory_enabled)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, to_timestamp($12), $13)
+                                      total_spent, worker_ids, created, memory_enabled, enc_key)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, to_timestamp($12), $13, $14)
                 ON CONFLICT (account_id) DO UPDATE SET
                     email=EXCLUDED.email, password_hash=EXCLUDED.password_hash,
                     display_name=EXCLUDED.display_name, pseudo=EXCLUDED.pseudo,
                     account_token=EXCLUDED.account_token, eth_address=EXCLUDED.eth_address,
                     total_credits=EXCLUDED.total_credits, total_earned=EXCLUDED.total_earned,
                     total_spent=EXCLUDED.total_spent, worker_ids=EXCLUDED.worker_ids,
-                    memory_enabled=EXCLUDED.memory_enabled
+                    memory_enabled=EXCLUDED.memory_enabled,
+                    enc_key=COALESCE(EXCLUDED.enc_key, accounts.enc_key)
             """,
                 acc_id, acc.get("email", ""), acc.get("password_hash", ""),
                 acc.get("display_name", ""), acc.get("pseudo", ""),
@@ -148,9 +150,25 @@ async def _save_account_to_db(acc_id: str, pool_instance=None):
                 _j.dumps(acc.get("worker_ids", [])),
                 float(acc.get("created", 0)),
                 bool(acc.get("memory_enabled", False)),
+                acc.get("enc_key"),
             )
     except Exception as e:
         log.warning(f"Failed to save account {acc_id} to DB: {e}")
+
+
+def resolve_identity(api_token: str) -> dict | None:
+    """Resout un bearer de COMPTE (acc_*) en {account_id, enc_key} (sec-pub-08).
+
+    Retourne None pour les tokens non-compte (worker iam_*, invite guest_*) : ils
+    n'ont pas de memoire chiffree de compte. enc_key peut etre None pour un compte
+    legacy cree avant la migration 027 (le chiffrement retombe alors sur le bearer
+    via db._memory_key)."""
+    if not api_token or not api_token.startswith("acc_"):
+        return None
+    for acc in _accounts.values():
+        if acc.get("account_token") == api_token:
+            return {"account_id": acc.get("account_id"), "enc_key": acc.get("enc_key")}
+    return None
 
 
 async def _seed_user_memory(api_token: str, pseudo: str, pool_instance=None):

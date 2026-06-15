@@ -174,6 +174,14 @@ def _new_account_token() -> str:
     return "acc_" + secrets.token_hex(16)
 
 
+def _new_enc_key() -> str:
+    """Cle de chiffrement dediee, aleatoire stable par compte (sec-pub-08 Phase 2a).
+
+    Decouplee du bearer : un bearer fuite ne donne plus la cle, et la rotation du
+    bearer n'impose plus de re-chiffrement. Persistee dans accounts.enc_key."""
+    return secrets.token_hex(32)
+
+
 async def _get_smtp_config(pool):
     try:
         async with pool.store.pool.acquire() as conn:
@@ -341,6 +349,7 @@ async def auth_register(data: dict):
     accounts[account_id] = {
         "account_id": account_id,
         "account_token": account_token,
+        "enc_key": _new_enc_key(),
         "email": email,
         "password_hash": password_hash,
         "pseudo": pseudo,
@@ -546,6 +555,7 @@ async def auth_google(data: dict):
         accounts[account_id] = {
             "account_id": account_id,
             "account_token": account_token,
+            "enc_key": _new_enc_key(),
             "email": email,
             "password_hash": "google_oauth",
             "pseudo": pseudo,

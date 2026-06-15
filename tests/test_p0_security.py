@@ -390,6 +390,63 @@ def test_new_account_token_is_random():
     assert t1 != t2  # aleatoire, plus derive de l'email (non forgeable)
 
 
+# ── sec-pub-08 (Phase 2a) : enc_key + resolve_identity + decouplage crypto ────
+
+def test_new_enc_key_random():
+    k1 = auth_mod._new_enc_key()
+    k2 = auth_mod._new_enc_key()
+    assert len(k1) == 64 and k1 != k2
+
+
+def test_resolve_identity(monkeypatch):
+    from iamine.core import accounts as acc_mod
+    monkeypatch.setattr(acc_mod, "_accounts",
+                        {"id1": {"account_id": "id1", "account_token": "acc_xyz", "enc_key": "K"}})
+    assert acc_mod.resolve_identity("acc_xyz") == {"account_id": "id1", "enc_key": "K"}
+    assert acc_mod.resolve_identity("acc_unknown") is None
+    assert acc_mod.resolve_identity("iam_worker") is None  # token worker, pas un compte
+    assert acc_mod.resolve_identity("") is None
+
+
+def test_memory_key_resolution(monkeypatch):
+    from iamine import db as db_mod
+    from iamine.core import accounts as acc_mod
+    monkeypatch.setattr(acc_mod, "_accounts", {
+        "id1": {"account_id": "id1", "account_token": "acc_withkey", "enc_key": "ENC_DEDIEE"},
+        "id2": {"account_id": "id2", "account_token": "acc_legacy", "enc_key": None},
+    })
+    assert db_mod._memory_key("acc_withkey") == "ENC_DEDIEE"      # enc_key dediee
+    assert db_mod._memory_key("acc_legacy") == "acc_legacy"        # fallback bearer (legacy)
+    assert db_mod._memory_key("iam_worker") == "iam_worker"        # fallback bearer (non-compte)
+
+
+def test_memory_encryption_decoupled_from_bearer(monkeypatch):
+    """Preuve : les memoires sont chiffrees avec enc_key, PAS avec le bearer.
+    Un attaquant connaissant le bearer mais derivant la cle a l'ancienne (depuis
+    le bearer) ne dechiffre PAS."""
+    import base64 as _b64
+    import os as _os
+    from cryptography.fernet import Fernet, InvalidToken
+    from iamine import db as db_mod
+    from iamine.core import accounts as acc_mod
+
+    token = "acc_aaaa1111"
+    monkeypatch.setattr(acc_mod, "_accounts",
+                        {"id1": {"account_id": "id1", "account_token": token, "enc_key": "ENC_KEY_SECRETE"}})
+
+    salt = _os.urandom(db_mod._SALT_SIZE)
+    key = db_mod._derive_key(db_mod._memory_key(token), salt)   # chiffre avec enc_key
+    ct = Fernet(key).encrypt(b"fait confidentiel").decode("ascii")
+    salt_b64 = _b64.urlsafe_b64encode(salt).decode("ascii")
+
+    # _decrypt_fact re-resout enc_key depuis le bearer -> dechiffre correctement
+    assert db_mod._decrypt_fact(ct, salt_b64, token) == "fait confidentiel"
+
+    # DECOUPLAGE : deriver la cle depuis le BEARER (ancienne methode) ne dechiffre pas
+    with pytest.raises(InvalidToken):
+        Fernet(db_mod._derive_key(token, salt)).decrypt(ct.encode("ascii"))
+
+
 @pytest.mark.asyncio
 async def test_activate_code_lockout(monkeypatch):
     acc = {"email": "u@x.com", "email_verified": False,
