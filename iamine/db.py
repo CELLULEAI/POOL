@@ -1379,8 +1379,8 @@ class PostgresStore(Store):
 
     async def list_user_memories(self, api_token: str) -> list[dict]:
         """Liste les faits memorises d'un utilisateur (dechiffres)."""
-        import hashlib
-        token_hash = hashlib.sha256(api_token.encode()).hexdigest()
+        from iamine.memory import token_hash as _token_hash  # sec-pub-08 : -> account_id
+        token_hash = _token_hash(api_token)
         rows = await self.pool.fetch(
             "SELECT id, fact_text_enc, salt, conv_id, created FROM user_memories "
             "WHERE token_hash = $1 ORDER BY created DESC LIMIT 200",
@@ -1403,8 +1403,8 @@ class PostgresStore(Store):
 
     async def delete_user_memory(self, memory_id: int, api_token: str) -> bool:
         """Supprime un fait specifique (verifie le proprietaire)."""
-        import hashlib
-        token_hash = hashlib.sha256(api_token.encode()).hexdigest()
+        from iamine.memory import token_hash as _token_hash  # sec-pub-08 : -> account_id
+        token_hash = _token_hash(api_token)
         result = await self.pool.execute(
             "DELETE FROM user_memories WHERE id = $1 AND token_hash = $2",
             memory_id, token_hash)

@@ -1368,8 +1368,31 @@ async def account_change_password(data: dict):
     except Exception as _e:
         log.warning(f"change-password DB update failed: {_e}")
 
-    log.info(f"Password changed for {acc.get('email')}")
-    return {"ok": True}
+    # sec-pub-08 : rotation du bearer au changement de mot de passe. L'isolation
+    # des memoires (account_id) et le chiffrement (enc_key) etant decouples du
+    # bearer (Phase 2a+2b), la rotation n'orpheline ni ne rend indechiffrable
+    # aucune donnee : seul l'ancien token est revoque.
+    old_token = acc.get("account_token")
+    new_token = _new_account_token()
+    acc["account_token"] = new_token
+    try:
+        tok_info = pool.api_tokens.pop(old_token, None)
+        if tok_info is not None:
+            pool.api_tokens[new_token] = tok_info
+    except Exception:
+        pass
+    _save_accounts()
+    try:
+        async with pool.store.pool.acquire() as conn:
+            await conn.execute(
+                "UPDATE accounts SET account_token = $1 WHERE account_id = $2",
+                new_token, account_id,
+            )
+    except Exception as _e:
+        log.warning(f"change-password token rotation DB update failed: {_e}")
+
+    log.info(f"Password changed + bearer rotated for {acc.get('email')}")
+    return {"ok": True, "api_token": new_token, "token_rotated": True}
 
 
 # ─── DELETE /v1/account/delete ──────────────────────────────

@@ -561,7 +561,10 @@ async def _load_conversations_for_replication(pool, token_hash: str = None,
                      LIMIT $2
                 """, since_ts, limit)
             elif token_hash:
-                # api_token stores derived account token — match indirectly
+                # token_hash == account_id (sec-pub-08 Phase 2b). conversations.api_token
+                # contient le bearer (account_token) -> on joint via accounts.account_token.
+                # (Corrige le meme bug dormant : accounts.api_token / accounts.token_hash
+                # n'existent pas.)
                 rows = await conn.fetch("""
                     SELECT conv_id, api_token, messages, total_tokens,
                            model_used, worker_id, created, last_activity,
@@ -569,8 +572,8 @@ async def _load_conversations_for_replication(pool, token_hash: str = None,
                       FROM conversations c
                      WHERE EXISTS (
                          SELECT 1 FROM accounts a
-                          WHERE a.api_token = c.api_token
-                            AND a.token_hash = $1)
+                          WHERE a.account_token = c.api_token
+                            AND a.account_id = $1)
                      ORDER BY last_activity DESC
                      LIMIT $2
                 """, token_hash, limit)
@@ -1326,13 +1329,17 @@ async def handle_memory_forget_v2(pool, payload: dict, from_atom_id: str) -> dic
             r = await conn.execute(
                 "DELETE FROM memory_consolidation_log WHERE token_hash = $1", th)
             deleted["consolidation_logs"] = int(r.split()[-1])
-            # Conversations — match via accounts.token_hash relationship
+            # Conversations — l'isolation memoire (th) est desormais account_id
+            # (sec-pub-08 Phase 2b). On supprime les conversations du compte dont
+            # account_id = th, jointes via accounts.account_token = conversations.api_token.
+            # (Corrige un bug dormant : accounts.api_token / accounts.token_hash
+            # n'existent pas — la requete plantait et cassait le forget federe.)
             r = await conn.execute("""
                 DELETE FROM conversations c
                  WHERE EXISTS (
                      SELECT 1 FROM accounts a
-                      WHERE a.api_token = c.api_token
-                        AND a.token_hash = $1)
+                      WHERE a.account_token = c.api_token
+                        AND a.account_id = $1)
             """, th)
             deleted["conversations"] = int(r.split()[-1])
 

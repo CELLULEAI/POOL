@@ -50,7 +50,17 @@ def embed_batch(texts: list[str]) -> list[list[float]] | None:
 
 
 def token_hash(api_token: str) -> str:
-    """Hash one-way du token pour isolation utilisateur en DB."""
+    """Cle d'isolation des memoires en DB.
+
+    sec-pub-08 (Phase 2b) : retourne desormais l'account_id (cle STABLE, decouplee
+    du bearer => la rotation du token n'orpheline plus les memoires), resolu via
+    resolve_identity. Fallback sha256 du bearer pour les tokens non-compte
+    (worker iam_*, invite guest_*, legacy). La colonne DB reste nommee 'token_hash'
+    mais contient desormais account_id."""
+    from iamine.core.accounts import resolve_identity
+    ident = resolve_identity(api_token)
+    if ident and ident.get("account_id"):
+        return ident["account_id"]
     return hashlib.sha256(api_token.encode()).hexdigest()
 
 

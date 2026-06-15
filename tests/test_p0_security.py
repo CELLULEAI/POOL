@@ -447,6 +447,37 @@ def test_memory_encryption_decoupled_from_bearer(monkeypatch):
         Fernet(db_mod._derive_key(token, salt)).decrypt(ct.encode("ascii"))
 
 
+# ── sec-pub-08 (Phase 2b) : isolation par account_id + rotation du bearer ─────
+
+def test_token_hash_returns_account_id(monkeypatch):
+    import hashlib
+    from iamine import memory as mem_mod
+    from iamine.core import accounts as acc_mod
+    monkeypatch.setattr(acc_mod, "_accounts",
+                        {"acct1": {"account_id": "acct1", "account_token": "acc_tok", "enc_key": "K"}})
+    # compte -> account_id (cle d'isolation STABLE, plus le sha256 du bearer)
+    assert mem_mod.token_hash("acc_tok") == "acct1"
+    # non-compte (worker) -> fallback sha256 du bearer (comportement legacy)
+    assert mem_mod.token_hash("iam_worker") == hashlib.sha256(b"iam_worker").hexdigest()
+
+
+def test_rotation_preserves_isolation_and_enc_key(monkeypatch):
+    """Apres rotation du bearer : ancien token revoque, mais account_id (isolation)
+    ET enc_key (chiffrement) inchanges => les memoires ne sont PAS orphelinees."""
+    from iamine import memory as mem_mod
+    from iamine.core import accounts as acc_mod
+    acc = {"account_id": "acct1", "account_token": "acc_old", "enc_key": "ENC"}
+    monkeypatch.setattr(acc_mod, "_accounts", {"acct1": acc})
+    th_before = mem_mod.token_hash("acc_old")
+    assert th_before == "acct1"
+
+    acc["account_token"] = "acc_new"   # rotation
+
+    assert acc_mod.resolve_identity("acc_old") is None             # ancien token revoque
+    assert mem_mod.token_hash("acc_new") == "acct1"                # meme isolation
+    assert acc_mod.resolve_identity("acc_new")["enc_key"] == "ENC" # meme cle de chiffrement
+
+
 @pytest.mark.asyncio
 async def test_activate_code_lockout(monkeypatch):
     acc = {"email": "u@x.com", "email_verified": False,
