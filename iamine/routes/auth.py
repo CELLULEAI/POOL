@@ -430,14 +430,21 @@ async def auth_register(data: dict):
 # ─── POST /v1/auth/login ────────────────────────────────────────────────────
 
 @router.post("/v1/auth/login")
-async def auth_login(data: dict):
+async def auth_login(data: dict, request: Request):
     """Connexion avec email/password."""
     from passlib.hash import argon2 as _argon2
+    from iamine.core.credits import (
+        client_ip, is_login_blocked, register_login_failure, clear_login_failures,
+    )
     pool = _pool()
     accounts = _accounts()
 
     email = data.get("email", "").strip().lower()
     password = data.get("password", "")
+
+    ip = client_ip(request)
+    if is_login_blocked(ip):
+        return JSONResponse({"error": "too many attempts, retry later"}, status_code=429)
 
     for acc in accounts.values():
         if acc["email"] == email:
@@ -453,6 +460,8 @@ async def auth_login(data: dict):
                 acc["password_hash"] = _argon2.hash(password)
                 _save_accounts()
 # Persister en DB aussi (DB-first)    from iamine.pool import _save_account_to_db    asyncio.create_task(_save_account_to_db(account_id))
+            # Mot de passe correct -> remise a zero du compteur d'echecs (par IP).
+            clear_login_failures(ip)
             # === Email verification gate (migration 016) ===
             if not acc.get("email_verified", True):
                 return JSONResponse({
@@ -477,6 +486,7 @@ async def auth_login(data: dict):
                 "display_name": acc["display_name"],
             }
 
+    register_login_failure(ip)
     return JSONResponse({"error": "invalid email or password"}, status_code=401)
 
 
@@ -1149,11 +1159,23 @@ async def auth_activate(data: dict):
     if time.time() > expires:
         return JSONResponse({"error": "code expired, resend a new one", "expired": True}, status_code=400)
     if code != stored:
-        return JSONResponse({"error": "invalid code"}, status_code=400)
+        # Anti brute-force du code 6 chiffres : apres 5 essais on invalide le
+        # code et on force un renvoi (sec-pub-09).
+        attempts = int(acc.get("verification_attempts") or 0) + 1
+        acc["verification_attempts"] = attempts
+        if attempts >= 5:
+            acc["verification_code"] = None
+            acc["verification_expires"] = None
+            acc["verification_attempts"] = 0
+            _save_accounts()
+            return JSONResponse({"error": "too many attempts, resend a new code", "locked": True}, status_code=429)
+        _save_accounts()
+        return JSONResponse({"error": "invalid code", "attempts_left": 5 - attempts}, status_code=400)
 
     acc["email_verified"] = True
     acc["verification_code"] = None
     acc["verification_expires"] = None
+    acc["verification_attempts"] = 0
     _save_accounts()
 
     try:

@@ -212,15 +212,22 @@ async def admin_models():
 @router.post("/admin/login")
 async def admin_login(request: Request):
     """Login admin par email/password."""
+    from iamine.core.credits import (
+        client_ip, is_login_blocked, register_login_failure, clear_login_failures,
+    )
     pool = _pool()
     data = await request.json()
     email = data.get("email", "").strip().lower()
     password = data.get("password", "")
+    ip = client_ip(request)
+    if is_login_blocked(ip):
+        return JSONResponse({"error": "too many attempts, retry later"}, status_code=429)
     try:
         async with pool.store.pool.acquire() as conn:
             row = await conn.fetchrow(
                 "SELECT email, password_hash FROM admin_users WHERE email=$1", email)
             if row and _verify_admin_password(password, row["password_hash"]):
+                clear_login_failures(ip)
                 # Migration : si le hash stocke n'est pas argon2 (ancienne ligne en
                 # clair), le re-hasher en argon2 apres une connexion reussie.
                 if not str(row["password_hash"] or "").startswith("$argon2"):
@@ -237,6 +244,7 @@ async def admin_login(request: Request):
                 return resp
     except Exception:
         pass
+    register_login_failure(ip)
     return JSONResponse({"error": "Invalid credentials"}, status_code=401)
 
 

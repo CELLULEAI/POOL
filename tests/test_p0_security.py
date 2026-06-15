@@ -303,3 +303,64 @@ def test_dev_routes_have_require_admin_guard():
             assert dev_mod.require_admin in dep_calls, f"{route.path} sans garde admin"
             seen.add(route.path)
     assert seen == paths, f"routes dev manquantes: {paths - seen}"
+
+
+# ── sec-pub-09/10 : client_ip + throttle login ───────────────────────────────
+
+class _Client:
+    def __init__(self, host):
+        self.host = host
+
+
+def test_client_ip_prefers_cf_connecting_ip():
+    from iamine.core import credits as credits_mod
+    req = _FakeReq(headers={"cf-connecting-ip": "1.2.3.4", "x-real-ip": "9.9.9.9",
+                            "x-forwarded-for": "8.8.8.8"})
+    assert credits_mod.client_ip(req) == "1.2.3.4"
+
+
+def test_client_ip_falls_back_in_order():
+    from iamine.core import credits as credits_mod
+    assert credits_mod.client_ip(_FakeReq(headers={"x-real-ip": "9.9.9.9"})) == "9.9.9.9"
+    assert credits_mod.client_ip(_FakeReq(headers={"x-forwarded-for": "8.8.8.8, 7.7.7.7"})) == "8.8.8.8"
+    req = _FakeReq()
+    req.client = _Client("5.5.5.5")
+    assert credits_mod.client_ip(req) == "5.5.5.5"
+    assert credits_mod.client_ip(_FakeReq()) == "unknown"
+
+
+def test_login_throttle_blocks_after_max():
+    from iamine.core import credits as credits_mod
+    key = "test-ip-throttle"
+    credits_mod.clear_login_failures(key)
+    try:
+        for _ in range(credits_mod.LOGIN_MAX_FAILURES):
+            assert credits_mod.is_login_blocked(key) is False
+            credits_mod.register_login_failure(key)
+        assert credits_mod.is_login_blocked(key) is True
+        credits_mod.clear_login_failures(key)
+        assert credits_mod.is_login_blocked(key) is False
+    finally:
+        credits_mod.clear_login_failures(key)
+
+
+# ── sec-pub-09 : verrou anti brute-force du code d'activation ─────────────────
+
+@pytest.mark.asyncio
+async def test_activate_code_lockout(monkeypatch):
+    acc = {"email": "u@x.com", "email_verified": False,
+           "verification_code": "123456",
+           "verification_expires": int(time.time()) + 600}
+    accounts = {"aid1": acc}
+    monkeypatch.setattr(auth_mod, "_accounts", lambda: accounts)
+    monkeypatch.setattr(auth_mod, "_save_accounts", lambda: None)
+    monkeypatch.setattr(auth_mod, "_pool", lambda: object())
+    # 4 essais errones -> 400, le code reste valide
+    for _ in range(4):
+        r = await auth_mod.auth_activate({"email": "u@x.com", "code": "000000"})
+        assert r.status_code == 400
+    assert acc["verification_code"] == "123456"
+    # 5e essai -> 429 et code invalide (force un renvoi)
+    r = await auth_mod.auth_activate({"email": "u@x.com", "code": "000000"})
+    assert r.status_code == 429
+    assert acc["verification_code"] is None

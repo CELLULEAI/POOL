@@ -29,6 +29,58 @@ def check_rate_limit(pool, source: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
+# Anti-brute-force login (audit sec-pub-09 / sec-pub-10)
+# ---------------------------------------------------------------------------
+
+_LOGIN_FAILURES: dict[str, list[float]] = {}
+LOGIN_MAX_FAILURES = 8
+LOGIN_WINDOW_SEC = 900.0  # 15 minutes
+
+
+def client_ip(request) -> str:
+    """Meilleure IP client connue, dans l'ordre de confiance.
+
+    Prefere ``CF-Connecting-IP`` (posee par Cloudflare et NON spoofable par le
+    client dans le deploiement cellule.ai), puis ``X-Real-IP``, puis le 1er hop
+    de ``X-Forwarded-For``, sinon l'IP du pair direct. Sert de cle de throttling
+    et reduit le contournement de quota par en-tete forge (sec-pub-10)."""
+    h = request.headers
+    ip = (h.get("cf-connecting-ip")
+          or h.get("x-real-ip")
+          or (h.get("x-forwarded-for", "").split(",")[0].strip())
+          or (getattr(getattr(request, "client", None), "host", "") or ""))
+    return ip or "unknown"
+
+
+def is_login_blocked(key: str) -> bool:
+    """True si trop d'echecs recents pour cette cle (IP)."""
+    now = time.time()
+    fails = [t for t in _LOGIN_FAILURES.get(key, []) if now - t < LOGIN_WINDOW_SEC]
+    if fails:
+        _LOGIN_FAILURES[key] = fails
+    else:
+        _LOGIN_FAILURES.pop(key, None)
+    return len(fails) >= LOGIN_MAX_FAILURES
+
+
+def register_login_failure(key: str) -> None:
+    """Enregistre un echec de login pour cette cle (IP)."""
+    now = time.time()
+    fails = [t for t in _LOGIN_FAILURES.get(key, []) if now - t < LOGIN_WINDOW_SEC]
+    fails.append(now)
+    _LOGIN_FAILURES[key] = fails
+    if len(_LOGIN_FAILURES) > 10000:  # garde-fou memoire (pas de croissance illimitee)
+        for k, v in list(_LOGIN_FAILURES.items()):
+            if not v or now - v[-1] > LOGIN_WINDOW_SEC:
+                _LOGIN_FAILURES.pop(k, None)
+
+
+def clear_login_failures(key: str) -> None:
+    """Remet a zero apres un login reussi."""
+    _LOGIN_FAILURES.pop(key, None)
+
+
+# ---------------------------------------------------------------------------
 # Worker DB updates
 # ---------------------------------------------------------------------------
 
