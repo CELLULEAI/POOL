@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import hashlib
 import json
 import logging
 import secrets
 import time
+import urllib.request
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
@@ -16,6 +18,82 @@ router = APIRouter()
 log = logging.getLogger("iamine.pool")
 
 GOOGLE_CLIENT_ID = "106098942094-u10np9r0n03pg0g0370m0su0tgcjede0.apps.googleusercontent.com"
+
+
+# ── Verification cryptographique des id_token Google (RS256 via JWKS) ─────────
+#
+# Audit 2026-06-15 (sec-pub-02) : auparavant le payload du JWT etait simplement
+# decode en base64 SANS verifier la signature -> un attaquant pouvait forger un
+# token pour n'importe quel email et prendre le compte de la victime. On verifie
+# desormais la signature RS256 contre les cles publiques Google (JWKS), plus
+# iss/aud/exp. Aucune dependance externe : cryptography (deja requis) + stdlib.
+
+_GOOGLE_CERTS_URL = "https://www.googleapis.com/oauth2/v3/certs"
+_GOOGLE_ISSUERS = ("https://accounts.google.com", "accounts.google.com")
+_GOOGLE_JWKS_CACHE: dict = {"keys": [], "fetched_at": 0.0}
+_GOOGLE_JWKS_TTL = 3600.0
+
+
+def _b64url_decode(segment: str) -> bytes:
+    return base64.urlsafe_b64decode(segment + "=" * (-len(segment) % 4))
+
+
+def _google_jwks() -> list:
+    """Cles publiques Google (cache 1h)."""
+    now = time.time()
+    cache = _GOOGLE_JWKS_CACHE
+    if cache["keys"] and (now - cache["fetched_at"]) < _GOOGLE_JWKS_TTL:
+        return cache["keys"]
+    with urllib.request.urlopen(_GOOGLE_CERTS_URL, timeout=5) as resp:
+        keys = json.loads(resp.read()).get("keys", [])
+    if keys:
+        cache["keys"] = keys
+        cache["fetched_at"] = now
+    return keys
+
+
+def _verify_google_id_token(credential: str) -> dict:
+    """Verifie la signature RS256 + iss/aud/exp d'un id_token Google.
+
+    Retourne le payload decode si VALIDE, leve une exception sinon (fail-closed)."""
+    from cryptography.hazmat.backends import default_backend
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.asymmetric import padding
+    from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
+
+    parts = credential.split(".")
+    if len(parts) != 3:
+        raise ValueError("malformed JWT")
+    header_b64, payload_b64, sig_b64 = parts
+    header = json.loads(_b64url_decode(header_b64))
+    if header.get("alg") != "RS256":
+        raise ValueError(f"unexpected alg: {header.get('alg')}")
+    kid = header.get("kid")
+
+    jwk = next((k for k in _google_jwks() if k.get("kid") == kid), None)
+    if jwk is None:
+        raise ValueError("signing key not found in Google JWKS")
+
+    n = int.from_bytes(_b64url_decode(jwk["n"]), "big")
+    e = int.from_bytes(_b64url_decode(jwk["e"]), "big")
+    pubkey = RSAPublicNumbers(e, n).public_key(default_backend())
+    # leve cryptography.exceptions.InvalidSignature si la signature est invalide
+    pubkey.verify(
+        _b64url_decode(sig_b64),
+        f"{header_b64}.{payload_b64}".encode(),
+        padding.PKCS1v15(),
+        hashes.SHA256(),
+    )
+
+    payload = json.loads(_b64url_decode(payload_b64))
+    if payload.get("iss") not in _GOOGLE_ISSUERS:
+        raise ValueError(f"invalid issuer: {payload.get('iss')}")
+    if payload.get("aud") != GOOGLE_CLIENT_ID:
+        raise ValueError("invalid audience")
+    exp = payload.get("exp", 0)
+    if not exp or time.time() > exp + 60:
+        raise ValueError("token expired")
+    return payload
 
 
 # --- Lazy imports pour eviter les imports circulaires ---
@@ -395,7 +473,6 @@ async def auth_login(data: dict):
 @router.post("/v1/auth/google")
 async def auth_google(data: dict):
     """Connexion via Google Sign-In. Cree le compte automatiquement si nouveau."""
-    import base64
     pool = _pool()
     accounts = _accounts()
 
@@ -403,39 +480,21 @@ async def auth_google(data: dict):
     if not credential:
         return JSONResponse({"error": "missing credential"}, status_code=400)
 
-    # Decoder le JWT Google (sans lib externe, on decode le payload)
+    # Verifier cryptographiquement le id_token Google (signature RS256 + iss/aud/exp).
+    # cf. audit sec-pub-02 — l'ancien code decodait le payload sans verifier la
+    # signature, permettant un account takeover par forge de token.
     try:
-        # Le JWT a 3 parties: header.payload.signature
-        parts = credential.split(".")
-        # Decoder le payload (2e partie)
-        payload = parts[1]
-        # Ajouter le padding base64
-        payload += "=" * (4 - len(payload) % 4)
-        decoded = json.loads(base64.urlsafe_b64decode(payload))
-
-        email = decoded.get("email", "").strip().lower()
-        name = decoded.get("name", "")
-        picture = decoded.get("picture", "")
-        email_verified = decoded.get("email_verified", False)
-
-        # Verifier expiration du token Google
-        exp = decoded.get("exp", 0)
-        iat = decoded.get("iat", 0)
-        now = time.time()
-        if exp and now > exp + 300:  # 5 min de grace
-            return JSONResponse({"error": "Google token expired"}, status_code=401)
-        if iat and now < iat - 60:  # token du futur (1 min de grace)
-            return JSONResponse({"error": "Google token not yet valid"}, status_code=401)
-        aud = decoded.get("aud", "")
-
-        # Verifier que le token est pour notre app
-        if aud != GOOGLE_CLIENT_ID:
-            return JSONResponse({"error": "invalid token audience"}, status_code=401)
-        if not email or not email_verified:
-            return JSONResponse({"error": "email not verified"}, status_code=401)
-
+        decoded = await asyncio.to_thread(_verify_google_id_token, credential)
     except Exception as e:
-        return JSONResponse({"error": f"invalid Google token: {e}"}, status_code=401)
+        log.warning(f"Google id_token rejected: {e}")
+        return JSONResponse({"error": "invalid Google token"}, status_code=401)
+
+    email = decoded.get("email", "").strip().lower()
+    name = decoded.get("name", "")
+    picture = decoded.get("picture", "")
+    email_verified = decoded.get("email_verified", False)
+    if not email or not email_verified:
+        return JSONResponse({"error": "email not verified"}, status_code=401)
 
     # Chercher si le compte existe deja
     existing_account = None

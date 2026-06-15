@@ -5,8 +5,10 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
+
+from .admin import require_admin
 
 router = APIRouter()
 log = logging.getLogger("iamine.pool")
@@ -21,7 +23,7 @@ def _pool():
 
 # ─── GET /v1/dev/backup ─────────────────────────────────────────────────────
 
-@router.get("/v1/dev/backup")
+@router.get("/v1/dev/backup", dependencies=[Depends(require_admin)])
 async def dev_backup():
     """Sert le backup tar.gz pour download (temporaire)."""
     from fastapi.responses import FileResponse as FR
@@ -33,7 +35,7 @@ async def dev_backup():
 
 # ─── GET /v1/dev/signal ─────────────────────────────────────────────────────
 
-@router.get("/v1/dev/signal")
+@router.get("/v1/dev/signal", dependencies=[Depends(require_admin)])
 async def dev_signal():
     """Signal de mise à jour pour la boucle autonome David/Claude."""
     signal_file = REPORTS_DIR / "claude" / "signal-upgrade.json"
@@ -45,7 +47,7 @@ async def dev_signal():
 
 # ─── GET /v1/dev/inbox ──────────────────────────────────────────────────────
 
-@router.get("/v1/dev/inbox")
+@router.get("/v1/dev/inbox", dependencies=[Depends(require_admin)])
 async def dev_inbox():
     """Lit les rapports avec leur contenu complet."""
     reports = []

@@ -122,6 +122,12 @@ class Worker:
             # Envoyer les infos du worker au pool (handshake)
             info = self.config.system_info()
             info["bench_tps"] = getattr(self.engine, "bench_tps", None)
+            # Token d'admission optionnel : si IAMINE_POOL_JOIN_TOKEN est defini,
+            # on le presente au pool (cf. audit sec-pub-05). Sinon, rien n'est
+            # envoye et le pool public reste ouvert.
+            _join = os.environ.get("IAMINE_POOL_JOIN_TOKEN", "")
+            if _join:
+                info["join_token"] = _join
             await self._send(ws, {
                 "type": "register",
                 "worker": info,

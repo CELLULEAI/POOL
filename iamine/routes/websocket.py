@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import hmac
 import json
 import logging
+import os
 import time
 import uuid
 
@@ -17,6 +19,19 @@ log = logging.getLogger("iamine.pool")
 def _pool():
     from iamine.pool import pool
     return pool
+
+
+def _join_token_ok(info: dict) -> bool:
+    """Controle d'admission opt-in d'un worker (cf. audit sec-pub-05).
+
+    Si la variable IAMINE_POOL_JOIN_TOKEN est definie cote pool, le worker doit
+    presenter le meme token dans son message ``register`` (champ ``join_token``).
+    Si elle n'est PAS definie -> True : le pool public reste ouvert aux workers
+    volontaires (comportement historique inchange)."""
+    required = os.environ.get("IAMINE_POOL_JOIN_TOKEN", "")
+    if not required:
+        return True
+    return hmac.compare_digest(str(info.get("join_token", "")), required)
 
 
 def _parse_version(v: str) -> tuple[int, ...]:
@@ -69,6 +84,11 @@ async def worker_ws(ws: WebSocket):
             if msg_type == "register":
                 info = msg.get("worker", {})
                 worker_id = info.get("worker_id", "unknown")
+                if not _join_token_ok(info):
+                    log.warning(f"Worker {worker_id} rejete : join token invalide/manquant")
+                    await ws.send_json({"type": "error", "error": "invalid join token"})
+                    await ws.close(code=4403)
+                    return
                 await pool.add_worker(worker_id, ws, info)
                 # Envoyer le token API au worker
                 w = pool.workers.get(worker_id)

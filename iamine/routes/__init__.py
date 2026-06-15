@@ -1,5 +1,7 @@
 """Route registration for IAMINE pool."""
 
+import os
+
 from fastapi import FastAPI
 
 
@@ -26,7 +28,11 @@ def register_routes(app: FastAPI):
     app.include_router(admin_router)
     app.include_router(static_router)
     app.include_router(websocket_router)
-    app.include_router(dev_router)
+    # Routes dev/debug (/v1/dev/backup|signal|inbox) : exposent des fichiers
+    # internes -> uniquement en mode dev (IAMINE_DEV=1), et gardees par
+    # require_admin de toute facon (cf. audit sec-pub-06).
+    if os.environ.get("IAMINE_DEV") == "1":
+        app.include_router(dev_router)
     # app.include_router(red_router)  # RED admin desactive
     app.include_router(anthropic_router)
     app.include_router(jobs_router)

@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import hmac
 import json
 import logging
 import os
 from pathlib import Path
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 router = APIRouter()
@@ -112,12 +113,55 @@ async def _check_admin(request: Request) -> str | None:
                             return email
                 except Exception:
                     pass
-    # 2) Fallback : token admin (pour API/curl)
+    # 2) Fallback : token admin (pour API/curl) via cookie OU header
+    #    Authorization: Bearer. On n'accepte plus le token en ?token= (fuite via
+    #    logs nginx / referer, cf. audit sec-pub-04 / sec-pub-11).
     admin_pass = os.environ.get("ADMIN_PASSWORD")
-    token = request.cookies.get("admin_token") or request.query_params.get("token", "")
-    if token == admin_pass:
+    token = request.cookies.get("admin_token", "")
+    if not token:
+        auth_header = request.headers.get("authorization", "")
+        if auth_header.lower().startswith("bearer "):
+            token = auth_header[7:].strip()
+    if admin_pass and token and hmac.compare_digest(token, admin_pass):
         return "admin"
     return None
+
+
+async def require_admin(request: Request) -> str:
+    """Dependance FastAPI : leve 401 si la requete n'est pas authentifiee admin.
+
+    A appliquer via ``dependencies=[Depends(require_admin)]`` sur les routes
+    sensibles pour fermer definitivement la classe de bug "on a oublie d'appeler
+    _check_admin" (cf. audit 2026-06-15, sec-pub-01 / sec-pub-07)."""
+    email = await _check_admin(request)
+    if not email:
+        raise HTTPException(status_code=401, detail="admin authentication required")
+    return email
+
+
+def _hash_admin_password(password: str) -> str:
+    """Hash argon2 (meme algorithme que les comptes utilisateurs, cf. routes/auth.py)."""
+    from passlib.hash import argon2 as _argon2
+    return _argon2.hash(password)
+
+
+def _verify_admin_password(password: str, stored: str | None) -> bool:
+    """Verifie un mot de passe admin.
+
+    Supporte les anciennes lignes stockees en clair (comparaison constant-time),
+    qui sont ensuite re-hashees en argon2 au prochain login reussi (cf. admin_login)."""
+    if not stored:
+        return False
+    stored = str(stored)
+    if stored.startswith("$argon2"):
+        from passlib.hash import argon2 as _argon2
+        try:
+            return _argon2.verify(password, stored)
+        except Exception:
+            return False
+    # Legacy : ligne en clair pre-argon2 — comparaison a temps constant.
+    import hmac as _hmac
+    return _hmac.compare_digest(stored, str(password))
 
 
 # ─── GET /v1/admin/models ────────────────────────────────────────────────────
@@ -175,9 +219,17 @@ async def admin_login(request: Request):
     try:
         async with pool.store.pool.acquire() as conn:
             row = await conn.fetchrow(
-                "SELECT email FROM admin_users WHERE email=$1 AND password_hash=$2",
-                email, password)
-            if row:
+                "SELECT email, password_hash FROM admin_users WHERE email=$1", email)
+            if row and _verify_admin_password(password, row["password_hash"]):
+                # Migration : si le hash stocke n'est pas argon2 (ancienne ligne en
+                # clair), le re-hasher en argon2 apres une connexion reussie.
+                if not str(row["password_hash"] or "").startswith("$argon2"):
+                    try:
+                        await conn.execute(
+                            "UPDATE admin_users SET password_hash=$2 WHERE email=$1",
+                            email, _hash_admin_password(password))
+                    except Exception:
+                        pass
                 from fastapi.responses import JSONResponse as JR
                 resp = JR({"ok": True, "email": email})
                 resp.set_cookie("admin_token", os.environ.get("ADMIN_PASSWORD"),
@@ -208,7 +260,7 @@ async def admin_setup(request: Request):
                 return JSONResponse({"error": "Password must be at least 6 characters"}, status_code=400)
             await conn.execute(
                 "INSERT INTO admin_users (email, password_hash) VALUES ($1, $2)",
-                email, password)
+                email, _hash_admin_password(password))
             from fastapi.responses import JSONResponse as JR
             resp = JR({"ok": True, "email": email})
             resp.set_cookie("admin_token", os.environ.get("ADMIN_PASSWORD", password),
@@ -232,7 +284,7 @@ async def admin_molecule_page(request: Request):
     if molecule_file.exists():
         resp = FileResponse(str(molecule_file))
         resp.set_cookie("admin_token", os.environ.get("ADMIN_PASSWORD"),
-                        httponly=False, max_age=86400, samesite="lax")
+                        httponly=True, max_age=86400, samesite="strict")
         return resp
     return {"error": "Molecule Console page not found"}
 
@@ -269,7 +321,7 @@ async def admin_page(request: Request):
         from fastapi.responses import FileResponse as FR
         resp = FR(str(admin_file))
         resp.set_cookie("admin_token", os.environ.get("ADMIN_PASSWORD"),
-                        httponly=False, max_age=86400, samesite="lax")
+                        httponly=True, max_age=86400, samesite="strict")
         return resp
     return {"error": "Admin page not found"}
 
@@ -323,7 +375,7 @@ async def admin_stats():
 
 # ─── POST /admin/api/assign ─────────────────────────────────────────────────
 
-@router.post("/admin/api/assign")
+@router.post("/admin/api/assign", dependencies=[Depends(require_admin)])
 async def admin_assign(request: Request):
     """Assigne un modele specifique a un worker."""
     from iamine.models import REGISTRY_BY_ID
@@ -366,7 +418,7 @@ async def admin_assign(request: Request):
 
 # ─── GET /admin/api/assignments ──────────────────────────────────────────────
 
-@router.get("/admin/api/assignments")
+@router.get("/admin/api/assignments", dependencies=[Depends(require_admin)])
 async def admin_assignments():
     """JSON de toutes les assignations DB pour tous les workers connectes."""
     from iamine.models import REGISTRY_BY_ID
@@ -394,7 +446,7 @@ async def admin_assignments():
 
 # ─── GET /admin/api/hardware-db ──────────────────────────────────────────────
 
-@router.get("/admin/api/hardware-db")
+@router.get("/admin/api/hardware-db", dependencies=[Depends(require_admin)])
 async def admin_hardware_db():
     """Base de benchmarks hardware (hashrate style XMRig)."""
     pool = _pool()
@@ -411,7 +463,7 @@ async def admin_hardware_db():
 
 # ─── POST /admin/api/set-ctx ────────────────────────────────────────────────
 
-@router.post("/admin/api/set-ctx")
+@router.post("/admin/api/set-ctx", dependencies=[Depends(require_admin)])
 async def admin_set_ctx(request: Request):
     """Change le contexte d'un worker. Persiste en DB + envoie au worker."""
     pool = _pool()
@@ -449,7 +501,7 @@ async def admin_set_ctx(request: Request):
 
 # ─── GET /admin/api/families ─────────────────────────────────────────────────
 
-@router.get("/admin/api/families")
+@router.get("/admin/api/families", dependencies=[Depends(require_admin)])
 async def admin_families():
     """Liste les familles disponibles et la famille active."""
     from iamine.models import MODEL_FAMILIES, get_active_family
@@ -469,7 +521,7 @@ async def admin_families():
 
 # ─── POST /admin/api/set-family ─────────────────────────────────────────────
 
-@router.post("/admin/api/set-family")
+@router.post("/admin/api/set-family", dependencies=[Depends(require_admin)])
 async def admin_set_family(request: Request):
     """Change la famille de modeles active et migre tous les workers."""
     from iamine.models import MODEL_FAMILIES, set_active_family, get_active_family, recommend_model_for_worker
@@ -539,7 +591,7 @@ async def admin_set_family(request: Request):
 
 # ─── GET /v1/admin/tasks ─────────────────────────────────────────────────────
 
-@router.get("/v1/admin/tasks")
+@router.get("/v1/admin/tasks", dependencies=[Depends(require_admin)])
 async def admin_tasks():
     """Historique des taches distribuees entre workers."""
     pool = _pool()
@@ -549,7 +601,7 @@ async def admin_tasks():
 
 # ─── POST /admin/api/worker-cmd ─────────────────────────────────────────────
 
-@router.post("/admin/api/worker-cmd")
+@router.post("/admin/api/worker-cmd", dependencies=[Depends(require_admin)])
 async def admin_worker_cmd(request: Request):
     """Envoie une commande a un worker via WebSocket."""
     from iamine.models import REGISTRY_BY_ID
@@ -596,7 +648,7 @@ async def admin_worker_cmd(request: Request):
 
 # ─── POST /admin/api/pool-managed ───────────────────────────────────────────
 
-@router.post("/admin/api/pool-managed")
+@router.post("/admin/api/pool-managed", dependencies=[Depends(require_admin)])
 async def admin_pool_managed(request: Request):
     """Active/desactive la gestion automatique du pool pour un worker.
     Si pool_managed=false, le pool n'enverra JAMAIS update_model a ce worker."""
@@ -616,7 +668,7 @@ async def admin_pool_managed(request: Request):
 
 # ─── POST /admin/api/migrate-all ────────────────────────────────────────────
 
-@router.post("/admin/api/migrate-all")
+@router.post("/admin/api/migrate-all", dependencies=[Depends(require_admin)])
 async def admin_migrate_all():
     """Migre tous les workers encore sur Qwen 2.5 vers Qwen 3.5."""
     from iamine.models import MODEL_REGISTRY, recommend_model_for_worker
@@ -668,7 +720,7 @@ async def admin_migrate_all():
 
 # ─── POST /admin/api/commands ────────────────────────────────────────────────
 
-@router.post("/admin/api/commands")
+@router.post("/admin/api/commands", dependencies=[Depends(require_admin)])
 async def admin_create_command(request: Request):
     """Cree une commande admin (RED ou humain)."""
     pool = _pool()
@@ -684,7 +736,7 @@ async def admin_create_command(request: Request):
 
 # ─── GET /admin/api/commands ─────────────────────────────────────────────────
 
-@router.get("/admin/api/commands")
+@router.get("/admin/api/commands", dependencies=[Depends(require_admin)])
 async def admin_list_commands(limit: int = 50, status: str = "", result_status: str = ""):
     """Liste les commandes admin recentes. Filtres : status, result_status."""
     pool = _pool()
@@ -705,7 +757,7 @@ async def admin_list_commands(limit: int = 50, status: str = "", result_status: 
 
 # ─── GET /admin/api/lessons ──────────────────────────────────────────────────
 
-@router.get("/admin/api/lessons")
+@router.get("/admin/api/lessons", dependencies=[Depends(require_admin)])
 async def admin_lessons(command_type: str = "", limit: int = 20):
     """Retourne les lecons apprises par RED (memoire d'experience)."""
     pool = _pool()
@@ -731,7 +783,7 @@ async def admin_lessons(command_type: str = "", limit: int = 20):
 
 # ─── POST /admin/api/commands/{command_id}/complete ──────────────────────────
 
-@router.post("/admin/api/commands/{command_id}/complete")
+@router.post("/admin/api/commands/{command_id}/complete", dependencies=[Depends(require_admin)])
 async def admin_complete_command(command_id: int, request: Request):
     """Marque une commande comme terminee (RED rapporte le resultat)."""
     pool = _pool()
@@ -928,7 +980,7 @@ async def admin_set_checker(request: Request):
 
 # ─── POST /admin/api/alert ──────────────────────────────────────────────────
 
-@router.post("/admin/api/alert")
+@router.post("/admin/api/alert", dependencies=[Depends(require_admin)])
 async def admin_alert(request: Request):
     """RED envoie une alerte. Loggee en DB + email si SMTP configure."""
     from iamine import __version__
@@ -993,7 +1045,7 @@ async def admin_alert(request: Request):
 
 # ─── POST /admin/api/inference-report ────────────────────────────────────────
 
-@router.post("/admin/api/inference-report")
+@router.post("/admin/api/inference-report", dependencies=[Depends(require_admin)])
 async def admin_inference_report(request: Request):
     """Enregistre un rapport d'inference (RED evalue un worker)."""
     pool = _pool()
@@ -1018,7 +1070,7 @@ async def admin_inference_report(request: Request):
 
 # ─── GET /admin/api/capabilities ─────────────────────────────────────────────
 
-@router.get("/admin/api/capabilities")
+@router.get("/admin/api/capabilities", dependencies=[Depends(require_admin)])
 async def admin_capabilities():
     """Liste les capacites de toutes les machines connues."""
     pool = _pool()
@@ -1031,7 +1083,7 @@ async def admin_capabilities():
 
 # ─── POST /admin/api/red/memory-save ─────────────────────────────────────────
 
-@router.post("/admin/api/red/memory-save")
+@router.post("/admin/api/red/memory-save", dependencies=[Depends(require_admin)])
 async def red_memory_save(request: Request):
     """Sauvegarde le contenu de RED.md en DB pour versionning."""
     pool = _pool()
@@ -1049,7 +1101,7 @@ async def red_memory_save(request: Request):
 
 # ─── GET /admin/api/red/memory-history ───────────────────────────────────────
 
-@router.get("/admin/api/red/memory-history")
+@router.get("/admin/api/red/memory-history", dependencies=[Depends(require_admin)])
 async def red_memory_history(limit: int = 10):
     """Liste les snapshots de RED.md pour rollback."""
     pool = _pool()
@@ -1066,7 +1118,7 @@ async def red_memory_history(limit: int = 10):
 
 # ─── GET /admin/api/red/memory-restore/{snapshot_id} ─────────────────────────
 
-@router.get("/admin/api/red/memory-restore/{snapshot_id}")
+@router.get("/admin/api/red/memory-restore/{snapshot_id}", dependencies=[Depends(require_admin)])
 async def red_memory_restore(snapshot_id: int):
     """Recupere le contenu d'un snapshot pour rollback."""
     pool = _pool()
