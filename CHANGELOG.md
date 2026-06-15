@@ -1,5 +1,33 @@
 # Changelog
 
+## 1.0.2 — 2026-06-15
+
+Maintenance release — OpenAI stateless mode + SEO. No breaking changes.
+
+### New
+
+- **OpenAI stateless mode** for `/v1/chat/completions` — trigger via header
+  `X-Iamine-Stateless: 1` **or** model `iamine/raw` (now advertised in `/v1/models`).
+  Disables long-term memory injection, the assist pipeline (sub-agents / auto-review),
+  sticky `conv_id` and special memory commands, returning a plain OpenAI response.
+  Fixes parasitic output (JSON `follow_ups`, prompt-token bloat, "roles must alternate")
+  with stateless clients such as Nextcloud `integration_openai` and Open WebUI. The
+  rich behavior (memory + assist) stays the default for the iamine CLI and clients
+  that don't opt in.
+
+### SEO / site
+
+- JSON-LD structured data (Organization, WebSite, SoftwareApplication), keyword-
+  optimized `<title>` and meta description, canonical + `hreflang` on the bilingual
+  architecture docs, `/app` canonical, and corrected social handle (`@celluleai`).
+
+### Docker
+
+| Tag | Use |
+|-----|-----|
+| `:pinned-1.0.2` | reproducible, immutable (single-maintainer signed) |
+| `:latest` | rolling |
+
 ## 1.0.1 — 2026-06-15
 
 Security release — addresses the 2026-06-15 internal security audit (findings sec-pub-01..14).
