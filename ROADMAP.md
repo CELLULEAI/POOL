@@ -19,7 +19,7 @@ Un exe, un pool, un config → ca tourne. N'importe qui contribue sa puissance d
 | Proxy GPU (Z2) | PROD | 3 backends, 228+ t/s, pool_managed=false |
 | Dashboard | PROD | Stats live, leaderboard, auto-refresh |
 | API OpenAI-compatible | PROD | /v1/chat/completions |
-| Site iamine.org | PROD | Login Google, dashboard, API docs |
+| Site cellule.ai | PROD | Login Google, dashboard, API docs |
 
 **Infrastructure :** 14 workers (10 CPU 0.8B-2B, 4 GPU 4B-30B), 1 VPS orchestrateur
 

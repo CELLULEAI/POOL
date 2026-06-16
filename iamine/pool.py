@@ -1208,10 +1208,10 @@ async def start_heartbeat():
     await initialize_pool(pool)
 
 
-# --- CORS (pour accès depuis iamine.org ou autre domaine) ---
+# --- CORS (pour accès depuis cellule.ai ou autre domaine) ---
 from fastapi.middleware.cors import CORSMiddleware
 
-ALLOWED_ORIGINS = os.environ.get("IAMINE_CORS_ORIGINS", "https://cellule.ai,https://iamine.org,http://127.0.0.1:8081").split(",")
+ALLOWED_ORIGINS = os.environ.get("IAMINE_CORS_ORIGINS", "https://cellule.ai,http://127.0.0.1:8081").split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,

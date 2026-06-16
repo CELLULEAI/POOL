@@ -10,7 +10,7 @@ services:
       - key: PORT
         value: 8080
     plan: free
-    # Domaine custom : iamine.org
+    # Domaine custom : cellule.ai
     # customDomains:
-    #   - name: iamine.org
-    #   - name: www.iamine.org
+    #   - name: cellule.ai
+    #   - name: www.cellule.ai

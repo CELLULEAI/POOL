@@ -783,7 +783,7 @@ def main():
     xp.add_argument("-c", "--config", default="proxy.json", help="Fichier de configuration proxy")
 
     mp = sub.add_parser("mcp-server", help="Start MCP memory server for Claude Code / OpenCode / Cursor")
-    mp.add_argument("--pool-url", default="https://iamine.org", help="Pool URL")
+    mp.add_argument("--pool-url", default="https://cellule.ai", help="Pool URL")
     mp.add_argument("--token", default="", help="Account token (acc_*)")
     mp.add_argument("--transport", default="stdio", choices=["stdio", "streamable-http"], help="MCP transport")
 

@@ -5,7 +5,7 @@ OpenAI interne utilise par le pool IAMINE. Permet d'utiliser IAMINE
 comme drop-in replacement pour l'API Anthropic.
 
 Usage avec Claude Code:
-    $env:ANTHROPIC_BASE_URL = "https://iamine.org"
+    $env:ANTHROPIC_BASE_URL = "https://cellule.ai"
     $env:ANTHROPIC_API_KEY = "acc_xxx"
     claude --model iamine
 """

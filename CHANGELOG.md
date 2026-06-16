@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased
+
+### Maintenance — domain migration `iamine.org` → `cellule.ai`
+
+- Replaced all stale `iamine.org` URLs/endpoints with `cellule.ai` across docs,
+  install scripts, and code defaults (the `iamine.org` domain is retired, DNS gone).
+  The backward-compat shim that detects a legacy `iamine.org` pool URL in an existing
+  worker config and rewrites it to `cellule.ai` is intentionally preserved, as is the
+  model-download allowlist that still accepts the legacy host.
+- Removed a dead pre-migration `iamine/index.html` duplicate (the live homepage is
+  `iamine/static/index.html`).
+- Fixed a duplicate `https://cellule.ai` entry introduced in the default
+  `IAMINE_CORS_ORIGINS` list.
+
+### Docs
+
+- New `docs/CONNECT.md` — a short community onboarding card for connecting any
+  OpenAI-compatible tool (Nextcloud `integration_openai`, Open WebUI, the Python
+  `openai` SDK, Claude Code) to the pool, with `iamine/raw` stateless-model guidance.
+
 ## 1.0.2 — 2026-06-15
 
 Maintenance release — OpenAI stateless mode + SEO. No breaking changes.

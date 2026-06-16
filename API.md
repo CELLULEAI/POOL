@@ -1,7 +1,7 @@
 # IAMINE Pool API Reference
 
-**Base URL:** `https://iamine.org`
-**Interactive Docs:** [https://iamine.org/docs](https://iamine.org/docs) (Swagger UI) | [https://iamine.org/redoc](https://iamine.org/redoc) (ReDoc)
+**Base URL:** `https://cellule.ai`
+**Interactive Docs:** [https://cellule.ai/docs](https://cellule.ai/docs) (Swagger UI) | [https://cellule.ai/redoc](https://cellule.ai/redoc) (ReDoc)
 
 ## Authentication
 
@@ -147,7 +147,7 @@ Anthropic API-compatible endpoint. Translates Anthropic message format to intern
 - **Response (streaming):** SSE events: `message_start`, `content_block_start`, `content_block_delta`, `content_block_stop`, `message_delta`, `message_stop`
 - **Usage:** Drop-in replacement for Anthropic API (Claude Code, Anthropic SDK):
 ```bash
-export ANTHROPIC_BASE_URL="https://iamine.org"
+export ANTHROPIC_BASE_URL="https://cellule.ai"
 export ANTHROPIC_API_KEY="acc_xxx"
 claude --model iamine
 ```
@@ -768,7 +768,7 @@ Submit a contact message.
 Linux installation script.
 
 - **Auth:** None
-- **Usage:** `curl -sL https://iamine.org/install.sh | bash`
+- **Usage:** `curl -sL https://cellule.ai/install.sh | bash`
 
 ---
 
@@ -776,7 +776,7 @@ Linux installation script.
 Windows installation script.
 
 - **Auth:** None
-- **Usage:** `irm https://iamine.org/install.ps1 | iex`
+- **Usage:** `irm https://cellule.ai/install.ps1 | iex`
 
 ---
 
@@ -1064,7 +1064,7 @@ Future endpoints for pool-to-pool federation:
 
 ## WebSocket
 
-### WSS wss://iamine.org/ws
+### WSS wss://cellule.ai/ws
 Worker WebSocket connection for joining the compute pool.
 
 - **Protocol:** JSON messages over WebSocket

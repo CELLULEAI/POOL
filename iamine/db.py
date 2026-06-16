@@ -608,7 +608,7 @@ def _discover_migrations_dir():
 
 
 class PostgresStore(Store):
-    """Stockage PostgreSQL — pour la production sur iamine.org.
+    """Stockage PostgreSQL — pour la production sur cellule.ai.
 
     Necessite : pip install asyncpg
     Usage :

@@ -102,7 +102,7 @@ fi
 if [ -n "$PIP_UPDATES" ]; then
     log "  PIP upgrade iamine-ai..."
     cd $IAMINE && source venv/bin/activate
-    pip install --upgrade iamine-ai -i https://iamine.org/pypi --extra-index-url https://pypi.org/simple -q >> $LOG 2>&1
+    pip install --upgrade iamine-ai -i https://cellule.ai/pypi --extra-index-url https://pypi.org/simple -q >> $LOG 2>&1
 fi
 
 # GIT

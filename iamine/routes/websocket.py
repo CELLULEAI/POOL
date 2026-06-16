@@ -100,8 +100,8 @@ async def worker_ws(ws: WebSocket):
                         upgrade_signal = {
                             "current": worker_version,
                             "latest": __version__,
-                            "url": "https://iamine.org/pypi",
-                            "action": "pip install --upgrade iamine-ai -i https://iamine.org/pypi --extra-index-url https://pypi.org/simple",
+                            "url": "https://cellule.ai/pypi",
+                            "action": "pip install --upgrade iamine-ai -i https://cellule.ai/pypi --extra-index-url https://pypi.org/simple",
                         }
                         log.info(f"Worker {worker_id} outdated: v{worker_version} → v{__version__}")
 

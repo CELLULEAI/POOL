@@ -811,7 +811,7 @@ async def api_chat(request: dict):
     Usage:
         curl -H "Authorization: Bearer iam_xxx" \\
              -d '{"messages":[...]}' \\
-             https://iamine.org/v1/api/chat
+             https://cellule.ai/v1/api/chat
 
     Fonctionne meme si le worker est offline tant qu'il a des credits.
     """

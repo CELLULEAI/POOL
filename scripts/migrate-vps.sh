@@ -45,7 +45,7 @@ export)
   "version": "$VERSION",
   "hostname": "$(hostname)",
   "ip": "$(hostname -I | awk '{print $1}')",
-  "domain": "iamine.org",
+  "domain": "cellule.ai",
   "postgres_db": "iamine",
   "postgres_user": "harpersatrage"
 }
@@ -126,8 +126,8 @@ import)
 
     echo ""
     echo "=== CHECKLIST MANUELLE ==="
-    echo "  [ ] DNS: pointer iamine.org vers la nouvelle IP"
-    echo "  [ ] SSL: sudo certbot --nginx -d iamine.org"
+    echo "  [ ] DNS: pointer cellule.ai vers la nouvelle IP"
+    echo "  [ ] SSL: sudo certbot --nginx -d cellule.ai"
     echo "  [ ] Cron: restaurer avec crontab configs/crontab.bak"
     echo "  [ ] SSH testeurs: creer les comptes david-tester, regis-tester"
     echo "  [ ] Modeles GGUF: transferer depuis l ancien VPS (~79 GB)"

@@ -9,7 +9,7 @@ Add to `~/.claude/claude_code_config.json`:
   "mcpServers": {
     "cellule-memory": {
       "command": "python",
-      "args": ["-m", "iamine", "mcp-server", "--pool-url", "https://iamine.org", "--token", "YOUR_TOKEN"]
+      "args": ["-m", "iamine", "mcp-server", "--pool-url", "https://cellule.ai", "--token", "YOUR_TOKEN"]
     }
   }
 }
@@ -25,7 +25,7 @@ or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
   "mcpServers": {
     "cellule-memory": {
       "command": "python",
-      "args": ["-m", "iamine", "mcp-server", "--pool-url", "https://iamine.org", "--token", "YOUR_TOKEN"]
+      "args": ["-m", "iamine", "mcp-server", "--pool-url", "https://cellule.ai", "--token", "YOUR_TOKEN"]
     }
   }
 }
@@ -40,7 +40,7 @@ Add to `.cursor/mcp.json` in your project root:
   "mcpServers": {
     "cellule-memory": {
       "command": "python",
-      "args": ["-m", "iamine", "mcp-server", "--pool-url", "https://iamine.org", "--token", "YOUR_TOKEN"]
+      "args": ["-m", "iamine", "mcp-server", "--pool-url", "https://cellule.ai", "--token", "YOUR_TOKEN"]
     }
   }
 }
@@ -49,7 +49,7 @@ Add to `.cursor/mcp.json` in your project root:
 ## Environment variables (alternative)
 
 ```bash
-export IAMINE_POOL_URL=https://iamine.org
+export IAMINE_POOL_URL=https://cellule.ai
 export IAMINE_TOKEN=acc_xxxxx
 python -m iamine mcp-server
 ```

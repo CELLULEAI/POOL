@@ -6,9 +6,9 @@ Two modes:
   - Direct: connects to PostgreSQL directly (co-located deployment)
 
 Usage:
-  python -m iamine.mcp_server --pool-url https://iamine.org --token acc_xxx
+  python -m iamine.mcp_server --pool-url https://cellule.ai --token acc_xxx
   # or via CLI:
-  iamine mcp-server --pool-url https://iamine.org --token acc_xxx
+  iamine mcp-server --pool-url https://cellule.ai --token acc_xxx
 """
 
 from __future__ import annotations
@@ -26,7 +26,7 @@ from mcp.server.fastmcp import FastMCP
 log = logging.getLogger("iamine.mcp")
 
 # --- Configuration ---
-POOL_URL = os.environ.get("IAMINE_POOL_URL", "https://iamine.org")
+POOL_URL = os.environ.get("IAMINE_POOL_URL", "https://cellule.ai")
 API_TOKEN = os.environ.get("IAMINE_TOKEN", "")
 
 mcp = FastMCP(
@@ -195,7 +195,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Cellule.ai MCP Memory Server")
     parser.add_argument("--pool-url", default=POOL_URL,
-                        help="Pool URL (default: $IAMINE_POOL_URL or https://iamine.org)")
+                        help="Pool URL (default: $IAMINE_POOL_URL or https://cellule.ai)")
     parser.add_argument("--token", default=API_TOKEN,
                         help="Account token (default: $IAMINE_TOKEN)")
     parser.add_argument("--transport", default="stdio",

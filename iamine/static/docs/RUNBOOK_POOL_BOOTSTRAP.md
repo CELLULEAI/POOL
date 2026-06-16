@@ -1,6 +1,6 @@
 # RUNBOOK — Bootstrap d'un nouveau pool IAMINE fédéré
 
-**Origine** : ce runbook est le résultat du bootstrap réel de Gladiator (.30) comme pool #2 le 2026-04-11, depuis un pool fresh jusqu'au handshake fédéré bi-directionnel avec iamine.org. Chaque commande a été exécutée en production et le résultat est documenté. Si une étape échoue, la section **Troubleshooting** en fin de doc liste les erreurs réelles rencontrées et leur fix.
+**Origine** : ce runbook est le résultat du bootstrap réel de Gladiator (.30) comme pool #2 le 2026-04-11, depuis un pool fresh jusqu'au handshake fédéré bi-directionnel avec cellule.ai. Chaque commande a été exécutée en production et le résultat est documenté. Si une étape échoue, la section **Troubleshooting** en fin de doc liste les erreurs réelles rencontrées et leur fix.
 
 **Public cible** : un membre de la communauté qui veut exposer sa machine comme **pool** fédéré (pas juste worker) pour participer au maillage molécule.
 
@@ -78,7 +78,7 @@ python3 -m venv venv
 
 pip install --upgrade pip
 pip install 'iamine-ai==0.2.49' \
-    -i https://iamine.org/pypi \
+    -i https://cellule.ai/pypi \
     --extra-index-url https://pypi.org/simple
 
 # BUG WHEEL CONNU : asyncpg n'est pas dans les deps officielles
@@ -163,8 +163,8 @@ cp -r /tmp/iamine-git/migrations \
 scp -r user@existing-pool:/path/to/iamine/migrations \
     ~/iamine-pool/venv/lib/python3.13/site-packages/migrations
 
-# Option C : depuis iamine.org (tarball à publier, TODO)
-# curl -sL https://iamine.org/pool/migrations-0.2.49.tgz | \
+# Option C : depuis cellule.ai (tarball à publier, TODO)
+# curl -sL https://cellule.ai/pool/migrations-0.2.49.tgz | \
 #     tar -xz -C ~/iamine-pool/venv/lib/python3.13/site-packages/
 ```
 
@@ -201,7 +201,7 @@ chmod 600 ~/iamine-pool/.env
 **Valeurs à personnaliser** :
 - `DB_PASS` : le mot de passe choisi en 2b
 - `IAMINE_FED_NAME` : nom lisible de ton pool (ex: `gladiator-pool`, `alice-lab-pool`)
-- `IAMINE_FED_URL` : l'URL publique à laquelle iamine.org doit pouvoir te joindre. **Obligatoire en http(s)://**, pas d'IP nue. Exemples valides :
+- `IAMINE_FED_URL` : l'URL publique à laquelle cellule.ai doit pouvoir te joindre. **Obligatoire en http(s)://**, pas d'IP nue. Exemples valides :
   - `http://<ip-publique-v4>:8080`
   - `https://monpool.mondomaine.fr`
 - `IAMINE_FED_MOLECULE` : `iamine-testnet` pour le réseau actuel.
@@ -253,13 +253,13 @@ curl http://127.0.0.1:8080/v1/federation/info
 
 ---
 
-## Phase 6 — Handshake fédération avec iamine.org
+## Phase 6 — Handshake fédération avec cellule.ai
 
 Deux moitiés : (1) test du NAT/accès public, (2) handshake VPS -> ton pool.
 
 ### 6a — Vérifier accès public
 
-Depuis **une autre machine** sur internet (par exemple le VPS iamine.org, ou ton téléphone en 4G si tu veux un test indépendant de ton LAN) :
+Depuis **une autre machine** sur internet (par exemple le VPS cellule.ai, ou ton téléphone en 4G si tu veux un test indépendant de ton LAN) :
 
 ```bash
 curl -v http://<ton-ip-publique>:8080/v1/federation/info
@@ -267,9 +267,9 @@ curl -v http://<ton-ip-publique>:8080/v1/federation/info
 
 **Attendu** : HTTP 200 + JSON `atom_id`/`pubkey_hex`/`name`. Si pas de réponse, la règle NAT TCP public:8080 -> LAN:8080 n'est pas en place sur ton routeur.
 
-### 6b — Demander le handshake à iamine.org
+### 6b — Demander le handshake à cellule.ai
 
-Depuis le **VPS iamine.org** (par un admin iamine.org qui dispose de `IAMINE_ADMIN_TOKEN`) :
+Depuis le **VPS cellule.ai** (par un admin cellule.ai qui dispose de `IAMINE_ADMIN_TOKEN`) :
 
 ```bash
 IAMINE_ADMIN_TOKEN=<token> \
@@ -290,7 +290,7 @@ handshake ok : 'my-pool-name' (<16hex>...)
 
 ### 6c — Vérifier la réciprocité
 
-**Côté iamine.org** :
+**Côté cellule.ai** :
 
 ```bash
 IAMINE_ADMIN_TOKEN=<token> python3 -m iamine pool peers
@@ -387,16 +387,16 @@ L'atom_id identique confirme que le keypair `~/.iamine/federation/self_ed25519.k
 
 ## Post-install : upgrade trust level
 
-Par défaut après handshake, le peer est à **trust_level=1** (bare handshake). Pour participer à la fédération active (M3+ endpoints, futures phases M10/M11), un admin iamine.org doit promouvoir :
+Par défaut après handshake, le peer est à **trust_level=1** (bare handshake). Pour participer à la fédération active (M3+ endpoints, futures phases M10/M11), un admin cellule.ai doit promouvoir :
 
 ```bash
-# Depuis iamine.org
+# Depuis cellule.ai
 IAMINE_ADMIN_TOKEN=<token> python3 -m iamine pool promote <atom_id> --level 2
 # Puis éventuellement :
 # python3 -m iamine pool promote <atom_id> --level 3   # bonded (M5 HARD-LOCK actuel)
 ```
 
-**Note** : en phase M11-scaffold actuelle, trust=3 est hard-lock côté iamine.org. Contacter david pour débloquer temporairement ou attendre M11.2.
+**Note** : en phase M11-scaffold actuelle, trust=3 est hard-lock côté cellule.ai. Contacter david pour débloquer temporairement ou attendre M11.2.
 
 ---
 

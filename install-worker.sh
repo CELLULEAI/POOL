@@ -107,7 +107,7 @@ PIP="$VENV_DIR/bin/pip"
 
 log "Installing iamine-ai from cellule.ai/pypi (may take 1-3 min)"
 "$PIP" install --quiet --upgrade \
-    --index-url https://iamine.org/pypi \
+    --index-url https://cellule.ai/pypi \
     --extra-index-url https://pypi.org/simple \
     iamine-ai || fail "pip install failed. Check network + Python version."
 

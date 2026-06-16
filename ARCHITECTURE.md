@@ -1,4 +1,4 @@
-# ARCHITECTURE.md — IAMINE.org
+# ARCHITECTURE.md — CELLULE (ex-IAMINE.org)
 
 > Pool de calcul distribue pour l inference LLM.
 > Document vivant — derniere mise a jour : 2026-04-10 (session M3->M10-scaffold).
@@ -15,7 +15,7 @@ IAMINE suit une evolution biologique en trois phases :
 
 ## Phase 1 — L Atome (actuel)
 
-Noyau (VPS iamine.org) + Electrons (workers CPU/GPU).
+Noyau (VPS cellule.ai) + Electrons (workers CPU/GPU).
 - Pool FastAPI + WebSocket
 - PostgreSQL (L3, RAG pgvector, comptes, tokens)
 - 4 LLM sur Z2 : RED 30B, Coder 30B, Tank 35B, Scout 9B

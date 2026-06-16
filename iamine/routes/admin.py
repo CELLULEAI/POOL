@@ -407,7 +407,7 @@ async def admin_assign(request: Request):
     payload = {
         "type": "command",
         "cmd": "update_model",
-        "model_url": f"http://dl.iamine.org/v1/models/download/{tier.hf_file}",
+        "model_url": f"http://dl.cellule.ai/v1/models/download/{tier.hf_file}",
         "model_path": f"models/{tier.hf_file}",
         "ctx_size": ctx,
         "gpu_layers": gpu_layers,
@@ -701,7 +701,7 @@ async def admin_migrate_all():
         payload = {
             "type": "command",
             "cmd": "update_model",
-            "model_url": f"http://dl.iamine.org/v1/models/download/{rec.hf_file}",
+            "model_url": f"http://dl.cellule.ai/v1/models/download/{rec.hf_file}",
             "model_path": f"models/{rec.hf_file}",
             "ctx_size": ctx,
             "gpu_layers": -1 if w.info.get("has_gpu") else 0,

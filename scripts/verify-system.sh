@@ -57,9 +57,9 @@ for ep in /v1/status /v1/models/available /install.sh /install.ps1; do
 done
 
 # Site HTTPS
-for url in https://iamine.org https://iamine.org/m; do
+for url in https://cellule.ai https://cellule.ai/m; do
     c=$(curl -s -o /dev/null -w '%{http_code}' $url 2>/dev/null || echo 0)
-    check "HTTPS $(echo $url | sed 's|https://iamine.org||' || echo /)" "$([ "$c" = "200" ] && echo OK || echo "HTTP $c")"
+    check "HTTPS $(echo $url | sed 's|https://cellule.ai||' || echo /)" "$([ "$c" = "200" ] && echo OK || echo "HTTP $c")"
 done
 
 echo ""

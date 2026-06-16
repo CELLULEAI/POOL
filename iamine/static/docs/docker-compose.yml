@@ -9,7 +9,7 @@
 #
 # Requirements :
 #   - Docker 20+ with compose v2
-#   - Public URL reachable from iamine.org (NAT 8080 or tunnel)
+#   - Public URL reachable from cellule.ai (NAT 8080 or tunnel)
 #   - 2 GB RAM minimum, 10 GB disk
 #
 # The federation keypair is persisted in a named volume so your pool

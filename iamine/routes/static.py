@@ -140,7 +140,7 @@ async def available_models():
 # --- PyPI prive — sert le package iamine-ai depuis le VPS ---
 @router.get("/pypi/iamine-ai/")
 async def pypi_index():
-    """Index PyPI simple pour pip install -i https://iamine.org/pypi."""
+    """Index PyPI simple pour pip install -i https://cellule.ai/pypi."""
     dist_dir = Path(__file__).parent.parent.parent / "dist"
     if not dist_dir.exists():
         return JSONResponse({"error": "No dist/ directory. Run: python -m build"}, status_code=404)
@@ -226,7 +226,7 @@ async def mobile_page():
 # --- Scripts d'installation ---
 @router.get("/install.sh")
 async def install_script():
-    """Script d'installation Linux — curl -sL https://iamine.org/install.sh | bash"""
+    """Script d'installation Linux — curl -sL https://cellule.ai/install.sh | bash"""
     from fastapi.responses import FileResponse as FR
     script = Path(__file__).parent.parent / "install.sh"
     if script.exists():
@@ -236,7 +236,7 @@ async def install_script():
 
 @router.get("/install.ps1")
 async def install_script_win():
-    """Script d'installation Windows — irm https://iamine.org/install.ps1 | iex"""
+    """Script d'installation Windows — irm https://cellule.ai/install.ps1 | iex"""
     from fastapi.responses import FileResponse as FR
     script = Path(__file__).parent.parent / "install.ps1"
     if script.exists():

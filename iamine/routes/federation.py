@@ -161,7 +161,7 @@ async def federation_worker_known(worker_id: str, request: Request):
 
 
 # ─── GET /v1/federation/pools (public, unsigned) ─────────────────────────────
-# Read-only public view of the federated network for the iamine.org landing
+# Read-only public view of the federated network for the cellule.ai landing
 # page. Returns self identity card + list of non-revoked peers with public
 # fields only. No admin token required. Safe to expose : names, atom_ids,
 # URLs, molecule_ids, trust levels, last_seen, live capabilities. Excludes
