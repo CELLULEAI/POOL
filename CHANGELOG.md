@@ -1,24 +1,44 @@
 # Changelog
 
-## Unreleased
+## 1.0.3 — 2026-06-16
+
+Maintenance release — domain migration cleanup, a docs/security pass. No breaking
+API changes; no DB migrations.
 
 ### Maintenance — domain migration `iamine.org` → `cellule.ai`
 
 - Replaced all stale `iamine.org` URLs/endpoints with `cellule.ai` across docs,
   install scripts, and code defaults (the `iamine.org` domain is retired, DNS gone).
-  The backward-compat shim that detects a legacy `iamine.org` pool URL in an existing
-  worker config and rewrites it to `cellule.ai` is intentionally preserved, as is the
-  model-download allowlist that still accepts the legacy host.
+  This also fixes the admin model-assignment download URL, which still pointed at the
+  dead `dl.iamine.org` host (now `dl.cellule.ai`). The backward-compat shim that
+  detects a legacy `iamine.org` pool URL in an existing worker config and rewrites it
+  to `cellule.ai` is intentionally preserved, as is the model-download allowlist that
+  still accepts the legacy host.
 - Removed a dead pre-migration `iamine/index.html` duplicate (the live homepage is
   `iamine/static/index.html`).
 - Fixed a duplicate `https://cellule.ai` entry introduced in the default
   `IAMINE_CORS_ORIGINS` list.
 
+### Security
+
+- Removed `iamine/static/docs/CLAUDE_VPS_RESTORE.md` — an internal disaster-recovery
+  runbook that was served publicly at `/docs/CLAUDE_VPS_RESTORE.md`. It exposed
+  internal operational paths (no live credentials). Internal ops docs no longer ship
+  in the public served docs directory.
+
 ### Docs
 
-- New `docs/CONNECT.md` — a short community onboarding card for connecting any
+- New `docs/CONNECT.md` + the served page `/docs/connect.html` (linked from the
+  homepage API section) — a community onboarding card for connecting any
   OpenAI-compatible tool (Nextcloud `integration_openai`, Open WebUI, the Python
   `openai` SDK, Claude Code) to the pool, with `iamine/raw` stateless-model guidance.
+
+### Docker
+
+| Tag | Use |
+|-----|-----|
+| `:pinned-1.0.3` | reproducible, immutable (single-maintainer signed) |
+| `:latest` | rolling |
 
 ## 1.0.2 — 2026-06-15
 
