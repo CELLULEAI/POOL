@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cellule.ai — Connect your tools</title>
+<meta name="description" content="Connect any OpenAI-compatible tool (Nextcloud, Open WebUI, the openai SDK, Claude Code) to the Cellule.ai decentralized inference network. Base URL, models, and the iamine/raw stateless guidance.">
+<link rel="canonical" href="https://cellule.ai/docs/connect.html">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0f;color:#e0e0e0;font-family:system-ui,-apple-system,sans-serif;line-height:1.7;padding:2rem 1rem}
+.container{max-width:800px;margin:0 auto}
+h1{font-size:2rem;background:linear-gradient(135deg,#8b5cf6,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:0.5rem}
+h2{color:#8b5cf6;font-size:1.3rem;margin:2.5rem 0 1rem;padding-bottom:0.5rem;border-bottom:1px solid rgba(139,92,246,0.2)}
+h3{color:#a78bfa;font-size:1.1rem;margin:1.5rem 0 0.5rem}
+p{margin-bottom:1rem;color:rgba(255,255,255,0.75)}
+a{color:#8b5cf6;text-decoration:none}
+a:hover{text-decoration:underline}
+code{background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;font-size:0.9em;font-family:'JetBrains Mono',monospace}
+pre{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:1.2rem;overflow-x:auto;margin:1rem 0;font-size:0.85rem;line-height:1.5}
+pre code{background:none;padding:0}
+.badge{display:inline-block;background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;padding:3px 12px;border-radius:12px;font-size:11px;font-weight:700;letter-spacing:1px;margin-bottom:1rem}
+.card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:1.5rem;margin:1rem 0}
+.warn{border-left:3px solid #ff8800;padding-left:1rem;margin:1rem 0;color:rgba(255,255,255,0.6)}
+.ok{border-left:3px solid #4ade80;padding-left:1rem;margin:1rem 0;color:rgba(255,255,255,0.6)}
+table{width:100%;border-collapse:collapse;margin:1rem 0}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.06);vertical-align:top}
+th{color:#8b5cf6;font-size:0.85rem;text-transform:uppercase;letter-spacing:1px}
+.back{display:inline-block;margin-bottom:2rem;color:rgba(255,255,255,0.4);font-size:0.9rem}
+</style>
+</head>
+<body>
+<div class="container">
+
+<a href="/" class="back">&larr; Back to cellule.ai</a>
+
+<span class="badge">INTEGRATIONS</span>
+<h1>Connect your tools</h1>
+<p>Cellule.ai exposes an <strong>OpenAI-compatible API</strong>. Any tool that can talk to OpenAI can talk to the Cellule pool &mdash; point it at the base URL below and pick a model.</p>
+
+<div class="card">
+<table>
+<tr><th>Base URL</th><td><code>https://cellule.ai/v1</code></td></tr>
+<tr><th>Auth</th><td><code>Authorization: Bearer acc_xxxxxxxx</code> (your personal key)</td></tr>
+<tr><th>Tools / integrations</th><td><code>iamine/raw</code> &mdash; <em>stateless, recommended</em></td></tr>
+<tr><th>Personal chat w/ memory</th><td><code>iamine</code> &mdash; <em>stateful</em></td></tr>
+</table>
+</div>
+
+<h2>1. Get a key</h2>
+<p>Create an account at <a href="https://cellule.ai">cellule.ai</a> &mdash; your personal key looks like <code>acc_xxxxxxxx</code>. Send it as <code>Authorization: Bearer acc_xxxxxxxx</code>.</p>
+<p>No account yet? Guests get <strong>20 free requests per IP</strong>, after which a key is required.</p>
+
+<h2>2. Pick the right model</h2>
+<p><code>/v1/models</code> advertises two public models:</p>
+<table>
+<tr><th>Model</th><th>Behavior</th><th>Use it for</th></tr>
+<tr><td><code>iamine</code></td><td><strong>stateful</strong> &mdash; long-term memory is injected, answers are rich but can be noisy for automated callers</td><td>personal chat where you <em>want</em> memory</td></tr>
+<tr><td><code>iamine/raw</code></td><td><strong>stateless</strong> &mdash; no memory, no assist pipeline, a clean / deterministic OpenAI reply</td><td><strong>integrations &amp; tools (recommended)</strong></td></tr>
+</table>
+<p>You can also force stateless mode on any model with the header <code>X-Iamine-Stateless: 1</code> (accepted values: <code>1</code>, <code>true</code>, <code>yes</code>, <code>on</code>). Both <code>iamine/raw</code> and the header bypass long-term memory injection and the assist pipeline (sub-agents / auto-review / sticky conversation id), returning a plain OpenAI response built only from the messages you send.</p>
+<div class="warn"><strong>Why this matters:</strong> stateless clients (Nextcloud <code>integration_openai</code>, Open WebUI, &hellip;) otherwise receive memory-augmented output (extra <code>follow_ups</code>, inflated prompt tokens, occasional &quot;roles must alternate&quot;). <code>iamine/raw</code> fixes that.</div>
+
+<h2>3. Quick test</h2>
+<pre><code>curl -s https://cellule.ai/v1/chat/completions \
+  -H "Authorization: Bearer acc_xxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"iamine/raw","messages":[{"role":"user","content":"Say hello in one sentence."}]}'</code></pre>
+
+<h2>4. Connect common clients</h2>
+
+<div class="card">
+<h3>Nextcloud &mdash; <code>integration_openai</code> app</h3>
+<ul style="margin:0 0 1rem 1.5rem;color:rgba(255,255,255,0.7)">
+<li>Service URL: <code>https://cellule.ai/v1</code></li>
+<li>API key: <code>acc_xxxxxxxx</code></li>
+<li>Default model: <code>iamine/raw</code></li>
+</ul>
+<div class="warn"><strong>Known pitfall:</strong> after changing the model, Nextcloud's Redis cache may pin the old model list and you get <em>&quot;Une erreur s'est produite au moment de planifier la t&acirc;che&quot;</em>. Fix: flush the Redis keys matching <code>*integration_openai*</code> (<code>redis-cli --scan --pattern '*integration_openai*' | xargs redis-cli del</code>), then reload.</div>
+</div>
+
+<div class="card">
+<h3>Open WebUI</h3>
+<p style="margin:0">Settings &rarr; Connections &rarr; OpenAI API. Base URL <code>https://cellule.ai/v1</code>, API key <code>acc_xxxxxxxx</code>, then pick <code>iamine/raw</code> from the model list.</p>
+</div>
+
+<div class="card">
+<h3>Python (<code>openai</code> SDK)</h3>
+<pre><code>from openai import OpenAI
+
+client = OpenAI(base_url="https://cellule.ai/v1", api_key="acc_xxxxxxxx")
+r = client.chat.completions.create(
+    model="iamine/raw",
+    messages=[{"role": "user", "content": "Summarize: ..."}],
+)
+print(r.choices[0].message.content)</code></pre>
+</div>
+
+<div class="card">
+<h3>Anthropic-compatible clients (Claude Code, Anthropic SDK)</h3>
+<p>The pool also speaks the Anthropic message format at <code>/v1/messages</code>:</p>
+<pre><code>export ANTHROPIC_BASE_URL="https://cellule.ai"
+export ANTHROPIC_API_KEY="acc_xxxxxxxx"
+claude --model iamine</code></pre>
+</div>
+
+<h2>5. Limits &amp; good citizenship</h2>
+<ul style="margin:0 0 1rem 1.5rem;color:rgba(255,255,255,0.7)">
+<li><strong>Guests:</strong> 20 requests per IP, then create a (free) account.</li>
+<li><strong>Rate limiting:</strong> the pool throttles abusive sources &mdash; keep automated callers reasonable and back off on HTTP <code>429</code>.</li>
+<li><strong>Discoverability:</strong> call <code>GET /v1/models</code> to see what the pool currently serves. Most OpenAI clients read their model dropdown from this list.</li>
+</ul>
+
+<div class="ok">Cellule.ai is a community-run, decentralized AI inference network (AGPLv3). The compute comes from volunteer machines &mdash; be kind to the pool.</div>
+
+<div style="text-align:center;margin-top:3rem;padding-top:2rem;border-top:1px solid rgba(255,255,255,0.1)">
+<p style="color:rgba(255,255,255,0.4);font-size:0.9rem">Cellule.ai — Decentralized AI, powered by the community</p>
+<a href="/" style="color:#8b5cf6">cellule.ai</a>
+</div>
+
+</div>
+</body>
+</html>
