@@ -46,6 +46,25 @@ _TRIVIAL_EXACT = {
     "au revoir", "bye",
 }
 
+# Arithmétique / calcul exact : court mais NON-trivial (la précision requiert un
+# modèle adéquat, jamais un 1B). ×/*/^/+ entre deux chiffres sont peu ambigus ;
+# /, ÷, %, - exigent des ESPACES autour pour éviter dates (17/06/2026), plages
+# (2020-2024), IDs, numéros de téléphone.
+_ARITH_RE = re.compile(
+    r"\d\s*[×x✕⋅*^]\s*\d"        # 17 x 23, 2*2, 3^4
+    r"|\d\s*\+\s*\d"             # 2+2, 17 + 23
+    r"|\d\s*÷\s*\d"             # 144÷12
+    r"|\d\s+[/%\-]\s+\d",        # 144 / 12, 100 - 7 (espaces obligatoires)
+    re.IGNORECASE,
+)
+_COMPUTE_VERBS = re.compile(
+    r"(?:\bcalcul|\bcombien\s+(?:font|fait|vaut|valent|coûte)"
+    r"|\br[ée]sou[ds]|\br[ée]sultat\s+de|\bcompute\b|\bwhat\s+is\b|\bhow\s+much\b"
+    r"|\ble\s+produit\s+de|\bla\s+somme\s+de).*\d"
+    r"|\d.*=\s*\?",
+    re.IGNORECASE,
+)
+
 
 def classify_prompt(text: str) -> tuple[str, float]:
     """Classifie un prompt utilisateur en tier avec confidence.
@@ -76,6 +95,12 @@ def classify_prompt(text: str) -> tuple[str, float]:
     # 2. Trivial — match exact politesse courte (prioritaire car tres haute confidence)
     if stripped_clean in _TRIVIAL_EXACT:
         return "small", 0.95
+
+    # 2b. Arithmétique / calcul exact : court mais précision requise → tier adéquat
+    #     (>= 9B), JAMAIS small. Limité aux prompts courts (les longs passent par
+    #     les règles reasoning/longueur qui peuvent monter à 'large').
+    if n_words <= 40 and (_ARITH_RE.search(stripped) or _COMPUTE_VERBS.search(lowered)):
+        return "medium", 0.8
 
     reasoning_hits = sum(1 for k in _REASONING_KEYWORDS if k in lowered)
     code_hits = sum(1 for k in _CODE_KEYWORDS if k in lowered)

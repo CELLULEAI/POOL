@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased
+
+### Routing — quality floor (q75 / 9B-equivalent)
+
+- Non-trivial prompts are no longer routed to a model below `quality_score` 75
+  (≈9B in the Qwen3.5 family) as the **final** answerer while an adequate worker is
+  idle. Fixes occasional wrong answers from very small models (e.g. a 1B answering
+  arithmetic incorrectly), especially in stateless mode where the post-draft review
+  pipeline is off. Short arithmetic/precision prompts are now classified as
+  non-trivial, and a downward KNN/LLM tier re-classification can no longer push a
+  non-trivial prompt back to the smallest tier.
+- **Graceful degrade, never 503**: when no worker at or above the floor is idle, the
+  strongest available worker answers (and, in stateless, a stronger worker reviews it
+  if one frees up). Small workers still serve trivial prompts, act as classifiers, and
+  answer non-trivial prompts when nothing stronger is free.
+- The floor is `quality_score`-based (handles MoE models such as 35B-A3B correctly)
+  and tunable via `IAMINE_MIN_ANSWER_QUALITY` (default 75). Also fixes a latent
+  `UnboundLocalError` in the near-full-context routing penalty.
+- **Community note**: this skews non-trivial traffic toward stronger workers; very
+  small contributors earn relatively more on trivial prompts than on hard ones. The
+  60/20/10/10 reward split is unchanged — only routing preference.
+
 ## 1.0.3 — 2026-06-16
 
 Maintenance release — domain migration cleanup, a docs/security pass. No breaking

@@ -348,6 +348,11 @@ class SmartRouter:
             if exclude_local_hostname and w.info.get("hostname", "") == exclude_local_hostname:
                 continue
 
+            # Score du worker — routing cooperatif pondere. Initialise TOT car la
+            # penalite de contexte ci-dessous l'utilise (corrige un UnboundLocalError
+            # latent : score etait reference avant init sur la bande ctx 80-95%).
+            score = 0.0
+
             # Verifier le contexte — migration au lieu de skip
             worker_ctx = w.info.get("ctx_size", 2048)
             if conv.total_tokens > worker_ctx * 0.95:
@@ -363,8 +368,6 @@ class SmartRouter:
                 if requested_model != "auto" and requested_model.lower() not in worker_model.lower() and requested_model.lower() not in w.worker_id.lower():
                     continue
 
-            # Score du worker — routing cooperatif pondere
-            score = 0.0
             has_gpu = w.info.get("has_gpu", False)
             # Utiliser real_tps si > 0, sinon bench_tps (workers sans job servi)
             _real = w.info.get("real_tps") or 0
@@ -428,10 +431,42 @@ class SmartRouter:
                 if w_tier:
                     score += fit_bonus(preferred_tier, w_tier) * preferred_confidence
 
-            candidates.append((w.worker_id, score, worker_ctx))
+            candidates.append((w.worker_id, score, worker_ctx, model_path))
 
         if not candidates:
             return None
+
+        # === PLANCHER DE QUALITÉ (curseur 9B / quality_score>=75) ===
+        # Pour un prompt NON-TRIVIAL (tier medium/large/code) et un routage auto
+        # (pas de requested_model explicite), un modèle SOUS le plancher ne doit
+        # pas être le répondeur final TANT QU'un worker adéquat est idle. Si aucun
+        # adéquat n'est idle → dégradation gracieuse vers le PLUS FORT dispo (jamais
+        # de 503). Les prompts triviaux (tier small/None) gardent les petits workers.
+        floor_required = (not requested_model) and (preferred_tier or "").lower() in ("medium", "large", "code")
+        if floor_required:
+            from . import models as _models
+            adequate = [c for c in candidates if not _models.model_below_floor(c[3])]
+            if adequate:
+                if len(adequate) < len(candidates):
+                    log.info(
+                        f"Floor q{_models.min_answer_quality()}: {len(candidates) - len(adequate)} "
+                        f"sub-floor worker(s) ecartes (tier={preferred_tier}, conv={conv.conv_id})"
+                    )
+                candidates = adequate
+            else:
+                # Aucun worker adequat idle → JAMAIS 503 : garder le(s) plus fort(s)
+                def _q(mp):
+                    qv = _models.quality_for_model_path(mp)
+                    if qv is not None:
+                        return float(qv)
+                    b = _models._total_params_b_from_path(mp)
+                    return (b or 0.0) * 5.0
+                maxq = max(_q(c[3]) for c in candidates)
+                candidates = [c for c in candidates if _q(c[3]) >= maxq]
+                log.info(
+                    f"Floor q{_models.min_answer_quality()} DEGRADE: aucun worker adequat idle "
+                    f"(tier={preferred_tier}) -> plus fort dispo, conv={conv.conv_id}"
+                )
 
         # Trier par score decroissant
         candidates.sort(key=lambda x: x[1], reverse=True)

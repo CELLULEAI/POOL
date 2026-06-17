@@ -543,20 +543,45 @@ class Pool:
             if best_id:
                 return self.workers.get(best_id)
 
-        # Fallback : n'importe quel worker idle (meme CPU lent, mieux qu'un 503)
-        for w in self.workers.values():
-            if not w.busy:
-                if exclude_local and self._is_local_worker(w):
-                    continue
-                if self._is_outdated(w) or self._is_unknown_model(w):
-                    continue
-                return w
+        # === Fallback : le smart router n'a rien choisi (tous busy/filtres) ===
+        # JAMAIS de 503 (doctrine "mieux qu'un 503"). Mais pour un prompt NON-trivial
+        # en routage auto, on applique le MÊME plancher q75 : préférer un worker
+        # adéquat (>= q75) si idle ; sinon le PLUS FORT dispo (dégradation gracieuse).
+        from . import models as _models
+        floor_required = (not requested_model) and (preferred_tier or "").lower() in ("medium", "large", "code")
 
-        # Dernier recours : ignorer l'exclusion locale (VPS worker)
-        for w in self.workers.values():
-            if not w.busy and not self._is_outdated(w) and not self._is_unknown_model(w):
-                return w
-        return None
+        def _eligible(w, allow_local):
+            if w.busy:
+                return False
+            if not allow_local and exclude_local and self._is_local_worker(w):
+                return False
+            if self._is_outdated(w) or self._is_unknown_model(w):
+                return False
+            return True
+
+        def _quality(w):
+            mp = w.info.get("model_path", "")
+            qv = _models.quality_for_model_path(mp)
+            if qv is not None:
+                return float(qv)
+            b = _models._total_params_b_from_path(mp)
+            return (b or 0.0) * 5.0
+
+        def _pick(allow_local):
+            idle = [w for w in self.workers.values() if _eligible(w, allow_local)]
+            if not idle:
+                return None
+            if floor_required:
+                adequate = [w for w in idle if not _models.model_below_floor(w.info.get("model_path", ""))]
+                if adequate:
+                    return adequate[0]              # premier worker adéquat (>= q75)
+                return max(idle, key=_quality)       # degrade : le plus fort dispo
+            return idle[0]
+
+        w = _pick(allow_local=False)
+        if w is None:
+            w = _pick(allow_local=True)  # dernier recours : ignorer l'exclusion locale
+        return w
 
     async def submit_job(
         self, messages: list[dict], max_tokens: int = 512,
@@ -591,6 +616,7 @@ class Pool:
         classified_tier = ""
         classified_conf: float | None = None
         classified_method = ""
+        heuristic_tier = ""  # tier heuristique (Phase 2) — sert au clamp anti-rétrogradation
         last_user_for_classify = ""
         prompt_embedding_vec: list[float] | None = None
         if not tools:
@@ -603,6 +629,7 @@ class Pool:
                         break
                 if last_user_for_classify:
                     classified_tier, classified_conf = classify_prompt(last_user_for_classify)
+                    heuristic_tier = classified_tier
                     classified_method = "heuristic"
             except Exception as e:
                 log.warning(f"classify_prompt failed (non-blocking): {e}")
@@ -642,6 +669,19 @@ class Pool:
                             classified_method = "llm_idle"
                 except Exception as e:
                     log.warning(f"classify_via_idle failed (non-blocking): {e}")
+
+        # === CLAMP anti-rétrogradation (protège le plancher q75) ===
+        # Un override KNN/LLM peut ESCALADER le tier mais jamais rétrograder un
+        # prompt NON-trivial vers "small" — sinon l'historique de mauvais routages
+        # rejoué par le KNN contournerait le plancher (le 1B reprendrait la main).
+        if heuristic_tier in ("medium", "code", "large") and classified_tier == "small":
+            log.info(
+                f"Tier clamp: override->small ignore (heuristique={heuristic_tier}), "
+                f"plancher preserve (conv={conv.conv_id})"
+            )
+            classified_tier = heuristic_tier
+            classified_conf = max(classified_conf or 0.0, 0.7)
+            classified_method = "heuristic_clamp"
 
         # --- M13: Trigger consolidation if pending observations ---
         if AGENT_MEMORY_ENABLED and api_token:
@@ -896,8 +936,16 @@ class Pool:
             result = await handle_sub_agent_pipeline(self, result, messages, worker, conv_id, max_tokens)
 
         # === CHECKER LADDER (core/checker.py) ===
+        # En stateless, le pipeline boost/assist est coupé. Si un worker SOUS le
+        # plancher q75 a quand même répondu à un prompt NON-trivial (dégradation
+        # gracieuse : aucun worker adéquat n'était idle au routage), on FORCE une
+        # revue par un modèle strictement plus gros (bypass le skip tps>=15).
+        # Garde-fou #3 : signal passé par kwarg, jamais d'état sur le worker.
         from .core.checker import handle_checker
-        result = await handle_checker(self, result, messages, worker, conv)
+        from . import models as _models
+        _floor_req = (not requested_model) and (classified_tier or "").lower() in ("medium", "large", "code")
+        _force_check = bool(stateless and _floor_req and _models.model_below_floor(worker.info.get("model_path", "")))
+        result = await handle_checker(self, result, messages, worker, conv, force_check=_force_check)
 
 
         # Ajouter la reponse au contexte de la conversation

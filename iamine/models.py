@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+import re
 from dataclasses import dataclass
 
 # Tiers de modèles classés par puissance requise (croissant)
@@ -177,6 +179,85 @@ UNLOCK_THRESHOLDS = {m.id: (100 if m.quality_score >= 90 else 0) for m in MODEL_
 SINGLE_WORKER_MIN_RAM = {m.id: m.ram_required_gb for m in MODEL_REGISTRY}
 
 REGISTRY_BY_ID = {m.id: m for m in MODEL_REGISTRY}
+
+
+# === PLANCHER DE QUALITÉ POUR LE ROUTAGE (curseur David : 9B = quality_score 75) ===
+# Un modèle SOUS ce score ne doit jamais être le répondeur FINAL d'un prompt
+# NON-TRIVIAL tant qu'un worker adéquat est idle (sinon dégradation gracieuse —
+# JAMAIS de 503). Encodé en quality_score (pas en nb de params) : robuste au MoE
+# (35B-A3B = q95 malgré 3B actifs) et calibré par famille (q75 = 9B en Qwen3.5,
+# ≥14B en Qwen2.5, ≥12B en Gemma3). Toute nouvelle famille DOIT calibrer son
+# quality_score sur cette échelle sinon le plancher glisse silencieusement.
+_DEFAULT_MIN_ANSWER_QUALITY = 75
+# Repli pour les modèles HORS registry (proxies, générations plus récentes) :
+# parse du nb TOTAL de params depuis le nom de fichier.
+FLOOR_PARAMS_B = 9.0
+MIN_ANSWER_QUALITY = _DEFAULT_MIN_ANSWER_QUALITY  # défaut lisible (override à chaud ci-dessous)
+
+# Index quality_score par fichier GGUF, TOUTES familles confondues : un worker peut
+# servir un modèle d'une famille non-active (ex. Gemma 1B alors que qwen3.5 est active).
+_QUALITY_BY_HF_FILE: dict[str, int] = {
+    m.hf_file: m.quality_score for fam in MODEL_FAMILIES.values() for m in fam
+}
+
+_PARAMS_RE = re.compile(r"(\d+(?:\.\d+)?)\s*b\b", re.IGNORECASE)
+
+
+def min_answer_quality() -> int:
+    """Curseur du plancher. Surchargeable à chaud via IAMINE_MIN_ANSWER_QUALITY
+    (hydraté depuis pool_config par le système de flags admin — doctrine
+    'toute option = UI admin')."""
+    try:
+        return int(os.environ.get("IAMINE_MIN_ANSWER_QUALITY", _DEFAULT_MIN_ANSWER_QUALITY))
+    except (TypeError, ValueError):
+        return _DEFAULT_MIN_ANSWER_QUALITY
+
+
+def quality_for_model_path(model_path: str) -> int | None:
+    """quality_score d'un modèle d'après son chemin/fichier GGUF, ou None si inconnu
+    (cherche le basename exact puis un match 'contains' sur toutes les familles)."""
+    if not model_path:
+        return None
+    base = model_path.replace("\\", "/").rsplit("/", 1)[-1]
+    if base in _QUALITY_BY_HF_FILE:
+        return _QUALITY_BY_HF_FILE[base]
+    for hf, q in _QUALITY_BY_HF_FILE.items():
+        if hf and (hf in base or base in hf):
+            return q
+    return None
+
+
+def _total_params_b_from_path(model_path: str) -> float | None:
+    """Nb TOTAL de params (milliards) parsé du nom — MoE-safe : prend le PREMIER
+    nombre suivi de 'b' (35B-A3B -> 35, pas 3). None si non parsable."""
+    if not model_path:
+        return None
+    base = model_path.replace("\\", "/").rsplit("/", 1)[-1]
+    m = _PARAMS_RE.search(base)
+    if not m:
+        return None
+    try:
+        return float(m.group(1))
+    except ValueError:
+        return None
+
+
+def model_below_floor(model_path: str) -> bool:
+    """True UNIQUEMENT si le modèle est identifié AVEC CERTITUDE sous le plancher.
+    Tout modèle inconnu/ambigu est traité comme éligible (False) pour ne JAMAIS
+    exclure un modèle fort non-catalogué (proxy, génération plus récente)."""
+    q = quality_for_model_path(model_path)
+    if q is not None:
+        return q < min_answer_quality()
+    b = _total_params_b_from_path(model_path)
+    if b is not None:
+        return b < FLOOR_PARAMS_B
+    return False  # inconnu => éligible (jamais exclu)
+
+
+def model_meets_floor(model_path: str) -> bool:
+    """Inverse lisible de model_below_floor (True = adéquat / éligible)."""
+    return not model_below_floor(model_path)
 
 
 def best_model_from_bench(bench_tps: float, ram_gb: float, has_gpu: bool = False, gpu_vram_gb: float = 0) -> tuple[ModelTier, int]:

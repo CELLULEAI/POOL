@@ -41,10 +41,17 @@ def _cfg(pool, name: str, default):
 
 # -- Public API --------------------------------------------------------
 
-def checker_should_check(pool, worker) -> bool:
-    """Determine si ce worker doit etre verifie par le checker ladder."""
+def checker_should_check(pool, worker, force_check: bool = False) -> bool:
+    """Determine si ce worker doit etre verifie par le checker ladder.
+
+    force_check : un worker SOUS le plancher q75 a repondu a un prompt non-trivial
+    en mode stateless (degradation gracieuse). On bypasse alors le skip tps>=15 et
+    le sampling — le modele le plus faible/rapide est justement celui qu'il faut
+    verifier. CHECKER_ENABLED reste respecte (choix admin)."""
     if not _cfg(pool, "CHECKER_ENABLED", CHECKER_ENABLED):
         return False
+    if force_check:
+        return True
     bench = worker.info.get("bench_tps") or worker.info.get("real_tps") or 0
     if bench >= _cfg(pool, "CHECKER_TPS_THRESHOLD", CHECKER_TPS_THRESHOLD):
         return False
@@ -249,16 +256,20 @@ async def checker_demote_worker(pool, worker, score: float, fails: int) -> None:
 
 
 async def handle_checker(pool, result: dict, messages: list[dict],
-                         worker, conv) -> dict:
+                         worker, conv, force_check: bool = False) -> dict:
     """Point d'entree unique pour le checker ladder dans submit_job.
 
     Modifie result in-place (ajoute result["checker"], remplace result["text"] si FAIL).
     Retourne result.
+
+    force_check : force la verification meme si le worker est rapide/echantillonne
+    (cas : un modele sous le plancher q75 a repondu a un prompt non-trivial en
+    stateless — voir submit_job).
     """
     has_tools = result.get("tool_calls") or any(
         m.get("role") == "tool" for m in messages
     )
-    if has_tools or not checker_should_check(pool, worker):
+    if has_tools or not checker_should_check(pool, worker, force_check=force_check):
         return result
 
     try:
