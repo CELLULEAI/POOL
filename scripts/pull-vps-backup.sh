@@ -27,8 +27,8 @@ chown harpersat:harpersat "$DEST_ROOT" 2>/dev/null || true
 # Script inline dans un fichier temp pour éviter les cauchemars de quoting.
 LFTP_SCRIPT=$(mktemp)
 cat > "$LFTP_SCRIPT" <<EOF
-set sftp:connect-program "ssh -i $SSH_KEY -o StrictHostKeyChecking=accept-new -a -x"
-open -u ${VPS_USER}, sftp://${VPS_HOST}
+set sftp:connect-program "ssh -p 2202 -i $SSH_KEY -o StrictHostKeyChecking=accept-new -a -x"
+open -u ${VPS_USER}, sftp://${VPS_HOST}:2202
 mirror --verbose --only-newer --no-perms / ${DEST_ROOT}/
 bye
 EOF

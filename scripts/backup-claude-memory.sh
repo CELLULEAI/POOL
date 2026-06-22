@@ -48,12 +48,12 @@ gpg --batch --yes --pinentry-mode loopback \
 SIZE_GPG=$(stat -c%s "$ENCRYPTED")
 log "  -> $ENCRYPTED ($SIZE_GPG bytes)"
 
-# 3. Upload to VPS
+# 3. Upload to VPS (port 2202 — changed 2026-04-22 to escape SSH bots on port 22)
 log "scp -> VPS ..."
-scp -i "$SSH_KEY" -o StrictHostKeyChecking=no -q "$ENCRYPTED" "$VPS_DEST"
+scp -P 2202 -i "$SSH_KEY" -o StrictHostKeyChecking=no -q "$ENCRYPTED" "$VPS_DEST"
 log "  -> VPS OK"
 
-# 4. Upload to Z2
+# 4. Upload to Z2 (LAN, port 22 standard)
 log "scp -> Z2 ..."
 scp -i "$SSH_KEY" -o StrictHostKeyChecking=no -q "$ENCRYPTED" "$Z2_DEST"
 log "  -> Z2 OK"
