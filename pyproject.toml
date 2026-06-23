@@ -31,6 +31,11 @@ dependencies = [
 pool = [
     "sentence-transformers>=3.0.0",
 ]
+# Outils de test (CI + dev local). Install: pip install iamine-ai[test]
+test = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
 
 [project.scripts]
 iamine = "iamine.__main__:main"
@@ -66,3 +71,9 @@ iamine = [
 # NOTE: setuptools discovers relative paths from the wheel's data/ prefix.
 [tool.setuptools.data-files]
 "iamine-migrations" = ["migrations/*.sql"]
+
+[tool.pytest.ini_options]
+# Rend la suite reproductible chez un contributeur/CI (avant : dependait du mode
+# pytest-asyncio installe localement). Audit 2026-06-22, dimension tests/CI.
+asyncio_mode = "auto"
+testpaths = ["tests"]
