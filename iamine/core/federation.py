@@ -182,25 +182,25 @@ def canonical_envelope_body(
     return header + body
 
 
-async def _nonce_seen(pool, atom_id: str, nonce: str) -> bool:
+async def _record_nonce_atomic(pool, atom_id: str, nonce: str) -> bool:
+    """Anti-replay atomique : enregistre le nonce et dit s'il est NOUVEAU.
+
+    Retourne True si le nonce vient d'etre insere (premiere vue -> accepte),
+    False s'il existait deja (replay). Le check et l'enregistrement sont fusionnes
+    en UNE requete (INSERT ... ON CONFLICT DO NOTHING RETURNING 1) pour fermer la
+    fenetre TOCTOU ou deux requetes concurrentes portant le meme nonce passaient
+    toutes deux un SELECT separe avant que l'une n'insere.
+    Sans store DB : True (pas d'anti-replay possible — comportement inchange).
+    """
     if not (hasattr(pool.store, 'pool') and pool.store.pool):
-        return False
+        return True
     async with pool.store.pool.acquire() as conn:
         row = await conn.fetchrow(
-            "SELECT 1 FROM federation_nonces WHERE atom_id=$1 AND nonce=$2",
+            "INSERT INTO federation_nonces (atom_id, nonce) VALUES ($1, $2) "
+            "ON CONFLICT DO NOTHING RETURNING 1",
             atom_id, nonce,
         )
     return row is not None
-
-
-async def _record_nonce(pool, atom_id: str, nonce: str) -> None:
-    if not (hasattr(pool.store, 'pool') and pool.store.pool):
-        return
-    async with pool.store.pool.acquire() as conn:
-        await conn.execute(
-            "INSERT INTO federation_nonces (atom_id, nonce) VALUES ($1, $2) ON CONFLICT DO NOTHING",
-            atom_id, nonce,
-        )
 
 
 async def verify_envelope(
@@ -260,9 +260,9 @@ async def verify_envelope(
     if not verify(peer_pubkey, sig, canonical):
         return "signature mismatch"
 
-    if await _nonce_seen(pool, atom_id, nonce):
+    # Anti-replay atomique (check + record en une requete) — ferme la TOCTOU.
+    if not await _record_nonce_atomic(pool, atom_id, nonce):
         return "replay (nonce seen)"
-    await _record_nonce(pool, atom_id, nonce)
     return None
 
 

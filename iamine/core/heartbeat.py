@@ -39,9 +39,11 @@ async def heartbeat_loop(pool: "Pool") -> None:
         stale = pool.get_stale_workers()
         for wid in stale:
             log.warning(f"Heartbeat: worker {wid} timeout ({pool.HEARTBEAT_TIMEOUT}s) — eviction")
-            pool.remove_worker(wid)
-            # Fermer la websocket si possible
+            # Recuperer la ref AVANT remove_worker : sinon pool.workers.get(wid)
+            # renvoie toujours None (le worker vient d'etre pop du dict) et la
+            # websocket n'est jamais fermee -> fuite de sockets/fd sous churn.
             w = pool.workers.get(wid)
+            pool.remove_worker(wid)
             if w:
                 try:
                     await w.ws.close()
