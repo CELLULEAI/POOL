@@ -30,6 +30,27 @@ LOG_FILE="/var/log/vps-self-backup.log"
 
 log() { echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] $*" | tee -a "$LOG_FILE" ; }
 
+# --- Alerte sur echec ---------------------------------------------------------
+# Avant, un echec de backup (cle GPG illisible, pg_dump KO, disque plein) etait
+# SILENCIEUX : personne n'etait alerte (audit 2026-06-22). set -e fait sortir en
+# erreur ; le trap ERR previent par notify.sh (sinon mail), sans jamais masquer
+# le code de sortie non-zero (systemd voit l'echec).
+SCRIPTS="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+NOTIFY_EMAIL="${IAMINE_BACKUP_ALERT_EMAIL:-david.mourgues@gmail.com}"
+
+notify_failure() {
+  local rc=$?
+  [ "$rc" -eq 0 ] && return 0
+  local msg="vps-self-backup ECHEC (rc=$rc, ligne ${1:-?}) le $DATE sur $(hostname) — voir $LOG_FILE"
+  log "ALERT: $msg"
+  if [ -x "$SCRIPTS/notify.sh" ]; then
+    "$SCRIPTS/notify.sh" "BACKUP FAILED" "$msg" "$NOTIFY_EMAIL" || true
+  elif command -v mail >/dev/null 2>&1; then
+    printf '%s\n' "$msg" | mail -s "[cellule.ai] backup VPS ECHEC" "$NOTIFY_EMAIL" || true
+  fi
+}
+trap 'notify_failure $LINENO' ERR
+
 log "=== vps-self-backup start ($DATE) ==="
 
 # --- preconditions ---
@@ -116,5 +137,12 @@ find "$BACKUP_ROOT" -mindepth 1 -maxdepth 1 -type d -mtime +$RETENTION_DAYS -exe
 # --- 8. Permissions : SFTP chroot user will pull as vps-pull-backup
 chown -R root:vps-pull-backup "$BACKUP_ROOT" 2>/dev/null || true
 chmod -R g+rX "$BACKUP_ROOT"
+
+# --- 9. Dead-man-switch optionnel : ping un service externe (ex. Healthchecks.io)
+# en cas de SUCCES. L'absence de ping = alerte cote service (detecte aussi un VPS
+# eteint ou un cron qui ne tourne plus). Active uniquement si l'URL est fournie.
+if [ -n "${IAMINE_BACKUP_HEALTHCHECK_URL:-}" ]; then
+  curl -fsS -m 10 "$IAMINE_BACKUP_HEALTHCHECK_URL" >/dev/null 2>&1 || log "WARN: healthcheck ping failed"
+fi
 
 log "=== vps-self-backup done ($DATE) size=$(du -sh $DEST | awk '{print $1}') ==="
