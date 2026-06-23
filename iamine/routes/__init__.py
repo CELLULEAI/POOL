@@ -19,6 +19,7 @@ def register_routes(app: FastAPI):
     from .anthropic import router as anthropic_router
     from .jobs import router as jobs_router
     from .federation import router as federation_router
+    from .federation_admin_messaging import router as federation_admin_messaging_router
     from .memory import router as memory_router
 
     app.include_router(status_router)
@@ -37,4 +38,5 @@ def register_routes(app: FastAPI):
     app.include_router(anthropic_router)
     app.include_router(jobs_router)
     app.include_router(federation_router)
+    app.include_router(federation_admin_messaging_router)
     app.include_router(memory_router)
