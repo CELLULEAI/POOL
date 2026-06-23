@@ -16,6 +16,8 @@ PROJECT_DIR="/c/Users/install/.claude/projects/D--IAMINE-org"
 PASSPHRASE_FILE="/d/IAMINE.org/.secret/z2-backup-gpg.key"
 SSH_KEY="/d/IAMINE.org/clef/id_iamine"
 LOG_FILE="/d/IAMINE.org/scripts/backup-claude-memory.log"
+# Port SSH du VPS — override via la variable d'env SSH_PORT (defaut 22).
+SSH_PORT="${SSH_PORT:-22}"
 
 VPS_DEST="harpersatrage@109.123.240.151:/home/harpersatrage/claude-backup/uploads/"
 Z2_DEST="harpersat@192.168.1.199:/home/harpersat/claude-backup/uploads/"
@@ -48,9 +50,9 @@ gpg --batch --yes --pinentry-mode loopback \
 SIZE_GPG=$(stat -c%s "$ENCRYPTED")
 log "  -> $ENCRYPTED ($SIZE_GPG bytes)"
 
-# 3. Upload to VPS (port 2202 — changed 2026-04-22 to escape SSH bots on port 22)
+# 3. Upload to VPS (port via $SSH_PORT)
 log "scp -> VPS ..."
-scp -P 2202 -i "$SSH_KEY" -o StrictHostKeyChecking=no -q "$ENCRYPTED" "$VPS_DEST"
+scp -P "$SSH_PORT" -i "$SSH_KEY" -o StrictHostKeyChecking=no -q "$ENCRYPTED" "$VPS_DEST"
 log "  -> VPS OK"
 
 # 4. Upload to Z2 (LAN, port 22 standard)

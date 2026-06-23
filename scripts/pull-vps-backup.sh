@@ -11,6 +11,8 @@ VPS_USER="vps-pull-backup"
 VPS_HOST="109.123.240.151"
 SSH_KEY="/root/.ssh/vps-pull-key"
 DEST_ROOT="/home/harpersat/cellule-vps-backup"
+# Port SSH du VPS — override via la variable d'env SSH_PORT (defaut 22).
+SSH_PORT="${SSH_PORT:-22}"
 RETENTION_DAYS=30
 LOG_FILE="/var/log/pull-vps-backup.log"
 
@@ -27,8 +29,8 @@ chown harpersat:harpersat "$DEST_ROOT" 2>/dev/null || true
 # Script inline dans un fichier temp pour éviter les cauchemars de quoting.
 LFTP_SCRIPT=$(mktemp)
 cat > "$LFTP_SCRIPT" <<EOF
-set sftp:connect-program "ssh -p 2202 -i $SSH_KEY -o StrictHostKeyChecking=accept-new -a -x"
-open -u ${VPS_USER}, sftp://${VPS_HOST}:2202
+set sftp:connect-program "ssh -p ${SSH_PORT} -i $SSH_KEY -o StrictHostKeyChecking=accept-new -a -x"
+open -u ${VPS_USER}, sftp://${VPS_HOST}:${SSH_PORT}
 mirror --verbose --only-newer --no-perms / ${DEST_ROOT}/
 bye
 EOF
