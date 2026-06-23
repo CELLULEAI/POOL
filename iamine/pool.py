@@ -75,13 +75,21 @@ if static_dir.exists():
     _spec = _ilu.find_spec("iamine")
     if _spec and _spec.origin:
         _wheel_static = Path(_spec.origin).parent / "static"
-    if not (static_dir / "index.html").exists() and (_wheel_static / "index.html").exists():
+    if (not (static_dir / "index.html").exists()
+            and (_wheel_static / "index.html").exists()
+            and _wheel_static != static_dir):
         import shutil
-        log.warning("static/index.html missing from source — recovering from installed wheel")
-        for _f in _wheel_static.iterdir():
-            if _f.is_file() and not (static_dir / _f.name).exists():
-                shutil.copy2(str(_f), str(static_dir / _f.name))
-                log.info(f"  recovered: {_f.name}")
+        log.warning("static/ incomplete in source — recovering from installed wheel")
+        # Recursif : recupere aussi static/docs, static/fonts, static/lib
+        # (sinon le self-heal laissait passer le 404 d'onboarding — audit 2026-06-22).
+        for _f in _wheel_static.rglob("*"):
+            if _f.is_file():
+                _rel = _f.relative_to(_wheel_static)
+                _dst = static_dir / _rel
+                if not _dst.exists():
+                    _dst.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(str(_f), str(_dst))
+                    log.info(f"  recovered: {_rel}")
     app.mount("/static", StaticFiles(directory=str(static_dir), html=True), name="static")
 
 

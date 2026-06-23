@@ -41,11 +41,24 @@ include = ["iamine*"]
 [tool.setuptools.package-data]
 iamine = [
     "*.ico",
+    # Fichiers statiques au premier niveau (page web + manifestes SEO)
     "static/*.html",
     "static/*.js",
     "static/*.css",
     "static/*.png",
     "static/*.svg",
+    "static/*.ico",
+    "static/*.txt",
+    "static/*.xml",
+    "static/*.md",
+    # Sous-dossiers : pages onboarding/docs, polices, libs JS.
+    # Sans ces globs, ils sont absents du wheel/Docker -> 404 sur tout pool
+    # installe via pip/Docker (audit bout-en-bout 2026-06-22, item onboarding).
+    "static/docs/*",
+    "static/fonts/*",
+    "static/lib/*",
+    # Filet recursif (setuptools>=68) pour tout futur sous-dossier de static/.
+    "static/**/*",
 ]
 
 # Embed migrations/ dir at the repo root as data_files so pip install
