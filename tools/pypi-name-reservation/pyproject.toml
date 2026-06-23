@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "iamine-ai"
+version = "0.0.1"
+description = "Reservation de nom — le vrai paquet iamine-ai est distribue via https://cellule.ai/pypi (voir https://github.com/CELLULEAI/POOL)"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "AGPL-3.0-or-later"}
+authors = [{name = "David MOURGUES"}]
+classifiers = [
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Development Status :: 7 - Inactive",
+]
+
+[project.urls]
+Homepage = "https://cellule.ai"
+Source = "https://github.com/CELLULEAI/POOL"
+
+[tool.setuptools]
+py-modules = ["iamine_ai_notice"]
