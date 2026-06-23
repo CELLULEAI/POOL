@@ -1,5 +1,7 @@
 # Render.com — déploiement automatique
 # https://render.com/docs/blueprint-spec
+# Chemin SIMPLIFIE (sans pgvector ni signature). Requiert un Postgres pgvector
+# externe ; la prod fédérée passe par docker/Dockerfile. Audit 2026-06-22.
 services:
   - type: web
     name: iamine-pool

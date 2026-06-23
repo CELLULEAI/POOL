@@ -1,3 +1,10 @@
+# ============================================================================
+# Dockerfile SIMPLIFIE (fly.io / render / quickstart). NON SUPPORTE pour la prod.
+# Il manque : pgvector (smart-routing KNN), la verification de signature de
+# release et l'extra [pool]. Il requiert un Postgres pgvector EXTERNE.
+# Pour un pool de production federe, utiliser docker/Dockerfile (image
+# celluleai/pool : wheel signe + pgvector + migrations). Audit 2026-06-22.
+# ============================================================================
 FROM python:3.12-slim
 
 WORKDIR /app

@@ -4,6 +4,8 @@ app = "iamine"
 primary_region = "cdg"  # Paris
 
 [build]
+  # Chemin simplifie : Dockerfile racine (sans pgvector ni signature de release).
+  # Requiert un Postgres pgvector EXTERNE. Voir docker/Dockerfile pour la prod.
   dockerfile = "Dockerfile"
 
 [http_service]
