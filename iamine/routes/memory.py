@@ -153,19 +153,9 @@ async def memory_forget_all(api_token: str = ""):
 
     deleted = {}
     try:
-        async with p.store.pool.acquire() as conn:
-            r = await conn.execute(
-                "DELETE FROM agent_observations WHERE token_hash = $1", th)
-            deleted["observations"] = int(r.split()[-1])
-            r = await conn.execute(
-                "DELETE FROM agent_episodes WHERE token_hash = $1", th)
-            deleted["episodes"] = int(r.split()[-1])
-            r = await conn.execute(
-                "DELETE FROM user_memories WHERE token_hash = $1", th)
-            deleted["semantic_facts"] = int(r.split()[-1])
-            r = await conn.execute(
-                "DELETE FROM memory_consolidation_log WHERE token_hash = $1", th)
-            deleted["consolidation_logs"] = int(r.split()[-1])
+        # Purge des 6 couches memoire via le helper partage (couvre aussi
+        # agent_procedures + memory_relationships, absents de l'ancienne version).
+        deleted = await p.store.delete_user_memory_tiers(th)
 
         # --- M13 P4: Propagate RGPD forget to federation ---
         try:

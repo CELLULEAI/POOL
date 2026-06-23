@@ -1464,27 +1464,41 @@ async def admin_delete_account(account_id: str, request: Request):
         return JSONResponse({"error": "admin required"}, status_code=401)
 
     from iamine.pool import _accounts, _save_accounts
-    acc = _accounts.pop(account_id, None)
+    acc = _accounts.get(account_id)
     if not acc:
         return {"ok": False, "error": "compte introuvable"}
 
-    _save_accounts()
-
-    # Supprimer de la DB
+    api_token = acc.get("account_token", "")
     pool = _pool()
+
+    # Purge RGPD complete EN DB d'abord, dans une transaction, AVANT de toucher la
+    # RAM/JSON (coherence app/DB). jobs.account_id/api_token passent en SET NULL
+    # (migration 029) donc plus de blocage FK silencieux. Toutes les couches
+    # memoire + conversations + sessions sont purgees. On ne masque plus l'echec.
     try:
+        from iamine.memory import token_hash
+        th = token_hash(api_token) if api_token else None
         async with pool.store.pool.acquire() as conn:
-            await conn.execute("DELETE FROM sessions WHERE account_id=$1", account_id)
-            await conn.execute("DELETE FROM accounts WHERE account_id=$1", account_id)
-    except Exception:
-        pass
+            async with conn.transaction():
+                if th:
+                    await pool.store.delete_user_memory_tiers(th, conn=conn)
+                if api_token:
+                    await conn.execute(
+                        "DELETE FROM conversations WHERE api_token=$1", api_token)
+                await conn.execute("DELETE FROM sessions WHERE account_id=$1", account_id)
+                await conn.execute("DELETE FROM accounts WHERE account_id=$1", account_id)
+    except Exception as e:
+        log.error(f"admin_delete_account: purge DB echouee pour {account_id}: {e}")
+        return JSONResponse(
+            {"error": "db delete failed", "detail": str(e)}, status_code=500)
 
-    # Retirer le token API du pool
-    token = acc.get("account_token", "")
-    pool.api_tokens.pop(token, None)
+    # DB OK -> retirer de la RAM/JSON + le token API du pool
+    _accounts.pop(account_id, None)
+    _save_accounts()
+    pool.api_tokens.pop(api_token, None)
 
-    log.info(f"Compte {acc['email']} supprime par {admin}")
-    return {"ok": True, "deleted": acc["email"]}
+    log.info(f"Compte {acc.get('email', '?')} supprime par {admin} (purge RGPD complete)")
+    return {"ok": True, "deleted": acc.get("email", account_id)}
 
 
 @router.post("/admin/api/push-update")

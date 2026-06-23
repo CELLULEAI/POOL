@@ -1435,7 +1435,8 @@ async def account_delete(data: dict):
         pass
     try:
         from iamine.memory import token_hash
-        await pool.store.delete_user_memories(token_hash(api_token))
+        # Purge complete des 6 couches memoire (pas seulement user_memories).
+        await pool.store.delete_user_memory_tiers(token_hash(api_token))
     except Exception:
         pass
 

@@ -1371,11 +1371,45 @@ class PostgresStore(Store):
             return int(result.split()[-1])
 
     async def delete_user_memories(self, token_hash: str) -> int:
-        """Supprime toutes les memoires d'un utilisateur (droit a l'oubli)."""
+        """Supprime les faits semantiques (user_memories) d'un utilisateur.
+
+        NB : ne purge QUE user_memories. Pour le droit a l'oubli complet, utiliser
+        delete_user_memory_tiers() qui couvre les 6 couches memoire.
+        """
         async with self.pool.acquire() as conn:
             result = await conn.execute(
                 "DELETE FROM user_memories WHERE token_hash = $1", token_hash)
             return int(result.split()[-1])
+
+    async def delete_user_memory_tiers(self, token_hash: str, conn=None) -> dict:
+        """RGPD : purge TOUTES les couches memoire d'un utilisateur (droit a l'oubli).
+
+        token_hash vaut l'account_id depuis sec-pub-08 (migration 028). La liste de
+        tables est fixe (aucune entree utilisateur -> pas d'injection SQL). Si `conn`
+        est fourni, s'execute dedans (transaction englobante) ; sinon acquiert sa
+        propre connexion. Les tables absentes (pool en retard de migration) sont
+        ignorees via to_regclass, sans empoisonner la transaction.
+        """
+        tiers = (
+            "agent_observations", "agent_episodes", "agent_procedures",
+            "memory_relationships", "memory_consolidation_log", "user_memories",
+        )
+
+        async def _run(c) -> dict:
+            deleted = {}
+            for table in tiers:
+                if not await c.fetchval("SELECT to_regclass($1)", table):
+                    deleted[table] = 0
+                    continue
+                r = await c.execute(
+                    f"DELETE FROM {table} WHERE token_hash = $1", token_hash)
+                deleted[table] = int(r.split()[-1])
+            return deleted
+
+        if conn is not None:
+            return await _run(conn)
+        async with self.pool.acquire() as c:
+            return await _run(c)
 
     async def list_user_memories(self, api_token: str) -> list[dict]:
         """Liste les faits memorises d'un utilisateur (dechiffres)."""
