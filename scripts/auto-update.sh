@@ -44,8 +44,12 @@ fi
 
 # git
 cd $IAMINE
+# Branche par defaut du repo. Etait 'master' (mort depuis le passage a 'main') ->
+# l'auto-update ne detectait plus aucun commit et le VPS restait fige. Override
+# possible via IAMINE_BRANCH.
+BRANCH="${IAMINE_BRANCH:-main}"
 git fetch origin 2>/dev/null
-GIT_UPDATES=$(git log HEAD..origin/master --oneline 2>/dev/null)
+GIT_UPDATES=$(git log HEAD..origin/$BRANCH --oneline 2>/dev/null)
 if [ -n "$GIT_UPDATES" ]; then
     GIT_COUNT=$(echo "$GIT_UPDATES" | wc -l)
     UPDATES="${UPDATES}GIT: $GIT_COUNT commits\n"
@@ -108,7 +112,7 @@ fi
 # GIT
 if [ -n "$GIT_UPDATES" ]; then
     log "  GIT pull..."
-    cd $IAMINE && git pull origin master >> $LOG 2>&1
+    cd $IAMINE && git pull origin "$BRANCH" >> $LOG 2>&1
 fi
 
 # Rebuild wheel
