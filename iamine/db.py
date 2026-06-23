@@ -678,12 +678,18 @@ class PostgresStore(Store):
 
                 sql = mf.read_text()
                 try:
-                    await conn.execute(sql)
-                    await conn.execute(
-                        "INSERT INTO schema_version (version, filename) "
-                        "VALUES ($1, $2) ON CONFLICT (version) DO NOTHING",
-                        version, mf.name
-                    )
+                    # Apply atomique : la migration + le tracking de version
+                    # commitent ensemble. En cas d'echec au milieu d'une migration
+                    # multi-statements, tout est rollback -> pas de schema a moitie
+                    # applique (audit 2026-06-22). Aucune migration n'utilise
+                    # CONCURRENTLY/VACUUM (incompatibles transaction) — verifie.
+                    async with conn.transaction():
+                        await conn.execute(sql)
+                        await conn.execute(
+                            "INSERT INTO schema_version (version, filename) "
+                            "VALUES ($1, $2) ON CONFLICT (version) DO NOTHING",
+                            version, mf.name
+                        )
                     applied += 1
                     log.info(f"Migration {mf.name} applied successfully")
                 except Exception as e:
@@ -1368,6 +1374,13 @@ class PostgresStore(Store):
             result = await conn.execute(
                 "DELETE FROM user_memories WHERE last_accessed < NOW() - $1 * INTERVAL '1 day'",
                 days)
+            return int(result.split()[-1])
+
+    async def cleanup_expired_sessions(self) -> int:
+        """Supprime les sessions expirees (hygiene + RGPD). L'index
+        idx_sessions_expires existe mais n'etait jamais exploite pour la purge."""
+        async with self.pool.acquire() as conn:
+            result = await conn.execute("DELETE FROM sessions WHERE expires < NOW()")
             return int(result.split()[-1])
 
     async def delete_user_memories(self, token_hash: str) -> int:

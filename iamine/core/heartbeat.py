@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import time
 from typing import TYPE_CHECKING
 
@@ -88,6 +89,19 @@ async def heartbeat_loop(pool: "Pool") -> None:
                         log.info(f"Daily version check: pushed self_update to {w.worker_id} (v{wv})")
                     except Exception:
                         pass
+
+            # Retention RGPD (1x/jour) : purge des memoires perimees + sessions
+            # expirees. Avant, cleanup_stale_memories n'etait jamais planifie et les
+            # sessions expirees n'etaient jamais purgees (croissance non bornee de
+            # donnees perso -> non-conformite duree de conservation). Audit 2026-06-22.
+            try:
+                retention_days = int(os.environ.get("IAMINE_MEMORY_RETENTION_DAYS", "90"))
+                n_mem = await pool.store.cleanup_stale_memories(retention_days)
+                n_sess = await pool.store.cleanup_expired_sessions()
+                if n_mem or n_sess:
+                    log.info(f"Retention RGPD: {n_mem} memoires perimees + {n_sess} sessions expirees purgees")
+            except Exception as _e:
+                log.warning(f"Retention cleanup skipped: {_e}")
 
         # Loyalty rewards — delegue a core/credits.py
         await loyalty_rewards(pool)
