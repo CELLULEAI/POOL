@@ -350,7 +350,7 @@ async def admin_models_dashboard():
 
 # ─── GET /admin/api/stats ────────────────────────────────────────────────────
 
-@router.get("/admin/api/stats")
+@router.get("/admin/api/stats", dependencies=[Depends(require_admin)])
 async def admin_stats():
     """Stats JSON du pool pour refresh AJAX."""
     pool = _pool()
@@ -1180,7 +1180,7 @@ async def delete_worker(worker_id: str, request: Request):
 
 # ─── GET /admin/api/queue ──────────────────────────────────────────────────
 
-@router.get("/admin/api/queue")
+@router.get("/admin/api/queue", dependencies=[Depends(require_admin)])
 async def admin_queue():
     """Liste les pending_jobs (file d attente)."""
     from iamine.pool import pool
@@ -1346,7 +1346,7 @@ async def blacklist_add(request: Request):
     import json
     async with pool.store.pool.acquire() as conn:
         await conn.execute(
-            "INSERT INTO pool_config (key, value) VALUES (blacklist, $1) ON CONFLICT (key) DO UPDATE SET value = $1",
+            "INSERT INTO pool_config (key, value) VALUES ('blacklist', $1) ON CONFLICT (key) DO UPDATE SET value = $1",
             json.dumps(sorted(pool._blacklist))
         )
 
@@ -1380,7 +1380,7 @@ async def blacklist_remove(request: Request):
     import json
     async with pool.store.pool.acquire() as conn:
         await conn.execute(
-            "INSERT INTO pool_config (key, value) VALUES (blacklist, $1) ON CONFLICT (key) DO UPDATE SET value = $1",
+            "INSERT INTO pool_config (key, value) VALUES ('blacklist', $1) ON CONFLICT (key) DO UPDATE SET value = $1",
             json.dumps(sorted(pool._blacklist))
         )
 
