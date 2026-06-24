@@ -2018,6 +2018,18 @@ footer {
 <section id="how" class="section fade-in">
     <h2 class="section-title" data-i18n="how_title">How it works</h2>
     <hr class="section-divider">
+    <div class="how-video">
+        <video id="how-explainer" src="/static/cellule-explainer.mp4" poster="/static/cellule-explainer-poster.jpg"
+               autoplay muted loop playsinline preload="metadata"></video>
+        <button class="how-video-sound" id="how-sound-btn" onclick="toggleExplainerSound()" data-i18n="how_video_sound">&#x1F50A; Sound</button>
+    </div>
+    <style>
+    .how-video{position:relative;max-width:900px;margin:0 auto 44px;aspect-ratio:16/9;border-radius:16px;overflow:hidden;border:1px solid rgba(139,92,246,.25);box-shadow:0 30px 80px rgba(0,0,0,.5)}
+    .how-video video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;background:#070b11}
+    .how-video-sound{position:absolute;bottom:14px;right:14px;z-index:2;background:rgba(8,14,22,.82);color:#fff;border:1px solid rgba(255,255,255,.25);padding:8px 15px;border-radius:999px;font-size:14px;font-weight:700;cursor:pointer}
+    .how-video-sound:hover{border-color:#8b5cf6}
+    @supports not (aspect-ratio:1){.how-video{height:0;padding-bottom:56.25%}}
+    </style>
     <div class="how-grid">
         <div class="how-card fade-in">
             <div class="how-icon">
@@ -2761,6 +2773,8 @@ var L = {
         cta_try: "Try the AI",
         cta_contribute: "Start Contributing",
         how_title: "How it works",
+        how_video_sound: "&#x1F50A; Sound",
+        how_video_mute: "&#x1F507; Mute",
         how_1_title: "Contribute",
         how_1_desc: "Install in 60 seconds. Your CPU or GPU serves an AI model to the network.",
         how_2_title: "Participate",
@@ -3012,6 +3026,8 @@ var L = {
         cta_try: "Essayer l\u0027API",
         cta_contribute: "Commencer \u00e0 contribuer",
         how_title: "Comment \u00e7a marche",
+        how_video_sound: "&#x1F50A; Son",
+        how_video_mute: "&#x1F507; Couper",
         how_1_title: "Contribuer",
         how_1_desc: "Installation en 60 secondes. Votre CPU ou GPU sert un mod\u00e8le IA au r\u00e9seau.",
         how_2_title: "Participer",
@@ -3220,6 +3236,12 @@ var L = {
 
 var currentLang = localStorage.getItem("iamine_lang") || "en";
 
+function toggleExplainerSound() {
+    var v = document.getElementById('how-explainer'), b = document.getElementById('how-sound-btn');
+    if (!v) return;
+    if (v.muted) { v.muted = false; v.currentTime = 0; v.play(); if (b && L[currentLang]) b.innerHTML = L[currentLang].how_video_mute || '&#x1F507; Mute'; }
+    else { v.muted = true; if (b && L[currentLang]) b.innerHTML = L[currentLang].how_video_sound || '&#x1F50A; Sound'; }
+}
 function setLang(lang) {
     currentLang = lang;
     localStorage.setItem("iamine_lang", lang);
