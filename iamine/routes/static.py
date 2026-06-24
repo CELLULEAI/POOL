@@ -105,6 +105,21 @@ async def legal_page():
     return JSONResponse({"error": "legal page not found"}, status_code=404)
 
 
+# --- Démo live animée (atout communautaire, partageable : cellule.ai/demo) ---
+@router.get("/demo")
+async def demo_page(request: Request):
+    if _is_pool_operator_mode():
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url="https://cellule.ai/demo", status_code=302)
+    from fastapi.responses import FileResponse, JSONResponse
+    lang = (request.query_params.get("lang") or "fr").strip().lower()
+    fname = "demo_en.html" if lang == "en" else "demo.html"
+    f = _static_dir() / fname
+    if f.exists():
+        return FileResponse(str(f), media_type="text/html")
+    return JSONResponse({"error": "demo page not found"}, status_code=404)
+
+
 # --- Serveur de modeles GGUF ---
 @router.get("/v1/models/download/{filename}")
 async def download_model(filename: str):

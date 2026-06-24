@@ -17,7 +17,7 @@ import pytest
 from fastapi.routing import APIRoute
 
 SNAPSHOT = Path(__file__).parent / "route_registry_snapshot.txt"
-EXPECTED_APIROUTE_COUNT = 187  # surface non-dev (sans IAMINE_DEV)
+EXPECTED_APIROUTE_COUNT = 188  # surface non-dev (sans IAMINE_DEV) — +1 : route /demo (atout communautaire)
 
 
 def _collect_api_routes(routes, seen=None):

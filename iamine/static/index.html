@@ -1852,6 +1852,7 @@ footer {
     <div class="nav-links">
         <a href="#advantages" data-i18n="nav_adv">Advantages</a>
         <a href="#how" data-i18n="nav_how">How it works</a>
+        <a href="#demo" data-i18n="nav_demo">Live demo</a>
         <a href="#pool" data-i18n="nav_pool">Network</a>
         <a href="#opencode" data-i18n="nav_opencode">Build</a>
         <a href="#tools" data-i18n="nav_tools">Tools</a>
@@ -1915,6 +1916,32 @@ footer {
         </div>
     </div>
 </section>
+
+
+<!-- ── LIVE DEMO (killer communautaire) ──────────────── -->
+<section id="demo" class="demo-section fade-in">
+    <h2 class="section-title" data-i18n="demo_title">See Cellule.ai in action</h2>
+    <hr class="section-divider">
+    <p class="demo-lead" data-i18n="demo_lead">Two commands, and your machine joins the network — live, right now.</p>
+    <div class="demo-frame">
+        <iframe id="demo-iframe" src="/static/demo.html" title="Cellule.ai live demo"
+                loading="lazy" frameborder="0" scrolling="no"></iframe>
+    </div>
+    <div class="demo-cta">
+        <a href="/docs/install-worker.html" class="btn-primary" data-i18n="cta_worker_install">&#x1F9EC; Install a Worker</a>
+        <a id="demo-fs-link" href="/static/demo.html" target="_blank" rel="noopener" class="btn-secondary" data-i18n="demo_fullscreen">&#x26F6; Open full screen</a>
+    </div>
+</section>
+<style>
+.demo-section{padding:70px 20px 50px;text-align:center;max-width:1180px;margin:0 auto}
+.demo-lead{color:var(--muted,#8aa0b0);font-size:1.1rem;max-width:680px;margin:0 auto 30px;line-height:1.55}
+.demo-frame{position:relative;width:100%;max-width:1000px;margin:0 auto;aspect-ratio:16/9;
+  border-radius:16px;overflow:hidden;border:1px solid rgba(61,220,132,.25);
+  box-shadow:0 30px 90px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.03)}
+.demo-frame iframe{position:absolute;inset:0;width:100%;height:100%;display:block;background:#070b11}
+.demo-cta{margin-top:30px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+@supports not (aspect-ratio:1){.demo-frame{height:0;padding-bottom:56.25%}}
+</style>
 
 
 <!-- ── ADVANTAGES ───────────────────────────────────── -->
@@ -2694,6 +2721,10 @@ setInterval(refreshFooterStats, 10000);
 var L = {
     en: {
         nav_how: "How it works",
+        nav_demo: "Live demo",
+        demo_title: "See Cellule.ai in action",
+        demo_lead: "Two commands, and your machine joins the network &mdash; live, right now.",
+        demo_fullscreen: "&#x26F6; Open full screen",
         nav_pool: "Network",
         nav_opencode: "Build",
         nav_contribute: "Contribute",
@@ -2941,6 +2972,10 @@ var L = {
     },
     fr: {
         nav_how: "Comment \u00e7a marche",
+        nav_demo: "D\u00e9mo live",
+        demo_title: "Cellule.ai en action",
+        demo_lead: "Deux commandes, et ta machine rejoint le r\u00e9seau &mdash; en direct, maintenant.",
+        demo_fullscreen: "&#x26F6; Plein \u00e9cran",
         nav_pool: "R\u00e9seau",
         nav_opencode: "D\u00e9velopper",
         nav_contribute: "Contribuer",
@@ -3201,6 +3236,10 @@ function setLang(lang) {
     document.getElementById("btn-en").classList.toggle("active", lang === "en");
     document.getElementById("btn-fr").classList.toggle("active", lang === "fr");
     var wpLink = document.getElementById("whitepaper-link"); if (wpLink) wpLink.href = "/static/whitepaper-" + lang + ".html";
+    var demoSrc = (lang === "en") ? "/static/demo_en.html" : "/static/demo.html";
+    var demoIframe = document.getElementById("demo-iframe");
+    if (demoIframe && demoIframe.getAttribute("src") !== demoSrc) demoIframe.src = demoSrc;
+    var demoFs = document.getElementById("demo-fs-link"); if (demoFs) demoFs.href = demoSrc;
 }
 setLang(currentLang);
 
