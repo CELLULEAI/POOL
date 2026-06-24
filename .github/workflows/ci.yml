@@ -24,7 +24,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           # deps d'import-time utilisees par la surface de test (toutes en wheels) :
-          pip install fastapi uvicorn websockets psutil aiohttp huggingface-hub \
+          # fastapi/starlette EPINGLES sur la version que la prod fait tourner :
+          # starlette 1.x change include_router (routes enveloppees dans
+          # _IncludedRouter au lieu d'etre aplaties dans app.routes), ce qui casse
+          # le harnais route-level (test_route_registry). On teste donc exactement
+          # ce qui tourne sur le VPS, pas la derniere release upstream.
+          pip install "fastapi==0.135.1" "starlette<0.53" uvicorn websockets psutil aiohttp huggingface-hub \
                       cryptography passlib argon2-cffi asyncpg \
                       pytest pytest-asyncio
           # le paquet lui-meme sans ses deps lourdes (llama-cpp / sentence-transformers) :
