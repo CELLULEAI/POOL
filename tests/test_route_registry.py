@@ -20,17 +20,40 @@ SNAPSHOT = Path(__file__).parent / "route_registry_snapshot.txt"
 EXPECTED_APIROUTE_COUNT = 187  # surface non-dev (sans IAMINE_DEV)
 
 
+def _collect_api_routes(routes, seen=None):
+    """Aplatit recursivement les APIRoute, quelle que soit la version FastAPI.
+
+    Jusqu'a starlette 0.52, include_router aplatissait les routes directement
+    dans app.routes. Depuis starlette 1.x, il insere un wrapper _IncludedRouter
+    qui garde les routes sous .original_router (et les Mount les gardent sous
+    .routes). On descend dans les deux pour rester agnostique a la version.
+    """
+    if seen is None:
+        seen = set()
+    out = []
+    for r in routes:
+        if isinstance(r, APIRoute) and id(r) not in seen:
+            seen.add(id(r))
+            out.append(r)
+        sub = getattr(r, "routes", None)
+        if sub:
+            out.extend(_collect_api_routes(sub, seen))
+        original = getattr(r, "original_router", None)  # starlette 1.x _IncludedRouter
+        if original is not None and getattr(original, "routes", None):
+            out.extend(_collect_api_routes(original.routes, seen))
+    return out
+
+
 def _live():
     from iamine.pool import app
     sigs, count = [], 0
-    for r in app.routes:
-        if isinstance(r, APIRoute):
-            count += 1
-            methods = "|".join(sorted(r.methods - {"HEAD", "OPTIONS"}))
-            deps = ",".join(sorted(
-                d.call.__name__ for d in r.dependant.dependencies if getattr(d, "call", None)
-            ))
-            sigs.append(f"{methods} {r.path} [{deps}]")
+    for r in _collect_api_routes(app.routes):
+        count += 1
+        methods = "|".join(sorted(r.methods - {"HEAD", "OPTIONS"}))
+        deps = ",".join(sorted(
+            d.call.__name__ for d in r.dependant.dependencies if getattr(d, "call", None)
+        ))
+        sigs.append(f"{methods} {r.path} [{deps}]")
     return sigs, count
 
 
