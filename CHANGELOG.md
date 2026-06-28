@@ -1,6 +1,30 @@
 # Changelog
 
-## Unreleased
+## 1.0.4 — 2026-06-28
+
+### Pool — anti-saturation compaction guards
+
+- **Fix a ghost-task leak that could pin `pool_load` at 100%.** `delegate_task`
+  only removed its `_active_tasks` / `pending_jobs` entries in the success and
+  inner-`TimeoutError` branches. But background compaction wraps `delegate_task`
+  in an *outer* `wait_for` shorter than its own (60s vs 90s): when the outer
+  timeout fires it cancels the call, raising `CancelledError` — which was never
+  caught, so the cleanup never ran and the entry leaked permanently. Over days a
+  single hammered conversation accumulated dozens of phantom "running" tasks,
+  skewing monitoring and the live canvas. Cleanup now runs in a `finally` block,
+  guaranteed on every exit path (success / timeout / cancellation).
+- **Self-healing ghost sweeper.** The heartbeat loop now drops any `_active_tasks`
+  entry older than `IAMINE_TASK_GHOST_TTL_SEC` (default 180s; a real delegated
+  task lasts ≤90s). If a future code path ever reintroduces a leak, it clears
+  itself within minutes instead of accumulating.
+- **Per-conversation compaction cooldown.** A client repeatedly posting to one
+  conversation used to trigger a compaction on nearly every message, monopolizing
+  the strongest helper workers. Compaction (and meta-compaction) is now rate-limited
+  per conversation via `IAMINE_COMPACT_COOLDOWN_SEC` (default 30s).
+- **Inference capacity reserve.** `get_idle_worker(reserve=N)` never grabs a
+  background helper if doing so would leave fewer than `IAMINE_INFERENCE_RESERVE`
+  (default 1) idle workers — user inference always keeps capacity, with graceful
+  degradation to self-compaction during maintenance bursts.
 
 ### Routing — quality floor (q75 / 9B-equivalent)
 

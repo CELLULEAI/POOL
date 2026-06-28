@@ -1,10 +1,10 @@
 # Cellule.ai Pool — multi-stage Docker image
-# Version: 1.0.3 (first community-governed release)
+# Version: 1.0.4 (anti-saturation compaction guards)
 # Usage:
 #   docker run -d --name iamine-pool -p 8080:8080 \
 #     -e POOL_NAME=my-pool -e POOL_URL=http://my-public-url:8080 \
 #     -e DB_HOST=iamine-pg -e DB_PASS=strong_pg_pass \
-#     celluleai/pool:1.0.3
+#     celluleai/pool:1.0.4
 #
 # Release signing: this image embeds the signed wheel + sig + MAINTAINERS
 # in /opt/cellule/. Pool verifies at boot and logs the result (warning-only
@@ -34,10 +34,10 @@ RUN pip install --no-cache-dir \
     torch
 
 # Install from locally-built signed wheel (built by scripts/build_release.sh)
-COPY dist/iamine_ai-1.0.3-py3-none-any.whl /tmp/
+COPY dist/iamine_ai-1.0.4-py3-none-any.whl /tmp/
 RUN pip install --no-cache-dir \
     --extra-index-url https://pypi.org/simple \
-    "/tmp/iamine_ai-1.0.3-py3-none-any.whl[pool]"
+    "/tmp/iamine_ai-1.0.4-py3-none-any.whl[pool]"
 
 # Pre-download MiniLM-L6-v2 (~90 MB) — instant container boot, no internet at runtime
 RUN mkdir -p /root/.cache/iamine-embedder && \
@@ -51,7 +51,7 @@ m.save('/root/.cache/iamine-embedder')"
 FROM python:3.12-slim-bookworm
 
 # OCI image metadata labels (opencontainers.org spec)
-LABEL org.opencontainers.image.title="CELLULE Pool"       org.opencontainers.image.description="Distributed AI inference network — pool orchestrator"       org.opencontainers.image.url="https://cellule.ai"       org.opencontainers.image.source="https://github.com/CELLULEAI/POOL"       org.opencontainers.image.version="1.0.3"       org.opencontainers.image.licenses="AGPL-3.0-or-later"       org.opencontainers.image.vendor="Cellule.ai / David Mourgues"       org.opencontainers.image.authors="David Mourgues <david.mourgues@gmail.com>"
+LABEL org.opencontainers.image.title="CELLULE Pool"       org.opencontainers.image.description="Distributed AI inference network — pool orchestrator"       org.opencontainers.image.url="https://cellule.ai"       org.opencontainers.image.source="https://github.com/CELLULEAI/POOL"       org.opencontainers.image.version="1.0.4"       org.opencontainers.image.licenses="AGPL-3.0-or-later"       org.opencontainers.image.vendor="Cellule.ai / David Mourgues"       org.opencontainers.image.authors="David Mourgues <david.mourgues@gmail.com>"
 
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -67,16 +67,16 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # Release signing artifacts (verified at boot by iamine.core.release_signing)
 RUN mkdir -p /opt/cellule
-COPY dist/iamine_ai-1.0.3-py3-none-any.whl           /opt/cellule/
-COPY dist/iamine_ai-1.0.3-py3-none-any.whl.sig       /opt/cellule/
+COPY dist/iamine_ai-1.0.4-py3-none-any.whl           /opt/cellule/
+COPY dist/iamine_ai-1.0.4-py3-none-any.whl.sig       /opt/cellule/
 COPY MAINTAINERS                                      /opt/cellule/
 COPY LICENSE                                          /opt/cellule/LICENSE
 COPY NOTICE                                           /opt/cellule/NOTICE
 
 # Env vars consumed by iamine.core.release_signing.verify_release_at_boot
 ENV IAMINE_MAINTAINERS=/opt/cellule/MAINTAINERS \
-    IAMINE_RELEASE_SIG=/opt/cellule/iamine_ai-1.0.3-py3-none-any.whl.sig \
-    IAMINE_RELEASE_ARTIFACT=/opt/cellule/iamine_ai-1.0.3-py3-none-any.whl
+    IAMINE_RELEASE_SIG=/opt/cellule/iamine_ai-1.0.4-py3-none-any.whl.sig \
+    IAMINE_RELEASE_ARTIFACT=/opt/cellule/iamine_ai-1.0.4-py3-none-any.whl
 
 WORKDIR /opt/iamine
 COPY docker-entrypoint.sh /opt/iamine/docker-entrypoint.sh
