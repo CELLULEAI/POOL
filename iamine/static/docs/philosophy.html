@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cellule.ai — Why ≥9B: our quality floor</title>
+<meta name="description" content="Cellule.ai is a heterogeneous network — any capable machine can participate, from a laptop to a GPU rig. But quality of service is floored at 9B-class models: below that, inference is not precise enough to be worth serving. Here is why, and how smaller contributors still matter.">
+<link rel="canonical" href="https://cellule.ai/docs/philosophy.html">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0f;color:#e0e0e0;font-family:system-ui,-apple-system,sans-serif;line-height:1.7;padding:2rem 1rem}
+.container{max-width:800px;margin:0 auto}
+h1{font-size:2rem;background:linear-gradient(135deg,#8b5cf6,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:0.5rem}
+h2{color:#8b5cf6;font-size:1.3rem;margin:2.5rem 0 1rem;padding-bottom:0.5rem;border-bottom:1px solid rgba(139,92,246,0.2)}
+h3{color:#a78bfa;font-size:1.1rem;margin:1.5rem 0 0.5rem}
+p{margin-bottom:1rem;color:rgba(255,255,255,0.75)}
+a{color:#8b5cf6;text-decoration:none}
+a:hover{text-decoration:underline}
+code{background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;font-size:0.9em;font-family:'JetBrains Mono',monospace}
+.lead{font-size:1.15rem;color:rgba(255,255,255,0.85)}
+.badge{display:inline-block;background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;padding:3px 12px;border-radius:12px;font-size:11px;font-weight:700;letter-spacing:1px;margin-bottom:1rem}
+.card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:1.5rem;margin:1rem 0}
+.ok{border-left:3px solid #4ade80;padding-left:1rem;margin:1rem 0;color:rgba(255,255,255,0.6)}
+.warn{border-left:3px solid #ff8800;padding-left:1rem;margin:1rem 0;color:rgba(255,255,255,0.6)}
+table{width:100%;border-collapse:collapse;margin:1rem 0}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.06);vertical-align:top}
+th{color:#8b5cf6;font-size:0.85rem;text-transform:uppercase;letter-spacing:1px}
+.back{display:inline-block;margin-bottom:2rem;color:rgba(255,255,255,0.4);font-size:0.9rem}
+</style>
+</head>
+<body>
+<div class="container">
+
+<a href="/" class="back">&larr; Back to cellule.ai</a>
+
+<span class="badge">PHILOSOPHY</span>
+<h1>Why ≥9B: our quality floor</h1>
+<p class="lead">Cellule.ai is a <strong>heterogeneous network</strong>. Any capable machine can join and contribute compute &mdash; a laptop, a workstation, a GPU rig. That openness is the whole point. But openness to <em>participation</em> is not the same as lowering the bar on <em>answers</em>. We hold a deliberate quality floor: the network does not serve a final answer from a model below 9B-class quality. Here is why &mdash; and why your small machine still matters.</p>
+
+<h2>Two things that look the same but aren't</h2>
+<p>There are two distinct questions in a distributed inference network, and conflating them is how quality quietly rots:</p>
+<table>
+<tr><th>Question</th><th>Our answer</th></tr>
+<tr><td><strong>Who can participate?</strong></td><td><strong>Any capable machine.</strong> From a laptop to a GPU rig. Heterogeneous atoms are the network's strength, not a compromise.</td></tr>
+<tr><td><strong>What is good enough to <em>answer</em>?</strong></td><td><strong>9B-class and up.</strong> Below that, by experience, the answer is not reliable enough to ship to a user.</td></tr>
+</table>
+
+<h2>What experience taught us</h2>
+<p>We started open to the romantic ideal: a swarm of tiny models, each doing a little. In practice, a 1B model asked <code>17 × 23</code> confidently returns <code>401</code>. A 3B drifts on anything multi-step. Hallucination and imprecision below the 9B line are not edge cases &mdash; they are the norm. Serving those answers doesn't democratize intelligence; it just ships wrong answers with a friendly tone.</p>
+<p>So we drew a line, calibrated by a <strong>quality score</strong> rather than raw parameter count (so a Mixture-of-Experts 35B-A3B is judged on what it delivers, not its active params). The viable floor is <strong>9B (quality score 75)</strong>; <strong>7B (65)</strong> is the extreme we tolerate; below that, the network will not use the model as a final answerer.</p>
+
+<div class="ok"><strong>Graceful, never a hard failure.</strong> When no model at or above the floor is free, the strongest available worker answers anyway &mdash; we never return a 503. The floor is a preference for quality, not a wall.</div>
+
+<h2>Your small machine is not wasted</h2>
+<p>A sub-9B contributor is <strong>not</strong> a second-class citizen. Smaller models do real, paid work every minute:</p>
+<table>
+<tr><th>Role</th><th>What it does</th></tr>
+<tr><td>Trivial prompts</td><td>Short, low-stakes requests are served directly by smaller models &mdash; fast and cheap.</td></tr>
+<tr><td>Classification &amp; routing</td><td>Deciding which tier a prompt needs is itself useful inference a small model does well.</td></tr>
+<tr><td>Checker / review</td><td>Smaller models help verify and post-process larger models' drafts.</td></tr>
+</table>
+<p>All of this earns network credits under the same reward split. <strong>Every atom contributes; no contribution is wasted.</strong> We are honest about which atom should write the <em>final</em> answer to a hard question &mdash; that's all.</p>
+
+<h2>Reciprocity: contribution and consumption</h2>
+<p>The network runs on a simple balance: it is neither commercial nor a free buffet, but a <strong>distributed budget</strong> where each participant finds a measurable interest without anyone silently footing the bill. In that spirit, consuming the community's compute through the API is tied to <strong>actively contributing</strong> compute back &mdash; running a capable worker connected to a pool. No participation, no free ride. <span style="color:rgba(255,255,255,0.5)">(This reciprocity rule is rolling out in phases; see the release notes.)</span></p>
+
+<div class="warn"><strong>In short:</strong> participate with anything; we serve answers worth trusting. Heterogeneity for the network, a floor for the answer.</div>
+
+<p style="margin-top:2rem"><a href="/docs/connect.html">→ Connect your tools</a> &nbsp;·&nbsp; <a href="/">→ Join the network</a></p>
+
+</div>
+</body>
+</html>

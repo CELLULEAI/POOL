@@ -199,7 +199,6 @@
         <li class="nav-tab" data-page="token" data-i18n="nav_token">$IAMINE</li>
         <li class="nav-tab" data-page="tuto" data-i18n="nav_tuto">Tuto</li>
         <li class="nav-tab" data-page="contact" data-i18n="nav_contact">Contact</li>
-        <li class="nav-tab" data-page="mobile" data-i18n="nav_mobile">Mobile</li>
         <li class="nav-tab" data-page="whitepaper" data-i18n="nav_wp">Whitepaper</li>
     </ul>
     <div style="display:flex;align-items:center;gap:0.75rem;">
@@ -1162,75 +1161,6 @@ python -m iamine recommend</code>
             <textarea id="ct-msg" data-i18n-placeholder="ct_m" placeholder="Your message"></textarea>
             <button class="btn btn-primary" style="width:100%;" id="ct-send" data-i18n="ct_btn">Send</button>
             <p id="ct-ok" style="text-align:center;margin-top:0.5rem;color:var(--accent2);display:none;" data-i18n="ct_ok">Sent!</p>
-        </div>
-    </div>
-</div>
-
-<!-- ============ MOBILE ============ -->
-<div class="page" id="page-mobile">
-    <div class="page-content" style="max-width:600px;text-align:center;">
-        <h2 data-i18n="mob_title">Add Mobile Worker</h2>
-        <p style="color:var(--text2);font-size:0.9rem;margin-bottom:1.5rem;" data-i18n="mob_sub">Turn your smartphone into an AI worker. Scan the QR code to pair your phone with your CELLULE.AI account.</p>
-
-        <!-- Not logged in -->
-        <div id="mob-login-required" style="display:none;">
-            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:2rem;">
-                <p style="color:var(--text2);margin-bottom:1rem;" data-i18n="mob_login">Log in first to generate a pairing QR code.</p>
-                <button class="btn" onclick="go('workers')" data-i18n="nav_login">Log in</button>
-            </div>
-        </div>
-
-        <!-- QR code section -->
-        <div id="mob-qr-section" style="display:none;">
-
-            <!-- Step 1 — Download -->
-            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1rem;text-align:left;">
-                <div style="display:flex;gap:0.75rem;align-items:center;margin-bottom:1rem;">
-                    <div style="min-width:36px;height:36px;border-radius:50%;background:var(--accent2);color:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;">1</div>
-                    <div>
-                        <div style="font-weight:700;font-size:1rem;color:var(--text1);" data-i18n="mob_step1_title">Download the app</div>
-                        <div style="font-size:0.8rem;color:var(--text2);" data-i18n="mob_step1_sub">Install the CELLULE.AI worker on your Mac, PC or Linux machine</div>
-                    </div>
-                </div>
-                <a href="/v1/mobile/download" download="iamine-worker.apk" id="apk-download-btn" class="btn btn-primary" style="display:block;text-align:center;font-size:0.95rem;text-decoration:none;padding:0.75rem;" data-i18n="mob_apk">Download APK</a>
-                <script>fetch('/v1/mobile/apk-info').then(r=>r.json()).then(d=>{if(d.available){document.getElementById('apk-download-btn').textContent='Download APK ('+d.size_mb+' MB)'}}).catch(()=>{})</script>
-                <details style="margin-top:0.75rem;">
-                    <summary style="cursor:pointer;color:var(--accent);font-size:0.8rem;font-weight:600;" data-i18n="mob_install_t">How to install the APK</summary>
-                    <div style="color:var(--text2);font-size:0.78rem;line-height:1.6;margin-top:0.5rem;">
-                        <div style="margin-bottom:0.4rem;" data-i18n="mob_install_2">Your phone will warn you: "Install from unknown sources". You need to allow it.</div>
-                        <div style="margin-bottom:0.4rem;" data-i18n="mob_install_3">Go to <strong>Settings</strong> and search for <strong>"Install unknown apps"</strong> or <strong>"Unknown sources"</strong>.</div>
-                        <div style="margin-bottom:0.4rem;" data-i18n="mob_install_4">Allow your browser (Chrome, Firefox...) to install apps.</div>
-                        <div style="margin-bottom:0.4rem;" data-i18n="mob_install_5">Open the downloaded APK and tap <strong>Install</strong>.</div>
-                        <div style="background:rgba(240,136,62,0.1);border-left:3px solid var(--accent3);padding:0.5rem;border-radius:0 6px 6px 0;margin-top:0.4rem;" data-i18n="mob_install_tip">The exact steps vary by phone brand. Search: <strong>"install APK [your phone brand]"</strong> (Samsung, Xiaomi, Pixel, OnePlus...).</div>
-                    </div>
-                </details>
-            </div>
-
-            <!-- Step 2 — QR Code -->
-            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1rem;">
-                <div style="display:flex;gap:0.75rem;align-items:center;margin-bottom:1rem;text-align:left;">
-                    <div style="min-width:36px;height:36px;border-radius:50%;background:var(--accent);color:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;">2</div>
-                    <div>
-                        <div style="font-weight:700;font-size:1rem;color:var(--text1);" data-i18n="mob_step2_title">Scan this QR code</div>
-                        <div style="font-size:0.8rem;color:var(--text2);" data-i18n="mob_step2_sub">Open the CELLULE.AI app and point your camera at this code</div>
-                    </div>
-                </div>
-                <div id="mob-qr-img" style="margin:0 auto 1rem;width:240px;height:240px;background:var(--bg);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--text2);">Loading...</div>
-                <p style="color:var(--accent);font-size:0.8rem;" id="mob-expires"></p>
-                <button class="btn btn-secondary" onclick="generateQR()" style="margin-top:0.75rem;font-size:0.85rem;" data-i18n="mob_refresh">Generate new QR</button>
-            </div>
-
-            <!-- Step 3 — Info -->
-            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;text-align:left;">
-                <div style="display:flex;gap:0.75rem;align-items:center;margin-bottom:0.75rem;">
-                    <div style="min-width:36px;height:36px;border-radius:50%;background:var(--accent3);color:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;">3</div>
-                    <div>
-                        <div style="font-weight:700;font-size:1rem;color:var(--text1);" data-i18n="mob_step3_title">Done!</div>
-                        <div style="font-size:0.8rem;color:var(--text2);" data-i18n="mob_s3">The app downloads a 500 MB AI model (once). Then your phone joins the pool and earns $IAMINE.</div>
-                    </div>
-                </div>
-                <div style="background:rgba(88,166,255,0.1);border-left:3px solid var(--accent);padding:0.75rem;border-radius:0 6px 6px 0;font-size:0.8rem;color:var(--text2);" data-i18n="mob_note">Your phone runs a lightweight 0.5B model on WiFi only, while charging. Battery-safe by default.</div>
-            </div>
         </div>
     </div>
 </div>

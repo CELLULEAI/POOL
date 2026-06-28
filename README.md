@@ -2,7 +2,9 @@
 
 **AI belongs to those who run it.**
 
-Cellule.ai is a community-powered distributed LLM inference network. Anyone can contribute computing power (CPU, GPU) to run AI models. No subscription, no payment — the network belongs to its contributors.
+Cellule.ai is a community-powered distributed LLM inference network. Any capable machine can contribute computing power (CPU, GPU) to run AI models. No subscription, no payment — the network belongs to its contributors.
+
+> **Quality philosophy (revised by experience):** participation is open to every capable atom, but *quality of service* is floored at **9B-class models** — below that, inference is not precise enough to serve as a final answer. Smaller contributors still do real, paid work (trivial prompts, classification, review). API consumption is being tied to active contribution (reciprocity, pre-token). See [Why ≥9B](https://cellule.ai/docs/philosophy.html).
 
 ## Quick Start
 
