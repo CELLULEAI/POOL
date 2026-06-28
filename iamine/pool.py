@@ -267,6 +267,23 @@ class Pool:
                 log.info(f"REJOIN {worker_id} — bonus skipped (known in federation)")
 
         self.workers[worker_id].info["api_token"] = api_token
+
+        # Lien de propriete worker -> compte (Release A du gating participation).
+        # Si l'operateur a declare son token de compte (acc_...) au register, on
+        # rattache ce worker au compte. Permet a la future "porte d'acces" (B) de
+        # verifier qu'un compte a >=1 worker connecte avant de servir l'API.
+        # Optionnel : sans account_token, le worker participe normalement (non lie).
+        owner_tok = info.get("account_token", "")
+        if owner_tok and owner_tok.startswith("acc_"):
+            from .core.accounts import _accounts
+            _acc = next((a for a in _accounts.values()
+                         if a.get("account_token") == owner_tok), None)
+            if _acc:
+                self.workers[worker_id].info["owner_account_id"] = _acc["account_id"]
+                log.info(f"Worker {worker_id} rattache au compte {_acc['account_id'][:8]}")
+            else:
+                log.warning(f"Worker {worker_id}: account_token inconnu — non rattache")
+
         gpu_tag = f" — GPU: {info['gpu']} ({info['gpu_vram_gb']} GB)" if info.get("has_gpu") else ""
         bench_tag = f" — bench: {info.get('bench_tps', '?')} tok/s" if info.get("bench_tps") else ""
         log.info(f"Worker connecte: {worker_id} — {info.get('cpu', '?')} / {info.get('ram_total_gb', '?')} GB{gpu_tag}{bench_tag} — v{info.get('version', '?')}")
@@ -371,6 +388,37 @@ class Pool:
             candidates.sort(key=lambda w: w.info.get("bench_tps") or 10.0, reverse=True)
 
         return candidates[0]
+
+    def account_contributing_workers(self, account_id: str,
+                                     min_quality: int | None = None,
+                                     grace_min: float | None = None) -> list:
+        """Workers connectés RATTACHÉS à ce compte, vivants (dans la fenêtre de
+        grâce) et au-dessus du plancher de contribution.
+
+        Release A (gating participation) : lecture seule — sert la visibilité
+        (qui est rattaché ?) et la future PORTE d'accès (B). Ne bloque rien.
+        """
+        from . import models as _M
+        if not account_id:
+            return []
+        if min_quality is None:
+            min_quality = _M.min_contrib_quality()
+        if grace_min is None:
+            try:
+                grace_min = float(os.environ.get("IAMINE_WORKER_GRACE_MINUTES", "30"))
+            except (TypeError, ValueError):
+                grace_min = 30.0
+        now = time.time()
+        out = []
+        for w in self.workers.values():
+            if w.info.get("owner_account_id") != account_id:
+                continue
+            if (now - getattr(w, "last_seen", 0)) > grace_min * 60:
+                continue
+            q = _M.quality_for_model_path(w.info.get("model_path", ""))
+            if q is not None and q >= min_quality:
+                out.append(w)
+        return out
 
     @property
     def pool_load(self) -> float:

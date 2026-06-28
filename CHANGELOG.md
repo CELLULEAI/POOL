@@ -1,5 +1,30 @@
 # Changelog
 
+## Unreleased
+
+### Participation link — worker ↔ account (Release A of the contribution gate)
+
+Groundwork for the policy "no API consumption without active compute contribution"
+(pre-`$IAMINE` reciprocity). **This release only adds the ownership link — the
+access gate itself is not wired yet** (Release B, flipped once workers have
+re-attached).
+
+- A worker may now declare its **owner account** at join time via
+  `IAMINE_ACCOUNT_TOKEN=acc_…` (sent in the `register` message). The pool resolves
+  it and records `owner_account_id` on the worker. **Optional and non-breaking**:
+  a worker with no account token participates and earns credits exactly as before.
+- New read-only helper `Pool.account_contributing_workers(account_id)` — returns the
+  connected workers owned by an account that are alive (within
+  `IAMINE_WORKER_GRACE_MINUTES`, default 30) and at or above the **contribution
+  floor** `IAMINE_MIN_CONTRIB_QUALITY` (default 75 = 9B). Used for visibility now
+  and by the future access gate.
+- **Philosophy, revised by experience**: the founding "heterogeneous atoms, from
+  smartphone to GPU" vision holds for *participation* (any atom contributes and
+  earns), but field experience shows that **below 9B inference is not viable or
+  precise** — so *quality of service* is floored at 9B (q75), with 7B (q65) the
+  extreme tolerated relaxation. The quality floor now governs both routing
+  (`min_answer_quality`) and contribution/access (`min_contrib_quality`).
+
 ## 1.0.4 — 2026-06-28
 
 ### Pool — anti-saturation compaction guards

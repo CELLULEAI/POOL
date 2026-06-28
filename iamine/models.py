@@ -181,13 +181,22 @@ SINGLE_WORKER_MIN_RAM = {m.id: m.ram_required_gb for m in MODEL_REGISTRY}
 REGISTRY_BY_ID = {m.id: m for m in MODEL_REGISTRY}
 
 
-# === PLANCHER DE QUALITÉ POUR LE ROUTAGE (curseur David : 9B = quality_score 75) ===
-# Un modèle SOUS ce score ne doit jamais être le répondeur FINAL d'un prompt
-# NON-TRIVIAL tant qu'un worker adéquat est idle (sinon dégradation gracieuse —
-# JAMAIS de 503). Encodé en quality_score (pas en nb de params) : robuste au MoE
-# (35B-A3B = q95 malgré 3B actifs) et calibré par famille (q75 = 9B en Qwen3.5,
-# ≥14B en Qwen2.5, ≥12B en Gemma3). Toute nouvelle famille DOIT calibrer son
-# quality_score sur cette échelle sinon le plancher glisse silencieusement.
+# === PLANCHER DE QUALITÉ (curseur David : 9B = quality_score 75) ===
+# PHILOSOPHIE (révisée PAR EXPÉRIENCE, David 2026-06-28) : la vision fondatrice
+# « atomes hétérogènes, du smartphone au GPU » reste vraie pour la PARTICIPATION
+# — tout atome (même 1B/3B) contribue et gagne des crédits (prompts triviaux,
+# checker). MAIS le terrain a tranché : sous 9B l'inférence n'est ni viable ni
+# précise (un 1B répond « 17×23 » faux). Donc la QUALITÉ DE SERVICE est plancher-
+# née : 9B (q75) est le plancher viable, 7B (q65) la relâche extrême tolérable,
+# en-dessous = non-servable. Ce plancher gouverne DEUX choses :
+#   1. ROUTING  — min_answer_quality() : un modèle sous q75 n'est jamais le
+#      répondeur FINAL d'un prompt non-trivial tant qu'un worker adéquat est idle
+#      (sinon dégradation gracieuse — JAMAIS de 503).
+#   2. CONTRIBUTION/ACCÈS — min_contrib_quality() : porte de participation (B).
+# Encodé en quality_score (pas en nb de params) : robuste au MoE (35B-A3B = q95
+# malgré 3B actifs) et calibré par famille (q75 = 9B en Qwen3.5, ≥14B en Qwen2.5,
+# ≥12B en Gemma3). Toute nouvelle famille DOIT calibrer son quality_score sur
+# cette échelle sinon le plancher glisse silencieusement.
 _DEFAULT_MIN_ANSWER_QUALITY = 75
 # Repli pour les modèles HORS registry (proxies, générations plus récentes) :
 # parse du nb TOTAL de params depuis le nom de fichier.
@@ -211,6 +220,21 @@ def min_answer_quality() -> int:
         return int(os.environ.get("IAMINE_MIN_ANSWER_QUALITY", _DEFAULT_MIN_ANSWER_QUALITY))
     except (TypeError, ValueError):
         return _DEFAULT_MIN_ANSWER_QUALITY
+
+
+_DEFAULT_MIN_CONTRIB_QUALITY = 75  # plancher d'ACCÈS/contribution (porte participation)
+
+
+def min_contrib_quality() -> int:
+    """Plancher de CONTRIBUTION pour ouvrir l'accès API (token acc_*), distinct du
+    plancher de ROUTING (min_answer_quality). Calibré par EXPÉRIENCE (David
+    2026-06-28) : sous 9B (q75) l'inférence n'est pas viable/précise ; 7B (q65)
+    est la relâche extrême tolérable. Surchargeable à chaud via
+    IAMINE_MIN_CONTRIB_QUALITY (doctrine 'toute option = UI admin')."""
+    try:
+        return int(os.environ.get("IAMINE_MIN_CONTRIB_QUALITY", _DEFAULT_MIN_CONTRIB_QUALITY))
+    except (TypeError, ValueError):
+        return _DEFAULT_MIN_CONTRIB_QUALITY
 
 
 def quality_for_model_path(model_path: str) -> int | None:

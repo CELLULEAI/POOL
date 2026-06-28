@@ -128,6 +128,14 @@ class Worker:
             _join = os.environ.get("IAMINE_POOL_JOIN_TOKEN", "")
             if _join:
                 info["join_token"] = _join
+            # Lien de propriete optionnel : si l'operateur declare le token de son
+            # compte (acc_...), le pool rattache ce worker au compte. Sert a prouver
+            # une participation active (cf. doctrine "pas de conso sans contribution").
+            # Optionnel : un worker sans compte participe et gagne des credits comme avant.
+            _account = os.environ.get("IAMINE_ACCOUNT_TOKEN", "") or getattr(
+                getattr(self.config, "pool", None), "account_token", "") or ""
+            if _account:
+                info["account_token"] = _account
             await self._send(ws, {
                 "type": "register",
                 "worker": info,
