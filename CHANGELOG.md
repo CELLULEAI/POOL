@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.5 — 2026-06-28
 
 ### Participation link — worker ↔ account (Release A of the contribution gate)
 
