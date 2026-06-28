@@ -71,6 +71,32 @@ async def heartbeat_loop(pool: "Pool") -> None:
             else:
                 w._busy_since = 0
 
+        # Balayeur de taches fantomes : filet de securite si un chemin de code
+        # reintroduit une fuite de _active_tasks (cf. delegate_task finally).
+        # Une vraie tache deleguee dure <= 90s ; au-dela de TASK_GHOST_TTL elle
+        # est forcement perimee. Sans ce balayage, une entree fantome gonflait
+        # le canvas et faussait le monitoring ad vitam (incident 2026-06-28).
+        try:
+            ghost_ttl = float(os.environ.get("IAMINE_TASK_GHOST_TTL_SEC", "180"))
+            ghosts = [tid for tid, t in pool._active_tasks.items()
+                      if now - t.get("started", now) > ghost_ttl]
+            for tid in ghosts:
+                pool._active_tasks.pop(tid, None)
+                pool.pending_jobs.pop(tid, None)
+            if ghosts:
+                log.warning(f"Balayeur: {len(ghosts)} tache(s) fantome(s) purgee(s) (> {ghost_ttl:.0f}s)")
+        except Exception as _e:
+            log.debug(f"Balayeur taches fantomes: {_e}")
+
+        # Purge du dict de cooldown compaction : eviter une croissance non bornee
+        # (1 entree par conv_id vue). Au-dela de 1h une entree est inutile.
+        try:
+            stale_cd = [k for k, t in pool._last_compaction.items() if now - t > 3600]
+            for k in stale_cd:
+                pool._last_compaction.pop(k, None)
+        except Exception:
+            pass
+
         # Daily version check — push self_update to outdated workers (once per 24h)
         if time.time() - _last_version_check > 86400:
             _last_version_check = time.time()

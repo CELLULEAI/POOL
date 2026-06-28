@@ -166,6 +166,7 @@ class Pool:
         self.store = store or MemoryStore()
         self._task_log: list[dict] = []  # historique des tâches distribuées
         self._active_tasks: dict[str, dict] = {}  # tâches en cours (task_id -> info)
+        self._last_compaction: dict[str, float] = {}  # conv_id -> ts derniere compaction (cooldown anti-emballement)
         self._admin_chat_futures: dict[str, asyncio.Future] = {}  # chat_id -> future (admin chat RED)
         self._blacklist: set[str] = set()  # worker IDs bannis (charge depuis DB)
         self.tool_routing_model: str = ""  # empty = normal deficit routing for tool-calls  # modele pour tool-calls (configurable via dashboard)
@@ -323,7 +324,8 @@ class Pool:
         """Retourne les worker_ids TOOL_ONLY — delegue a core/assist.py."""
         return _tool_only_workers()
 
-    def get_idle_worker(self, exclude: str = "", prefer_stronger: bool = False) -> ConnectedWorker | None:
+    def get_idle_worker(self, exclude: str = "", prefer_stronger: bool = False,
+                        reserve: int = 0) -> ConnectedWorker | None:
         """Trouve un worker idle pour les tâches de fond (compactage, etc).
 
         Le pool est le broker de confiance : il connaît tous les workers,
@@ -332,7 +334,15 @@ class Pool:
 
         prefer_stronger=True : pour le compactage, préférer un modèle plus gros
         que le worker source (meilleur résumé).
+
+        reserve>0 : ne JAMAIS prendre un helper si cela laisse moins de `reserve`
+        workers idle — garantit qu'il reste toujours de la capacité pour
+        l'inférence utilisateur, même pendant une rafale de maintenance.
         """
+        if reserve > 0:
+            idle = sum(1 for w in self.workers.values() if not w.busy and w.worker_id != exclude)
+            if idle <= reserve:
+                return None
         source = self.workers.get(exclude)
         source_size = 0
         if source and prefer_stronger:
@@ -1130,7 +1140,6 @@ class Pool:
 
         try:
             result = await asyncio.wait_for(future, timeout=90)
-            self.pending_jobs.pop(task_id, None)
             duration = time.time() - t0
             text = result.get("text", "")
 
@@ -1158,7 +1167,6 @@ class Pool:
                 f"({task_type}, {duration:.1f}s, {tokens_gen} tok)"
             )
 
-            self._active_tasks.pop(task_id, None)
             self._task_log.append({
                 "task_id": task_id, "task_type": task_type,
                 "source": source_worker, "helper": helper.worker_id,
@@ -1174,7 +1182,6 @@ class Pool:
                 return result
             return text
         except asyncio.TimeoutError:
-            self.pending_jobs.pop(task_id, None)
             try:
                 await self.store.log_task(
                     task_id=task_id, task_type=task_type, conv_id=conv_id,
@@ -1183,7 +1190,6 @@ class Pool:
                 )
             except Exception:
                 pass
-            self._active_tasks.pop(task_id, None)
             log.warning(f"DELEGATE TIMEOUT [{task_id}] {helper.worker_id}")
             self._task_log.append({
                 "task_id": task_id, "task_type": task_type,
@@ -1193,6 +1199,16 @@ class Pool:
                 "timestamp": time.time(),
             })
             return None
+        finally:
+            # Nettoyage GARANTI quel que soit le chemin de sortie : succes,
+            # timeout interne (90s), OU annulation par un timeout EXTERNE
+            # (async_compact enveloppe delegate_task dans wait_for(60s) < 90s).
+            # Cette annulation levait un CancelledError non capture -> les pop()
+            # n'etaient jamais atteints -> _active_tasks et pending_jobs fuyaient
+            # ad vitam, gonflant pool_load jusqu'au redemarrage du process.
+            # Cause racine de la saturation fantome du 2026-06-28.
+            self.pending_jobs.pop(task_id, None)
+            self._active_tasks.pop(task_id, None)
 
     def handle_result(self, msg: dict) -> None:
         """Traite un résultat reçu d'un worker."""

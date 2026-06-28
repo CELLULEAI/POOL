@@ -5,8 +5,33 @@ Fonctions standalone qui opèrent sur le pool via l'interface publique.
 
 import asyncio
 import logging
+import os
+import time
 
 log = logging.getLogger("iamine.pool")
+
+
+def _compact_cooldown_active(pool, key: str) -> bool:
+    """True si la conv a deja ete compactee il y a moins de IAMINE_COMPACT_COOLDOWN_SEC.
+
+    Garde anti-emballement : un client qui martele UNE conversation declenchait
+    auparavant une compaction a chaque message (~20/h), monopolisant les helpers
+    (souvent le worker le plus fort). Le cooldown plafonne a 1 compaction par
+    conv et par fenetre. Reglable ; 0 desactive le garde.
+    """
+    cooldown = float(os.environ.get("IAMINE_COMPACT_COOLDOWN_SEC", "30"))
+    if cooldown <= 0:
+        return False
+    last = pool._last_compaction.get(key, 0.0)
+    return (time.time() - last) < cooldown
+
+
+def _inference_reserve() -> int:
+    """Nombre de workers idle a toujours garder pour l'inference utilisateur."""
+    try:
+        return int(os.environ.get("IAMINE_INFERENCE_RESERVE", "1"))
+    except ValueError:
+        return 1
 
 
 # ---------------------------------------------------------------------------
@@ -61,6 +86,11 @@ async def handle_compaction(pool, conv, worker, conv_id, budget, tools):
     if not conv.needs_compaction(worker_ctx):
         return
 
+    # Garde anti-emballement : 1 compaction max par conv et par fenetre de cooldown.
+    if _compact_cooldown_active(pool, conv_id):
+        log.debug(f"Compaction cooldown actif pour {conv_id} — saute")
+        return
+
     compact_prompt = pool.router.check_and_compact(conv, worker_ctx)
     if not compact_prompt:
         return
@@ -69,11 +99,17 @@ async def handle_compaction(pool, conv, worker, conv_id, budget, tools):
         log.info(f"Compaction deferred for {conv_id}: pool load {pool.pool_load}% — suspended")
         return
 
-    # Chercher un worker plus fort, sinon même tier, sinon self-compact
-    helper = pool.get_idle_worker(exclude=worker.worker_id, prefer_stronger=True)
+    # On s'engage a compacter : armer le cooldown des maintenant (avant dispatch)
+    # pour qu'un client qui martele ne reessaie pas a chaque message.
+    pool._last_compaction[conv_id] = time.time()
+
+    # Chercher un worker plus fort, sinon même tier, sinon self-compact.
+    # reserve : garder au moins N workers idle pour l'inference utilisateur.
+    reserve = _inference_reserve()
+    helper = pool.get_idle_worker(exclude=worker.worker_id, prefer_stronger=True, reserve=reserve)
     if not helper:
         # Fallback : worker de même tier ou n'importe quel idle
-        helper = pool.get_idle_worker(exclude=worker.worker_id, prefer_stronger=False)
+        helper = pool.get_idle_worker(exclude=worker.worker_id, prefer_stronger=False, reserve=reserve)
 
     if not helper:
         # Self-compaction : le worker fait son propre résumé
@@ -132,14 +168,22 @@ async def handle_meta_compaction(pool, conv, worker, conv_id, budget, tools):
     if not conv.needs_meta_compaction() or budget == "suspended":
         return
 
+    # Meme garde anti-emballement que la compaction (cle distincte meta:).
+    if _compact_cooldown_active(pool, f"meta:{conv_id}"):
+        log.debug(f"Meta-compaction cooldown actif pour {conv_id} — saute")
+        return
+
     meta_prompt = pool.router.check_and_meta_compact(conv)
     if not meta_prompt:
         return
 
-    helper = pool.get_idle_worker(exclude=worker.worker_id, prefer_stronger=True)
+    reserve = _inference_reserve()
+    helper = pool.get_idle_worker(exclude=worker.worker_id, prefer_stronger=True, reserve=reserve)
     if not helper:
-        log.info(f"Meta-compaction skipped for {conv_id}: no stronger worker available")
+        log.info(f"Meta-compaction skipped for {conv_id}: no stronger worker available (or reserve)")
         return
+
+    pool._last_compaction[f"meta:{conv_id}"] = time.time()
 
     try:
         helper.busy = True
